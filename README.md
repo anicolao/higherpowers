@@ -13,6 +13,7 @@ bun run dev
 
 - Home: http://127.0.0.1:5198/
 - Component gallery: http://127.0.0.1:5198/gallery
+- Digital component study: http://127.0.0.1:5198/gallery?collection=digital
 - Illustrated rulebook: http://127.0.0.1:5198/rules.html
 - Print & play: http://127.0.0.1:5198/gallery/print
 
@@ -29,6 +30,14 @@ Preview builds use their own base path and preserve other previews on `gh-pages`
 Only the trusted `main` publisher deploys the combined Pages site; same-repository
 PRs stage their built files and dispatch that publisher. Fork PRs cannot stage
 or publish. This follows Hell’s Bells’ retained-preview convention.
+
+The [digital component study](docs/digital-components.md) adds painted soul tiles,
+Favor medallions, both Sanctuaries, Purgatory, and an interactive layer inspector.
+Its freeform Heaven supports single-click/drag splits, double-tap group selection, drop-to-join,
+undo, ordinary-formation legality emblems and completion hints. Matching ranks
+or suits snap north/south; the transpose control regroups an aligned stack
+into complementary formations and leftover pieces.
+Run `bun run review:digital` for its browser checks.
 
 ## The tabletop kit
 

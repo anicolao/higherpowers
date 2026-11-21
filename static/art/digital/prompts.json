@@ -1,0 +1,66 @@
+{
+  "game": "Higher Powers",
+  "mode": "Built-in image_gen",
+  "license": "GPL-3.0-only",
+  "assets": [
+    {
+      "id": "soul-tile-body-v2",
+      "transparent": true,
+      "prompt": "Use case: precise-object-edit. Image 1 is the edit target: the blank ivory soul tile for Higher Powers. Change ONLY the size and necessary vertical placement of the circular recessed symbol well in the lower face. Enlarge its diameter to TWICE the existing diameter, about 32 percent of the tile's width. Center the new well horizontally and put its center at about 79 percent of the tile's height, moving it slightly upwards so its entire rim stays comfortably inside the fine gold rectangular border, never overlapping the border. Keep the well circular with a soft ceramic rim and shallow recessed pale ivory interior, large enough for a separately rendered standard card suit icon. The previous small well must be gone, leaving only one larger well. Preserve the exact outer silhouette, aspect ratio, proportions, thickness, ivory marble grain, warm porcelain color, gold border, bevels and lighting. Preserve genuine transparent background. Keep the entire rest of the face blank: no symbols, lettering, numerals or marks. Same portrait format, one complete isolated tile, nothing else.",
+      "source": "static/art/source/digital/soul-tile-body-v2.png",
+      "output": "static/art/digital/soul-tile-body-v2.webp",
+      "generatedSource": "/Users/anicolao/.codex/generated_images/01a1f726-df37-7052-baf4-7398eca03659/exec-e48f2b36-09b3-424c-9841-906ea68f098d.png",
+      "input": "static/art/source/digital/soul-tile-body.png"
+    },
+    {
+      "id": "favor-medallion",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. Asset for Higher Powers, a digital tabletop game. Art direction: exquisite painterly classical fantasy, warm ivory porcelain, brushed antique gold, cream, delicate muted blue-grey shadows, hand-gilded texture, tactile and beautifully crafted. No letters, no numerals, no writing, no watermark, no UI, no mockup, no other objects. Create ONE circular ceremonial antique-gold laurel medallion for the Divine Favor counter. Exactly face-on, orthographic. A sculpted gold wreath around a broad completely blank, smooth, warm ivory enamel circular central face occupying 55 percent of total diameter, reserved for a separately rendered live number. At top a small radiant winged sun crest, at bottom a tiny tasteful pearl. Physical cast gold, fine raised leaves, handsome tactile relief, restrained gilding, luminous soft highlights. Strong silhouette clear at 64 pixels. Entire object visible, isolated on genuine transparency, no floor, no shadow outside the object. No symbols in the blank central face. Single standalone graphical game component.",
+      "source": "static/art/source/digital/favor-medallion.png",
+      "output": "static/art/digital/favor-medallion.webp",
+      "generatedSource": "/Users/anicolao/.codex/generated_images/01a1f726-df37-7052-baf4-7398eca03659/exec-d7d51c5a-8703-4f88-9cc6-ceb8f4894ae4.png"
+    },
+    {
+      "id": "sanctuary-garden",
+      "transparent": false,
+      "prompt": "Use case: stylized-concept. Asset for Higher Powers, a digital tabletop game. Art direction: exquisite painterly classical fantasy, warm ivory porcelain, brushed antique gold, cream, delicate muted blue-grey shadows, hand-gilded texture, tactile and beautifully crafted. No letters, no numerals, no writing, no watermark, no UI, no mockup, no other objects. Create a landscape 3:2 overhead tabletop REGION painting: an empty sacred Sanctuary in the form of a pale ivory marble garden court, a delicate gilded colonnade and low carved gold-and-ivory balustrade define a clear rectangular enclosed private area. Soft moss/sage-green inlay and sparse tiny white flowers only around the far outer edges, a pair of small ivory feathered wings sculpted into the top-center boundary. Central lower 70 percent is spacious empty warm cream marble, quiet and light, reserved for real live game tiles overlaid in code. View from above with a very shallow elegant architectural angle at the upper edge, not a deep vista. The boundary encloses all four edges and reads as a clearly protected physical region. Beautiful classical oil painting, hand-painted brush texture, rich but restrained antique-gold details, very soft daylight, no sky or horizon. Fully opaque full-bleed image. No tiles, cards, counters or people. No text at all.",
+      "source": "static/art/source/digital/sanctuary-garden.png",
+      "output": "static/art/digital/sanctuary-garden.webp",
+      "generatedSource": "/Users/anicolao/.codex/generated_images/01a1f726-df37-7052-baf4-7398eca03659/exec-ea5d6f7b-943e-4e44-a632-14896638b0c6.png"
+    },
+    {
+      "id": "purgatory-threshold",
+      "transparent": false,
+      "prompt": "Use case: stylized-concept. Asset for Higher Powers, a digital tabletop game. Art direction: exquisite painterly classical fantasy, warm ivory porcelain, brushed antique gold, cream, delicate muted blue-grey shadows, hand-gilded texture, tactile and beautifully crafted. No letters, no numerals, no writing, no watermark, no UI, no mockup, no other objects. Create a landscape 3:2 overhead tabletop REGION painting: Purgatory as a quiet waiting place at an ivory marble threshold, softly misted blue-grey alabaster, a small warm golden lantern on the upper left rim, delicate gold chain-and-post rails framing the left and right edges, soft luminous cloud wisps at the very outer boundary. A shallow oval ivory stone basin or recessed plinth in the central lower 70 percent, completely empty, light warm cream center reserved for ONE real live game tile rendered over it in code. Clearly different from the green garden Sanctuary: a cooler blue-grey waiting alcove with a warm glimmer of hope, contemplative rather than frightening. Clearly bounded on all edges. View from above, no deep perspective, no sky or horizon. Classical oil painting with physical brush texture and gilded details. Fully opaque full-bleed. No tiles, cards, counters, souls, people or text.",
+      "source": "static/art/source/digital/purgatory-threshold.png",
+      "output": "static/art/digital/purgatory-threshold.webp",
+      "generatedSource": "/Users/anicolao/.codex/generated_images/01a1f726-df37-7052-baf4-7398eca03659/exec-fae3cf9a-4863-434b-8eac-b7480aa48d63.png"
+    },
+    {
+      "id": "heaven-legal-halo",
+      "prompt": "Use case: stylized-concept. A single standalone small graphical status emblem for Higher Powers, a cream-and-antique-gold painterly digital tabletop game. Exactly front-facing, centered, isolated on genuine transparent background. Rich but restrained classical oil-painting brush texture, tactile ivory and gilded metal, readable silhouette at 48 pixels. Entire object visible, breathing room around every edge. No text, letters, numbers, faces, heads, people, scenery, borders, UI, mockup or watermark. A beautiful luminous elliptical antique-gold HALO, tilted just enough to read as a floating ring, above a tiny symmetrical pair of ivory feathered wings. The ring is the clear dominant motif. Warm gentle golden radiance with transparent soft edges, a dignified sign that Heaven is in a legal, harmonious state. Elegant, compact composition, not ornate or busy.",
+      "transparent": true,
+      "source": "static/art/source/digital/heaven-legal-halo.png",
+      "output": "static/art/digital/heaven-legal-halo.webp",
+      "generatedSource": "/Users/anicolao/.codex/generated_images/01a1f726-df37-7052-baf4-7398eca03659/exec-cd9921af-9d5d-4648-aaf3-ccb212193d15.png"
+    },
+    {
+      "id": "heaven-invalid-horns",
+      "prompt": "Use case: stylized-concept. A single standalone small graphical status emblem for Higher Powers, a cream-and-antique-gold painterly digital tabletop game. Exactly front-facing, centered, isolated on genuine transparent background. Rich but restrained classical oil-painting brush texture, tactile ivory and gilded metal, readable silhouette at 48 pixels. Entire object visible, breathing room around every edge. No text, letters, numbers, faces, heads, people, scenery, borders, UI, mockup or watermark. A symmetrical pair of elegantly curved dark bronze HORNS with warm burnished copper-gold edges, curling outward and upward from a small central ivory-and-bronze base. The two horns are the clear dominant motif, a witty restrained visual signal that the Heaven table needs rearrangement. No head or skull, no frightening face, no flames or blood. Similar compact silhouette and scale to a gilded halo emblem.",
+      "transparent": true,
+      "source": "static/art/source/digital/heaven-invalid-horns.png",
+      "output": "static/art/digital/heaven-invalid-horns.webp",
+      "generatedSource": "/Users/anicolao/.codex/generated_images/01a1f726-df37-7052-baf4-7398eca03659/exec-456540b8-0a3e-4dd2-8277-b24f0577c72d.png"
+    }
+  ],
+  "previousVersions": [
+    {
+      "id": "soul-tile-body",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. Asset for Higher Powers, a digital tabletop game. Art direction: exquisite painterly classical fantasy, warm ivory porcelain, brushed antique gold, cream, delicate muted blue-grey shadows, hand-gilded texture, tactile and beautifully crafted. No letters, no numerals, no writing, no watermark, no UI, no mockup, no other objects. Create ONE blank ivory rectangular Rummikub-like soul tile, upright portrait aspect about 7:10, viewed exactly face-on, orthographic, no perspective, no tilt. A thick tactile ivory ceramic tablet, very subtly rounded corners, a narrow bevel and a softly raised lustrous rim, delicate translucent marble grain on its creamy face, visible thickness at bottom and right edge, exquisitely subtle antique-gold hairline inset border. The central 70 percent of the face must be completely blank, pale, smooth and quiet for a separately rendered large colored number. A tiny shallow circular recessed well near the lower center, also blank. Keep decoration extremely restrained. Entire tile visible with a little transparent margin on every edge. Genuine transparent background outside the tile; no ground plane, no cast shadow baked outside the object. This is only the independent material/body layer, not a finished numbered tile.",
+      "source": "static/art/source/digital/soul-tile-body.png",
+      "output": "static/art/digital/soul-tile-body.webp",
+      "generatedSource": "/Users/anicolao/.codex/generated_images/01a1f726-df37-7052-baf4-7398eca03659/exec-1c983a8f-d8f4-4876-9aff-1d558d444e1e.png"
+    }
+  ]
+}

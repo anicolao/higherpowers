@@ -15,7 +15,10 @@
     "review": "bun scripts/review.ts",
     "prepare": "svelte-kit sync",
     "art:layers": "bun scripts/export-layers.ts",
-    "book:export": "bun scripts/print-rulebook.ts"
+    "book:export": "bun scripts/print-rulebook.ts",
+    "art:digital": "bun scripts/prepare-digital-art.ts",
+    "review:digital": "bun scripts/review-digital.ts",
+    "review:magnetism": "bun scripts/review-magnetism.ts"
   },
   "dependencies": {
     "@fontsource/atkinson-hyperlegible": "5.2.8",

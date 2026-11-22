@@ -31,7 +31,9 @@
     "review:layout": "bun scripts/review-heaven-layout.ts",
     "review:invites": "bun scripts/review-invites.ts",
     "review:lobby": "bun scripts/review-lobby.ts",
-    "review:live": "bun scripts/review-live-table.ts"
+    "review:live": "bun scripts/review-live-table.ts",
+    "review:drag-recovery": "bun scripts/review-drag-recovery.ts",
+    "review:smooth-play": "bun scripts/review-smooth-play.ts"
   },
   "dependencies": {
     "@fontsource/atkinson-hyperlegible": "5.2.8",

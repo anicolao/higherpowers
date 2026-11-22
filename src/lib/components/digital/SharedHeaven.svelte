@@ -6,7 +6,7 @@
  import SuitSymbol from './SuitSymbol.svelte';
  import {tileColumn,groupRect,geometry,findVerticalSnap,alignedStack,transposeStack,type MagnetKind} from '$lib/tabletop/magnetism';
  import {analyzeFormation,jokerFacesFor,fitInitialGroups,insertTiles,splitTiles,overlaps,type TileGroup,type Soul,type Rect,type Formation,type SoulSpec,type Repair} from '$lib/tabletop/rearrangement';
- let {moved=false,rescued=false,resetKey=0,game=false,initialGroups=[],boardKey='',readOnly=false,canTouch=()=>true,onChange,onSuggestion,hand=[],inspect=analyzeFormation,zoneLabel=()=>'',normalizeGroup=(g:TileGroup)=>g,onFinish,finishAllowed=false,finishReason='',onTilePick,pickedTiles=[],insetX=0,insetY=0,returnable=[],motionTiles=[],magnetKind,controlsHost=null,reserveBottom}:{moved?:boolean;rescued?:boolean;resetKey?:number;game?:boolean;initialGroups?:TileGroup[];boardKey?:string;readOnly?:boolean;canTouch?:(g:TileGroup)=>boolean;onChange?:(g:TileGroup[],dragging:boolean)=>void;onSuggestion?:(s:SoulSpec,g:string,r:Repair)=>void;hand?:Soul[];inspect?:(tiles:Soul[])=>Formation;zoneLabel?:(zone:string)=>string;normalizeGroup?:(g:TileGroup)=>TileGroup;onFinish?:()=>void;finishAllowed?:boolean;finishReason?:string;onTilePick?:(tile:string,group:string)=>boolean;pickedTiles?:string[];insetX?:number;insetY?:number;returnable?:string[];motionTiles?:string[];magnetKind?:MagnetKind;controlsHost?:HTMLElement|null;reserveBottom?:number}=$props();
+ let {moved=false,rescued=false,resetKey=0,game=false,initialGroups=[],boardKey='',readOnly=false,canTouch=()=>true,onChange,onSuggestion,hand=[],inspect=analyzeFormation,zoneLabel=()=>'',normalizeGroup=(g:TileGroup)=>g,orderGroup=(g:TileGroup)=>g,onFinish,finishAllowed=false,finishReason='',onTilePick,pickedTiles=[],insetX=0,insetY=0,returnable=[],motionTiles=[],magnetKind,controlsHost=null,reserveBottom}:{moved?:boolean;rescued?:boolean;resetKey?:number;game?:boolean;initialGroups?:TileGroup[];boardKey?:string;readOnly?:boolean;canTouch?:(g:TileGroup)=>boolean;onChange?:(g:TileGroup[],dragging:boolean)=>void;onSuggestion?:(s:SoulSpec,g:string,r:Repair)=>void;hand?:Soul[];inspect?:(tiles:Soul[])=>Formation;zoneLabel?:(zone:string)=>string;normalizeGroup?:(g:TileGroup)=>TileGroup;orderGroup?:(g:TileGroup)=>TileGroup;onFinish?:()=>void;finishAllowed?:boolean;finishReason?:string;onTilePick?:(tile:string,group:string)=>boolean;pickedTiles?:string[];insetX?:number;insetY?:number;returnable?:string[];motionTiles?:string[];magnetKind?:MagnetKind;controlsHost?:HTMLElement|null;reserveBottom?:number}=$props();
  let appliedKey:string|null=null;
  $effect(()=>{const key=boardKey;if(game&&key!==appliedKey){const incoming=initialGroups;untrack(()=>{clearTap();clearTilePreview();groups=JSON.parse(JSON.stringify(incoming));history=[];selected=null;wholeGroup=null;dragging=null;appliedKey=key;worldWidth=Math.max(viewportWidth-insetX,...groups.map(g=>g.x+(g.tiles.length+1)*47+20));worldHeight=Math.max(viewportHeight-insetY,...groups.map(g=>g.y+100));});}});
  $effect(()=>{const snapshot=JSON.stringify(groups),moving=!!dragging?.moved;if(game&&initialized)untrack(()=>{const normalized:TileGroup[]=JSON.parse(snapshot).map(normalizeGroup);if(JSON.stringify(normalized)!==snapshot)groups=normalized;onChange?.(normalized,moving);});});
@@ -16,7 +16,7 @@
  export function placeTiles(tiles:Soul[],clientX:number,clientY:number,anchorIndex=0){
   if(!editable()||!tiles.length||new Set(tiles.map(t=>t.id)).size!==tiles.length||tiles.some(tile=>groups.some(g=>g.tiles.some(t=>t.id===tile.id))))return false;
   const box=surface.getBoundingClientRect(),bounds=viewport.getBoundingClientRect();if(clientX<bounds.left||clientX>bounds.right||clientY<bounds.top||clientY>bounds.bottom)return false;
-  const before=capture();save();const x=Math.max(8,(clientX-box.left)/scale-tileSize/2-anchorIndex*step),y=Math.max(8,(clientY-box.top)/scale-tileHeight/2),id=`placed-${crypto.randomUUID()}`;
+  const before=capture(true);save();const x=Math.max(8,(clientX-box.left)/scale-tileSize/2-anchorIndex*step),y=Math.max(8,(clientY-box.top)/scale-tileHeight/2),id=`placed-${crypto.randomUUID()}`;
   groups.push(normalizeGroup({id,x,y,tiles:[...tiles],zone:null}));worldWidth=Math.max(worldWidth,x+tiles.length*step+18);worldHeight=Math.max(worldHeight,y+tileHeight+18);
   finishDrop(id,false);void animateLayout(before);return true;
  }
@@ -28,25 +28,26 @@
  export function hasPreview(){return !!external;}
  export function previewSnapshot(){return JSON.parse(JSON.stringify(external?[...groups,external]:groups)) as TileGroup[];}
  export function clearTilePreview(){external=null;externalOpening=false;}
- export function addToGroup(tile:Soul,id:string,index:number){const group=groups.find(g=>g.id===id);if(!group||!editable(group))return false;const before=capture();save();group.tiles=insertTiles(group.tiles,[tile],index);group.slots=undefined;group.jokerFaces=undefined;void animateLayout(before);return true;}
+ export function addToGroup(tile:Soul,id:string,index:number){const group=groups.find(g=>g.id===id);if(!group||!editable(group))return false;const before=capture(true);save();group.tiles=insertTiles(group.tiles,[tile],index);group.slots=undefined;group.jokerFaces=undefined;arrange(id);void animateLayout(before);return true;}
  export function removeTile(id:string){const group=groups.find(g=>g.tiles.some(t=>t.id===id));if(!group||!editable()||(!editable(group)&&!returnable.includes(id)))return false;const before=capture();save();groups=groups.map(g=>g.id===group.id?({...g,tiles:g.tiles.filter(t=>t.id!==id),slots:undefined,jokerFaces:jokerFacesFor(g.tiles.filter(t=>t.id!==id),g.jokerFaces)}):g).filter(g=>g.tiles.length);void animateLayout(before);return true;}
  export function shelter(id:string,owner:string|null){const group=groups.find(g=>g.id===id);if(!group||!editable(group))return false;save();group.zone=owner;return true;}
  export function snapshot(){return structuredClone($state.snapshot(groups));}
 
- let automaticAnimations:Animation[]=[];
- function capture(){return new Map(Array.from(surface?.querySelectorAll<HTMLElement>('[data-tile-id]')??[]).map(el=>[el.dataset.tileId!,{box:el.getBoundingClientRect(),node:el.cloneNode(true) as HTMLElement}]));}
+ let automaticAnimations:Animation[]=[];const layoutFlights=new Map<string,{node:HTMLElement;animation:Animation;target:HTMLElement;visibility:string}>();
+ function capture(includeSources=false){const nodes=[...surface?.querySelectorAll<HTMLElement>('[data-tile-id]')??[]];if(includeSources)for(const selector of ['[data-rack-tile]','[data-communion-tile]','[data-purgatory-tile]','[data-dragged-tile]'])nodes.push(...document.querySelectorAll<HTMLElement>(selector));return new Map(nodes.map(el=>{const id=el.dataset.tileId??el.dataset.rackTile??el.dataset.communionTile??el.dataset.purgatoryTile??el.dataset.draggedTile!,visible=layoutFlights.get(id)?.node??el;return [id,{box:visible.getBoundingClientRect(),node:visible.cloneNode(true) as HTMLElement,heaven:!!el.dataset.tileId}] as const;}));}
  async function animateLayout(before:ReturnType<typeof capture>){
-  await tick();if(window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
-  for(const el of surface.querySelectorAll<HTMLElement>('[data-tile-id]')){
-   const old=before.get(el.dataset.tileId!);if(!old)continue;const to=el.getBoundingClientRect(),from=old.box;
+  await tick();for(const flight of layoutFlights.values()){flight.animation.cancel();flight.node.remove();flight.target.style.visibility=flight.visibility;}layoutFlights.clear();if(window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  const targets=[...surface.querySelectorAll<HTMLElement>('[data-tile-id]')];for(const el of document.querySelectorAll<HTMLElement>('[data-rack-tile]'))if(before.get(el.dataset.rackTile!)?.heaven&&!targets.some(t=>t.dataset.tileId===el.dataset.rackTile))targets.push(el);
+  for(const el of targets){
+   const id=el.dataset.tileId??el.dataset.rackTile!;const old=before.get(id);if(!old)continue;const to=el.getBoundingClientRect(),from=old.box;
    if(Math.abs(from.x-to.x)+Math.abs(from.y-to.y)+Math.abs(from.width-to.width)<1)continue;
-   const clone=old.node;clone.removeAttribute('data-tile-id');clone.setAttribute('aria-hidden','true');clone.inert=true;
-   Object.assign(clone.style,{position:'fixed',left:`${from.x}px`,top:`${from.y}px`,width:`${from.width}px`,height:`${from.height}px`,transformOrigin:'0 0',transform:'none',visibility:'visible',pointerEvents:'none',zIndex:'1900'});
+   const clone=old.node;for(const attr of ['data-tile-id','data-rack-tile','data-communion-tile','data-purgatory-tile','data-dragged-tile'])clone.removeAttribute(attr);clone.setAttribute('aria-hidden','true');clone.inert=true;
+   Object.assign(clone.style,{position:'fixed',padding:'0',margin:'0',border:'0',minHeight:'0',background:'none',lineHeight:'0',boxSizing:'border-box',left:`${from.x}px`,top:`${from.y}px`,width:`${from.width}px`,height:`${from.height}px`,transformOrigin:'0 0',transform:'none',visibility:'visible',pointerEvents:'none',zIndex:'1900'});
    // Keep the tile's original logical dimensions inside its screen-sized flight.
    clone.style.width=`${tileSize}px`;clone.style.height=`${tileHeight}px`;document.body.append(clone);
    const visibility=el.style.visibility;el.style.visibility='hidden';
    const animation=clone.animate([{transform:`scale(${from.width/tileSize})`},{transform:`translate(${to.x-from.x}px,${to.y-from.y}px) scale(${to.width/tileSize})`}],{duration:460,easing:'cubic-bezier(.22,.7,.2,1)',fill:'forwards'});
-   automaticAnimations.push(animation);void animation.finished.catch(()=>{}).finally(()=>{clone.remove();el.style.visibility=visibility;automaticAnimations=automaticAnimations.filter(a=>a!==animation);});
+   layoutFlights.set(id,{node:clone,animation,target:el,visibility});automaticAnimations.push(animation);void animation.finished.catch(()=>{}).finally(()=>{clone.remove();if(layoutFlights.get(id)?.animation===animation){el.style.visibility=visibility;layoutFlights.delete(id);}automaticAnimations=automaticAnimations.filter(a=>a!==animation);});
   }
  }
  export function tidy(){if(readOnly||dragging)return;clearTap();const before=capture();save();groups=tidyGroups(groups,metrics,availableWidth/scale,g=>editable(g));announcement='Heaven tidied.';void animateLayout(before);}
@@ -104,8 +105,9 @@
   if(index===0)target.x=Math.min(moving.x,target.x);target.tiles=insertTiles(target.tiles,moving.tiles,index);target.slots=undefined;target.layoutKind=undefined;target.jokerFaces=undefined;groups=groups.filter(g=>g.id!==id);selected=targetId;wholeGroup=selectWhole?targetId:null;
   worldWidth=Math.max(worldWidth,target.x+rect(target).width+18);announcement=`Joined ${target.tiles.length} souls.`;
  }
+ function arrange(id:string){groups=groups.map(g=>g.id===id?normalizeGroup(orderGroup(g)):g);}
  function finishDrop(id:string,whole:boolean){
-  const target=findJoin(id);if(target){merge(id,target.id,target.index,whole);return;}
+  arrange(id);const target=findJoin(id);if(target){merge(id,target.id,target.index,whole);arrange(target.id);return;}
   const candidate=findVerticalSnap(groups,id,metrics,worldWidth,surfaceHeight),snap=candidate&&snapTarget(groups.find(g=>g.id===candidate.targetId)!)?candidate:null;
   if(snap){groups=groups.map(g=>g.id===id?snap.moving:g.id===snap.targetId?snap.target:g);selected=id;wholeGroup=id;announcement=`Aligned ${snap.kind==='procession'?'matching ranks':'matching suits'}. Transpose is available for this stack.`;}
   else{selected=id;wholeGroup=whole?id:null;announcement=whole?'Whole group moved.':'Split group moved.';}

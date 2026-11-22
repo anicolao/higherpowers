@@ -2,7 +2,7 @@ export const suits=['black','red','blue','green'] as const;
 export type Suit=typeof suits[number];
 export interface Soul {id:string;rank:number|'joker';color:Suit}
 export interface SoulSpec {rank:number;color:Suit}
-export interface TileGroup {id:string;x:number;y:number;tiles:Soul[];slots?:number[];layoutKind?:'procession'|'choir';jokerFaces?:Record<string,SoulSpec>}
+export interface TileGroup {id:string;x:number;y:number;tiles:Soul[];zone?:string|null;slots?:number[];layoutKind?:'procession'|'choir';jokerFaces?:Record<string,SoulSpec>}
 export interface Repair {kind:'choir'|'procession';additions:SoulSpec[];completed:SoulSpec[]}
 export interface Formation {legal:boolean;kind:'choir'|'procession'|'unformed';repairs:Repair[]}
 

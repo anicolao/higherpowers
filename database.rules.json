@@ -1,0 +1,22 @@
+{
+ "rules": {
+  ".read":false,".write":false,
+  "tables": {"$id": {
+   "control": {
+    ".read":"auth != null",
+    ".write":"auth != null && ((!data.exists() && newData.child('owner').val() === auth.uid) || data.child('owner').val() === auth.uid)",
+    ".validate":"newData.hasChildren(['owner','members','actor','revision','turn','phase']) && (!data.exists() || newData.child('owner').val() === data.child('owner').val())"
+   },
+   "draft": {
+    ".read":"auth != null && root.child('tables').child($id).child('control/members').child(auth.uid).val() === true",
+    ".write":"auth != null && root.child('tables').child($id).child('control/members').child(auth.uid).val() === true && newData.exists() && (newData.child('actor').val() === auth.uid || root.child('tables').child($id).child('control/owner').val() === auth.uid)",
+    ".validate":"newData.hasChildren(['version','revision','turn','actor','session','sequence','sentAt','dragging']) && newData.child('version').val() === 1 && newData.child('revision').isNumber() && newData.child('turn').isNumber() && newData.child('actor').isString() && newData.child('session').isString() && newData.child('sequence').isNumber() && newData.child('sentAt').isNumber() && newData.child('sentAt').val() > now - 45000 && newData.child('sentAt').val() < now + 10000 && newData.child('dragging').isBoolean()"
+   },
+   "presence": {"$uid": {
+    ".read":"auth != null && root.child('tables').child($id).child('control/members').child(auth.uid).val() === true",
+    ".write":"auth != null && auth.uid === $uid && root.child('tables').child($id).child('control/members').child(auth.uid).val() === true",
+    ".validate":"newData.hasChildren(['connectedAt']) && newData.child('connectedAt').isNumber()"
+   }}
+  }}
+ }
+}

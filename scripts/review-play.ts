@@ -1,0 +1,46 @@
+import {launchBrowser} from './browser';
+import {findMeld,botCommand} from '../src/lib/engine/bot';
+import type {State} from '../src/lib/engine/types';
+import {mkdir} from 'node:fs/promises';
+const url=process.env.REVIEW_URL??'http://127.0.0.1:5202/play';
+await mkdir('tmp/qa/play',{recursive:true});const browser=await launchBrowser();const errors:string[]=[];
+const contexts=await Promise.all([0,1,2].map(()=>browser.newContext({viewport:{width:1440,height:1100}})));const pages=await Promise.all(contexts.map(c=>c.newPage()));for(const p of pages)p.on('pageerror',e=>errors.push(e.message));
+const [host,guest,third]=pages;
+try{
+ await host.goto(url);await host.getByLabel('Your name').fill('Host');await host.getByRole('button',{name:'Create a table',exact:true}).click();await host.getByRole('heading',{name:'Your table is gathering'}).waitFor();const invite=host.url();
+ for(const [i,p]of [guest,third].entries()){await p.goto(invite);await p.getByLabel('Your name').fill(i?'Third':'Guest');await p.getByRole('button',{name:'Join table',exact:true}).click();await p.getByRole('heading',{name:'Your table is gathering'}).waitFor();}
+ await host.getByRole('button',{name:'Deal Angels'}).click();for(const p of pages){await p.locator('.angel-choice>button').first().waitFor();await p.locator('.angel-choice>button').first().click();}
+ await host.locator('[data-rack-tile]').first().waitFor();const active=pages[await Promise.all(pages.map(p=>p.getByRole('button',{name:/Finish organizing/}).count())).then(xs=>xs.findIndex(n=>n>0))];if(!active)throw new Error('No active player');const observer=pages.find(p=>p!==active)!;
+ const tile=active.locator('[data-rack-tile]').first(),id=await tile.getAttribute('data-rack-tile'),from=(await tile.boundingBox())!,board=(await active.locator('.heaven-board').boundingBox())!;
+ await active.mouse.move(from.x+22,from.y+30);await active.mouse.down();await active.mouse.move(board.x+150,board.y+180,{steps:18});await active.mouse.up();
+ await observer.locator(`[data-tile-id="${id}"]`).waitFor({timeout:8000});await observer.locator('[data-status="horns"]').waitFor();await active.screenshot({path:'tmp/qa/play/active-live-draft.png',fullPage:true});await observer.screenshot({path:'tmp/qa/play/observer-live-draft.png',fullPage:true});
+ await active.getByRole('button',{name:'Restore Heaven'}).click();await observer.locator(`[data-tile-id="${id}"]`).waitFor({state:'detached'});await observer.locator('[data-status="halo"]').waitFor();
+ // Find an opening using only the acting rack, then exercise a suggestion with a physical tile.
+ const info=async(p:typeof host)=>p.evaluate(async()=>{const {readGame}=await import('/src/lib/backend/repository.ts' as string);const {firebase}=await import('/src/lib/backend/firebase.ts' as string);return {state:await readGame(new URL(location.href).searchParams.get('table')!),uid:(await firebase()).uid};});
+ let snapshot=await info(active),meld:string[]|null=null,playerPage=active;
+ const seats=await Promise.all(pages.map(info));
+ for(let n=0;n<90;n++){
+  const current=snapshot.state as State,p=current.players[current.turn];playerPage=pages[seats.findIndex(x=>x.uid===p.id)];meld=current.phase==='play'?findMeld(current,p):null;if(meld)break;
+  const command=botCommand(current,p);if(!command)throw new Error('No legal playtest action');
+  await playerPage.evaluate(async({command})=>{const {readGame,append}=await import('/src/lib/backend/repository.ts' as string);const {firebase}=await import('/src/lib/backend/firebase.ts' as string);const id=new URL(location.href).searchParams.get('table')!,s=await readGame(id);await append(id,s,(await firebase()).uid,command);},{command});
+  await playerPage.waitForTimeout(160);snapshot=await info(playerPage);
+ }
+ if(!meld)throw new Error('No testable opening found');
+ await playerPage.getByRole('button',{name:/Finish organizing/}).waitFor();
+ const boardBox=(await playerPage.locator('.heaven-board').boundingBox())!;
+ // The opening is placed in clear space; the final soul comes from a matching suggestion.
+ const count=meld.length-1;for(let i=0;i<count;i++){const el=playerPage.locator(`[data-rack-tile="${meld[i]}"]`),b=(await el.boundingBox())!;await playerPage.mouse.move(b.x+22,b.y+25);await playerPage.mouse.down();await playerPage.mouse.move(boardBox.x+420+i*47,boardBox.y+240,{steps:10});await playerPage.mouse.up();await playerPage.waitForTimeout(90);}
+ const final=meld.at(-1)!,tileSpec=(snapshot.state as State).tiles[final];const chip=playerPage.getByRole('button',{name:`Play ${tileSpec.color} ${tileSpec.rank} from your rack`}).filter({visible:true}).first();
+ await chip.waitFor({timeout:4000});await chip.click();await playerPage.locator(`[data-tile-id="${final}"]`).waitFor();await playerPage.locator(`[data-rack-tile="${final}"]`).waitFor({state:'detached'});await playerPage.getByRole('button',{name:'Finish organizing',exact:true}).click();await playerPage.waitForTimeout(300);
+ await playerPage.screenshot({path:'tmp/qa/play/committed-opening.png',fullPage:true});
+ // Non-active rack rearrangement persists without changing the active turn.
+ const rack=observer.locator('[data-rack-tile]'),first=await rack.first().getAttribute('data-rack-tile');await rack.first().focus();await observer.keyboard.press('ArrowRight');await observer.waitForTimeout(500);if(await rack.first().getAttribute('data-rack-tile')===first)throw new Error('Rack keyboard reorder failed');
+ snapshot=await info(host);if(snapshot.state.phase==='after-turn'){await pages[seats.findIndex(x=>x.uid===snapshot.state.players[snapshot.state.turn].id)].getByRole('button',{name:'End turn',exact:true}).click();snapshot=await info(host);}const drawing=pages[seats.findIndex(x=>x.uid===snapshot.state.players[snapshot.state.turn].id)];await drawing.getByRole('button',{name:/Draw · inspect/}).click();await drawing.getByRole('heading',{name:'Keep one soul'}).waitFor();await drawing.locator('.inspect-tiles button').first().click();await active.waitForTimeout(500);const beforeReload=await observer.locator('[data-rack-tile]').count();await observer.reload();await observer.locator('[data-rack-tile]').first().waitFor();
+ if((await observer.locator('[data-rack-tile]').count())!==beforeReload)throw new Error('Reload lost rack');
+ // Existing table groups stream positions while the pointer is still held.
+ const openedId=(await info(playerPage)).uid;
+ for(let n=0;n<12;n++){snapshot=await info(host);const s=snapshot.state as State;if(s.phase==='play'&&s.players[s.turn].id===openedId)break;const p=s.players[s.turn],command=botCommand(s,p);if(!command)throw new Error('Cannot advance live-drag test');const actor=pages[seats.findIndex(x=>x.uid===p.id)];await actor.evaluate(async({command})=>{const {readGame,append}=await import('/src/lib/backend/repository.ts' as string);const {firebase}=await import('/src/lib/backend/firebase.ts' as string);const id=new URL(location.href).searchParams.get('table')!,s=await readGame(id);await append(id,s,(await firebase()).uid,command);},{command});await actor.waitForTimeout(180);}
+ await playerPage.getByRole('button',{name:'Finish organizing',exact:true}).waitFor();const moving=playerPage.locator('.soul-group').first(),groupId=await moving.getAttribute('data-group-id'),oldTransform=await moving.evaluate(el=>getComputedStyle(el).transform),tileBox=(await moving.locator('[data-tile-id]').first().boundingBox())!;await playerPage.mouse.move(tileBox.x+20,tileBox.y+20);await playerPage.mouse.down();await playerPage.mouse.move(tileBox.x+105,tileBox.y+100,{steps:12});const watching=pages.find(p=>p!==playerPage)!;await watching.waitForFunction(({groupId,oldTransform})=>(()=>{const el=document.querySelector(`[data-group-id="${groupId}"]`);return !!el&&getComputedStyle(el).transform!==oldTransform;})(),{groupId,oldTransform});await watching.screenshot({path:'tmp/qa/play/observer-pointer-held.png',fullPage:true});await playerPage.mouse.up();await playerPage.getByRole('button',{name:'Restore Heaven'}).click();
+ await observer.setViewportSize({width:390,height:844});await observer.waitForTimeout(600);await observer.screenshot({path:'tmp/qa/play/mobile.png',fullPage:true});if(await observer.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth))throw new Error('Mobile page overflows');
+ console.log(JSON.stringify({url:invite,checks:['three-client lobby','private angel choices','rack-to-Heaven drag','live illegal Heaven on observer','observer receives movement before pointer release','live restore','suggestion consumes real rack tile','legal opening commit','rack reorder between turns','draw inspection','reload reconstruction','mobile width'],errors}));if(errors.length)throw new Error(errors.join('\n'));
+}catch(e){for(let i=0;i<pages.length;i++){console.log('FAIL PAGE',i,(await pages[i].locator('body').innerText()).slice(-2000));await pages[i].screenshot({path:`tmp/qa/play/failure-${i}.png`,fullPage:true});}throw e;}finally{await browser.close();}

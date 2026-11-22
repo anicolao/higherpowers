@@ -215,3 +215,21 @@ opponents; Heaven remains fixed. Portrait keeps the compact top-rail arrangement
 Rack sorts and reorders use keyed tile animations, preserving physical identities
 and smoothly carrying each tile from its prior position to its new slot (including
 across rows). Reduced-motion preferences skip these transitions.
+
+## Inviting and joining
+
+New online tables have six-character codes using uppercase letters and digits,
+excluding I, O, 0 and 1. Codes are reserved transactionally and collisions retry.
+The lobby displays a large copyable code, a selectable invite URL and Copy invite
+link. The code remains visible at the table and opens the invitation dialog.
+Guests can type the code (case, spaces and hyphens are tolerated), paste a full
+invite link, or follow the link to a name-and-join screen. Existing twelve-character
+codes and links continue to work. Members reopen their existing seat on reload.
+The native modal table menu stays outside rail clipping; Leave table closes live
+subscriptions, clears local table state and returns to the join/create screen.
+Leaving the screen does not remove an existing seat from the event transcript.
+
+`bun run review:invites` tests three independent browser identities against the
+configured backend: real creation, code/link clipboard contents, manual and pasted
+invites, unknown-code recovery, reload, modal bounds in both orientations, Leave,
+resume through an existing invite and rejection of a late join after dealing.

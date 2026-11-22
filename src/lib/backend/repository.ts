@@ -1,3 +1,4 @@
+import {newTableCode} from './codes';
 import {collection,doc,query,orderBy,getDocFromServer,getDocsFromServer,onSnapshot,runTransaction,serverTimestamp,type Firestore} from 'firebase/firestore';
 import {ref,set,onValue,onDisconnect,remove,runTransaction as liveTransaction,serverTimestamp as liveTimestamp,type Database} from 'firebase/database';
 import {applyEvent,commandEvent,replay,type State,type GameEvent,type Command} from '../engine/engine';
@@ -8,7 +9,11 @@ const metadata=(s:State)=>({version:1,owner:s.owner,members:s.players.map(p=>p.i
 const path=(db:Firestore,id:string)=>doc(db,'games',id);
 export async function canResumeGame(id:string){const {db,uid}=await firebase();const room=await getDocFromServer(path(db,id));if(!room.exists())throw new Error('That table does not exist.');return room.data().members.includes(uid) as boolean;}
 export async function readGame(id:string):Promise<State>{const {db}=await firebase();for(let attempt=0;attempt<4;attempt++){const room=await getDocFromServer(path(db,id));if(!room.exists())throw new Error('That table does not exist.');const events=await getDocsFromServer(query(collection(db,'games',id,'events'),orderBy('sequence')));const state=replay(events.docs.map(d=>d.data() as GameEvent));if(state.revision>=room.data().revision)return state;}throw new Error('The game is still synchronizing. Please reconnect.');}
-export async function createGame(name:string){const {db,uid}=await firebase();const id=crypto.randomUUID().replaceAll('-','').slice(0,12),event=commandEvent(null,uid,{type:'create',name,seed:crypto.randomUUID()},crypto.randomUUID()),state=applyEvent(null,event);await runTransaction(db,async tx=>{const room=path(db,id);if((await tx.get(room)).exists())throw new Error('Table code collision. Try again.');tx.set(room,metadata(state));tx.set(doc(room,'events','1'),{...event,createdAt:serverTimestamp()});});return id;}
+export async function createGame(name:string){const {db,uid}=await firebase();if(!name.trim()||name.trim().length>40)throw new Error('Use a name of 1–40 characters.');
+ const event=commandEvent(null,uid,{type:'create',name:name.trim(),seed:crypto.randomUUID()},crypto.randomUUID()),state=applyEvent(null,event);
+ for(let attempt=0;attempt<8;attempt++){const id=newTableCode();const created=await runTransaction(db,async tx=>{const room=path(db,id);if((await tx.get(room)).exists())return false;tx.set(room,metadata(state));tx.set(doc(room,'events','1'),{...event,createdAt:serverTimestamp()});return true;});if(created)return id;}
+ throw new Error('Could not reserve a table code. Try again.');
+}
 export async function append(id:string,state:State,actor:string,command:Command):Promise<State>{const {db,uid}=await firebase();const eventId=crypto.randomUUID();let current=state;for(let attempt=0;attempt<5;attempt++){
  if(current.eventIds.includes(eventId))return current;
  if(actor!==uid&&!(current.owner===uid&&current.players.some(p=>p.id===actor&&p.bot)))throw new Error('You do not control that player.');

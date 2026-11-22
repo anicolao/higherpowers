@@ -28,7 +28,8 @@
     "review:selection": "bun scripts/review-rack-selection.ts",
     "review:snapping": "bun scripts/review-rack-snap.ts",
     "review:computers": "bun scripts/review-computer-moves.ts",
-    "review:layout": "bun scripts/review-heaven-layout.ts"
+    "review:layout": "bun scripts/review-heaven-layout.ts",
+    "review:invites": "bun scripts/review-invites.ts"
   },
   "dependencies": {
     "@fontsource/atkinson-hyperlegible": "5.2.8",

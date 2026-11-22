@@ -218,13 +218,14 @@ across rows). Reduced-motion preferences skip these transitions.
 
 ## Inviting and joining
 
-New online tables have six-character codes using uppercase letters and digits,
-excluding I, O, 0 and 1. Codes are reserved transactionally and collisions retry.
+New online tables have five-letter codes using uppercase letters, excluding I and O. Codes are reserved transactionally and collisions retry.
 The lobby displays a large copyable code, a selectable invite URL and Copy invite
 link. The code remains visible at the table and opens the invitation dialog.
 Guests can type the code (case, spaces and hyphens are tolerated), paste a full
-invite link, or follow the link to a name-and-join screen. Existing twelve-character
-codes and links continue to work. Members reopen their existing seat on reload.
+invite link, or follow the link to a name-and-join screen. Existing six- and twelve-character codes and links continue to work. Old tables
+receive a stable five-letter alias when a member opens them; the original game
+and event stream remain in place. Alias pairs are reserved atomically and cannot
+be changed or registered by nonmembers. Members reopen their existing seat on reload.
 The native modal table menu stays outside rail clipping; Leave table closes live
 subscriptions, clears local table state and returns to the join/create screen.
 Leaving the screen does not remove an existing seat from the event transcript.

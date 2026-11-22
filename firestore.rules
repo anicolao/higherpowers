@@ -9,10 +9,20 @@ service cloud.firestore {
   function controls(r,actor){return signed()&&(actor==request.auth.uid||(r.owner==request.auth.uid&&actor in r.bots));}
   function validRoom(r){return r.keys().hasOnly(['version','owner','members','bots','phase','revision'])&&r.version==1&&r.owner is string&&r.members is list&&r.members.size()>=1&&r.members.size()<=5&&r.members.toSet().size()==r.members.size()&&r.owner in r.members&&r.bots is list&&r.bots.toSet().hasOnly(r.members.toSet())&&r.phase in ['lobby','angels','judgment','play','inspect','dance','after-turn','round-end','ended']&&r.revision is int&&r.revision>=1;}
   function validCommand(c){return c is map&&c.keys().hasAll(['type'])&&c.keys().hasOnly(['type','name','seed','id','angel','tiles','target','groups','opening','stage','power','communionTile','turn','foretell','tile','count','rank','zeal'])&&c.type in ['create','join','bot','start','angel','judgment-choice','rack','organize','draw','keep','communion','before','dance-choice','continue','next-round'];}
+  match /tableCodes/{code} {
+   allow get:if signed();
+   allow list,update,delete:if false;
+   allow create:if signed()&&code.matches('^[A-Z]{5}$')&&request.resource.data.keys().hasOnly(['table'])&&request.resource.data.table is string&&member(room(request.resource.data.table))&&!exists(/databases/$(database)/documents/games/$(code))&&getAfter(/databases/$(database)/documents/tableInvites/$(request.resource.data.table)).data.code==code;
+  }
+  match /tableInvites/{id} {
+   allow get:if signed();
+   allow list,update,delete:if false;
+   allow create:if signed()&&member(room(id))&&request.resource.data.keys().hasOnly(['code'])&&request.resource.data.code is string&&request.resource.data.code.matches('^[A-Z]{5}$')&&getAfter(/databases/$(database)/documents/tableCodes/$(request.resource.data.code)).data.table==id;
+  }
   match /games/{id} {
    allow get:if signed();
    allow list,delete:if false;
-   allow create:if signed()&&validRoom(request.resource.data)&&request.resource.data.owner==request.auth.uid&&request.resource.data.members==[request.auth.uid]&&request.resource.data.bots==[]&&request.resource.data.phase=='lobby'&&request.resource.data.revision==1&&eventAfter(id,1).command.type=='create';
+   allow create:if signed()&&!exists(/databases/$(database)/documents/tableCodes/$(id))&&validRoom(request.resource.data)&&request.resource.data.owner==request.auth.uid&&request.resource.data.members==[request.auth.uid]&&request.resource.data.bots==[]&&request.resource.data.phase=='lobby'&&request.resource.data.revision==1&&eventAfter(id,1).command.type=='create';
    allow update:if signed()&&validRoom(request.resource.data)&&request.resource.data.version==resource.data.version&&request.resource.data.owner==resource.data.owner&&request.resource.data.revision==resource.data.revision+1&&(
     (eventAfter(id,request.resource.data.revision).command.type=='join'&&resource.data.phase=='lobby'&&request.resource.data.phase=='lobby'&&!(request.auth.uid in resource.data.members)&&request.resource.data.members==resource.data.members.concat([request.auth.uid])&&request.resource.data.bots==resource.data.bots)
     ||(eventAfter(id,request.resource.data.revision).command.type=='bot'&&resource.data.phase=='lobby'&&request.resource.data.phase=='lobby'&&request.auth.uid==resource.data.owner&&request.resource.data.members==resource.data.members.concat([eventAfter(id,request.resource.data.revision).command.id])&&request.resource.data.bots==resource.data.bots.concat([eventAfter(id,request.resource.data.revision).command.id]))

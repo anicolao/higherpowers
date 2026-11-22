@@ -1,0 +1,8 @@
+import {test,expect} from 'bun:test';
+import {draftQueue} from '../src/lib/backend/draft-queue';
+const wait=(ms=15)=>new Promise(r=>setTimeout(r,ms));
+test('the newest queued drag flushes as soon as the connection becomes ready',async()=>{const sent:number[]=[];const q=draftQueue<number>(async v=>{sent.push(v);},e=>{throw e;},1);q.publish(1);q.publish(2);await wait();expect(sent).toEqual([]);q.start();await wait();expect(sent).toEqual([2]);q.close();});
+test('disconnect retains the newest frame and reconnect sends it without another gesture',async()=>{const sent:number[]=[];const q=draftQueue<number>(async v=>{sent.push(v);},e=>{throw e;},1);q.start();q.publish(1);await wait();q.pause();q.publish(2);q.publish(3);await wait();expect(sent).toEqual([1]);q.start();await wait();expect(sent).toEqual([1,3]);q.close();});
+test('writes serialize and closed tables cannot send stale frames',async()=>{const sent:number[]=[];let finish!:()=>void;const first=new Promise<void>(r=>finish=r);const q=draftQueue<number>(async v=>{sent.push(v);if(v===1)await first;},e=>{throw e;},1);q.start();q.publish(1);await wait();q.publish(2);q.publish(3);await wait();expect(sent).toEqual([1]);finish();await wait();expect(sent).toEqual([1,3]);q.publish(4);q.close();await wait();expect(sent).toEqual([1,3]);});
+
+test('a failed send retains its frame until retry, allowing newer moves to replace it',async()=>{const sent:number[]=[];let fail=true,errors=0;const q=draftQueue<number>(async v=>{if(fail)throw new Error('offline');sent.push(v);},()=>errors++,1);q.start();q.publish(1);await wait();expect(errors).toBe(1);q.publish(2);await wait();expect(sent).toEqual([]);fail=false;q.start();await wait();expect(sent).toEqual([2]);q.close();});

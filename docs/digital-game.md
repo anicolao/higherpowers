@@ -240,3 +240,19 @@ computer. Add computer remains visible in a human lobby until all five seats are
 filled; only the host can use it, and additions stop when Angels are dealt.
 `bun run review:lobby` checks two-human and human/computer games, mixed-lobby
 additions, host permissions, synchronized rosters, Angel choices and the seat cap.
+
+## Live movement
+
+Rack drag previews are broadcast while the pointer is held, without removing
+souls from the acting rack or committing an action. Releasing or cancelling replaces
+the preview with the actual draft. Observers also see temporarily illegal Heaven,
+ongoing table drags and restores. Sorting an observer's rack does not erase the
+acting player's held preview when the committed revision changes.
+
+The live publisher coalesces frames and serializes writes. The newest queued frame
+flushes on initial readiness and on reconnection, without requiring another gesture
+or waiting for the heartbeat. Failed subscriptions retry. Live timestamps use server
+time and are converted to the observer's local clock for expiry checks.
+`bun run review:live` exercises both human turns against Firebase, including held
+rack/table drags, observer rack reorder/reload, a two-minute clock difference and
+an RTDB reconnect with a drag queued while offline (the latter uses the dev SDK).

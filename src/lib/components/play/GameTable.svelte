@@ -37,7 +37,7 @@
  $effect(()=>{const key=committedKey;if(key!==previousKey)untrack(()=>{draft=JSON.parse(JSON.stringify(gameState.heaven));opening=undefined;power=undefined;stage=undefined;communionTile=undefined;selected=[];giftTiles=[];message='';previousKey=key;});});
  const initial=$derived((remote?.groups??gameState.heaven).map(toView));
  const boardKey=$derived(`${committedKey}/${remote?`${remote.session}/${remote.sequence}`:'committed'}`);
- $effect(()=>{const revision=gameState.revision;if(myTurn)untrack(()=>publish?.(draft,false,draftPurgatory()));});
+ $effect(()=>{const revision=gameState.revision;if(myTurn)untrack(()=>publish?.(board?.hasPreview()?board.previewSnapshot().map(fromView):draft,false,draftPurgatory()));});
  const onTable=$derived(new Set(draft.flatMap(g=>g.tiles)));
  const remaining=$derived(me?me.hand.filter(id=>!onTable.has(id)&&!(power?.kind==='penance'&&power.tile===id)):[]);
  const availableRackIds=$derived([...remaining,...(power?.kind==='forgive'&&!onTable.has(power.tile)&&!remaining.includes(power.tile)?[power.tile]:[]),...(power?.kind==='transfigure'?power.tiles.filter(id=>!remaining.includes(id)):[])]);
@@ -59,7 +59,7 @@
   const retrieved=power?.kind==='transfigure'?power.tiles:[];if(tiles.some(t=>retrieved.includes(t.id))){message='Keep the two retrieved souls in your hand.';return false;}
   const previousOpening=opening;if(!me.opened&&!opening&&tiles.every(t=>me.hand.includes(t.id))&&formation(tiles,currentDecree))opening=tiles.map(t=>t.id);const placed=board.placeTiles(tiles,x,y,anchorIndex);if(placed)selected=[];else opening=previousOpening;return placed;
  }
- function previewRack(tiles:Soul[]|null,x:number,y:number,anchorIndex:number){if(!tiles||!editable){board.clearTilePreview();return;}board.previewTiles(tiles,x,y,anchorIndex,!me.opened&&!opening&&tiles.every(t=>me.hand.includes(t.id))&&!!formation(tiles,currentDecree));}
+ function previewRack(tiles:Soul[]|null,x:number,y:number,anchorIndex:number){if(!tiles||!editable){board.clearTilePreview();if(editable)publish?.(draft,false,draftPurgatory());return;}board.previewTiles(tiles,x,y,anchorIndex,!me.opened&&!opening&&tiles.every(t=>me.hand.includes(t.id))&&!!formation(tiles,currentDecree));publish?.(board.previewSnapshot().map(fromView),true,draftPurgatory());}
  function blockedDrop(){if(busy){message='Wait for this move to finish.';return;}message=active?.id!==uid?'Wait for your turn to play into Heaven.':gameState.phase==='inspect'?'Choose a soul from the bag first.':'Finish the current choice before playing into Heaven.';}
 
  function reorder(ids:string[]){rackOrder=ids;if(remaining.length===me.hand.length&&gameState.phase!=='lobby')void send({type:'rack',tiles:ids.filter(id=>me.hand.includes(id))});}

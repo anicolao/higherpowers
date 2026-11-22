@@ -1,3 +1,4 @@
+import {draftQueue} from './draft-queue';
 import {newTableCode} from './codes';
 import {collection,doc,query,orderBy,getDocFromServer,getDocsFromServer,onSnapshot,runTransaction,serverTimestamp,type Firestore} from 'firebase/firestore';
 import {ref,set,onValue,onDisconnect,remove,runTransaction as liveTransaction,serverTimestamp as liveTimestamp,type Database} from 'firebase/database';
@@ -27,14 +28,24 @@ export async function append(id:string,state:State,actor:string,command:Command)
  }throw new Error('The table changed. Try the action again.');}
 export async function joinGame(id:string,name:string){id=await resolveTableCode(id);const {uid,db}=await firebase();if(!name.trim()||name.length>40)throw new Error('Use a name of 1–40 characters.');const eventId=crypto.randomUUID();await runTransaction(db,async tx=>{const room=path(db,id),snapshot=await tx.get(room);if(!snapshot.exists())throw new Error('That table does not exist.');const data=snapshot.data();if(data.members.includes(uid))return;if(data.phase!=='lobby'||data.members.length>=5)throw new Error('The lobby is full or the game has started.');const sequence=data.revision+1;tx.set(doc(room,'events',String(sequence)),{version:1,sequence,id:eventId,actor:uid,command:{type:'join',name:name.trim()},createdAt:serverTimestamp()});tx.update(room,{members:[...data.members,uid],revision:sequence});});return readGame(id);}
 export async function watchGame(id:string,onState:(s:State,events:GameEvent[])=>void,onError:(e:Error)=>void){const {db}=await firebase();let last=0;return onSnapshot(query(collection(db,'games',id,'events'),orderBy('sequence')),{includeMetadataChanges:true},snap=>{if(snap.metadata.fromCache||snap.metadata.hasPendingWrites)return;try{const events=snap.docs.map(d=>d.data() as GameEvent),state=replay(events);if(state.revision>last){last=state.revision;onState(state,events);}}catch(e){onError(e as Error);}},onError);}
-export async function liveChannel(id:string,onDraft:(d:LiveDraft|null)=>void,onError:(e:Error)=>void,onReady:()=>void=()=>{}){const {live,uid}=await firebase();const root=ref(live,`tables/${id}`),draftRef=ref(live,`tables/${id}/draft`),presence=ref(live,`tables/${id}/presence/${uid}`);let sequence=0,closed=false,lastSent=0,timer:ReturnType<typeof setTimeout>|null=null,pending:Omit<LiveDraft,'sentAt'|'sequence'|'session'>|null=null;const session=crypto.randomUUID();
- let off:undefined|(()=>void),ready=false,hostAuthorized=false;
- // Arm removal only after connection; this does not grant an old tab permission to erase a new actor’s draft.
- const connection=onValue(ref(live,'.info/connected'),async snap=>{if(!snap.val()||closed||!ready)return;try{await onDisconnect(presence).remove();if(!closed)await set(presence,{connectedAt:liveTimestamp()});}catch(e){onError(e as Error);}});
- function begin(){if(ready||closed)return;ready=true;off=onValue(draftRef,snap=>{onDraft(decodeLive(snap.val()));onReady();},onError);void onDisconnect(presence).remove().then(()=>set(presence,{connectedAt:liveTimestamp()})).catch(onError);}
- const controlOff=onValue(ref(live,`tables/${id}/control`),snap=>{if(snap.child(`members/${uid}`).val()===true&&(snap.child('owner').val()!==uid||hostAuthorized))begin();},onError);
-
- async function flush(){timer=null;const update=pending;pending=null;if(!update||closed)return;lastSent=Date.now();try{await set(draftRef,clean({...update,session,sequence:++sequence,sentAt:Date.now()}));}catch(e){onError(e as Error);}}
- return {publish(d:Omit<LiveDraft,'sentAt'|'sequence'|'session'>){pending=d;if(!timer&&ready)timer=setTimeout(()=>void flush(),Math.max(0,65-(Date.now()-lastSent)));},async authorize(s:State){if(uid!==s.owner)return;const controller=s.players[s.turn]?.id;await liveTransaction(ref(live,`tables/${id}/control`),old=>old&&old.revision>s.revision?undefined:({owner:uid,members:Object.fromEntries(s.players.filter(p=>!p.bot).map(p=>[p.id,true])),actor:controller??uid,revision:s.revision,turn:s.turnNumber,phase:s.phase}));hostAuthorized=true;begin();},close(){closed=true;off?.();controlOff();connection();if(timer)clearTimeout(timer);void remove(presence).catch(()=>{});}};
+export async function liveChannel(id:string,onDraft:(d:LiveDraft|null)=>void,onError:(e:Error)=>void,onReady:()=>void=()=>{}){
+ const {live,uid}=await firebase(),draftRef=ref(live,`tables/${id}/draft`),presence=ref(live,`tables/${id}/presence/${uid}`),session=crypto.randomUUID();
+ let sequence=0,closed=false,ready=false,hostAuthorized=false,authorized=false,connected=false,clockOffset=0,latestDraft:LiveDraft|null=null,off:undefined|(()=>void),retry:ReturnType<typeof setTimeout>|undefined;
+ const queue=draftQueue<Omit<LiveDraft,'sentAt'|'sequence'|'session'>>(async update=>{await set(draftRef,clean({...update,session,sequence:++sequence,sentAt:liveTimestamp()}));},failed);
+ function deliver(){onDraft(latestDraft?{...latestDraft,sentAt:latestDraft.sentAt-clockOffset}:null);}
+ const clockOff=onValue(ref(live,'.info/serverTimeOffset'),snap=>{clockOffset=Number(snap.val())||0;if(ready)deliver();});
+ function failed(error:Error){if(closed)return;ready=false;queue.pause();onError(error);if(!closed&&authorized&&!retry)retry=setTimeout(()=>{retry=undefined;begin();},1000);}
+ function begin(){if(ready||closed||!authorized)return;ready=true;
+  off?.();off=onValue(draftRef,snap=>{latestDraft=decodeLive(snap.val());deliver();onReady();},failed);
+  void onDisconnect(presence).remove().then(()=>{if(!closed)return set(presence,{connectedAt:liveTimestamp()});}).catch(failed);
+  if(ready&&connected)queue.start();
+ }
+ const connection=onValue(ref(live,'.info/connected'),snap=>{connected=!!snap.val();if(!connected){queue.pause();return;}if(ready)queue.start();else begin();if(ready)void onDisconnect(presence).remove().then(()=>{if(!closed)return set(presence,{connectedAt:liveTimestamp()});}).catch(failed);});
+ const controlOff=onValue(ref(live,`tables/${id}/control`),snap=>{authorized=snap.child(`members/${uid}`).val()===true&&(snap.child('owner').val()!==uid||hostAuthorized);if(authorized)begin();else queue.pause();},onError);
+ return {
+  publish(d:Omit<LiveDraft,'sentAt'|'sequence'|'session'>){queue.publish(d);},
+  async authorize(s:State){if(uid!==s.owner||closed)return;const controller=s.players[s.turn]?.id;await liveTransaction(ref(live,`tables/${id}/control`),old=>old&&old.revision>s.revision?undefined:({owner:uid,members:Object.fromEntries(s.players.filter(p=>!p.bot).map(p=>[p.id,true])),actor:controller??uid,revision:s.revision,turn:s.turnNumber,phase:s.phase}));if(closed)return;hostAuthorized=true;authorized=true;begin();},
+  close(){closed=true;off?.();controlOff();connection();clockOff();queue.close();if(retry)clearTimeout(retry);void remove(presence).catch(()=>{});}
+ };
 }
 export type LiveChannel=Awaited<ReturnType<typeof liveChannel>>;

@@ -256,3 +256,31 @@ time and are converted to the observer's local clock for expiry checks.
 `bun run review:live` exercises both human turns against Firebase, including held
 rack/table drags, observer rack reorder/reload, a two-minute clock difference and
 an RTDB reconnect with a drag queued while offline (the latter uses the dev SDK).
+
+## Resilient direct play
+
+Rack gestures capture on the stable rack container and listen for release at window
+level. Losing tile capture during a render no longer loses the drop; cancelled,
+blurred, escaped or missing-release gestures clear their previews and capture state.
+A new gesture works without reloading. Human input is not disabled by decorative
+landing animations; computer pacing still waits for animations. Tile flights can
+overlap and retarget when the rack layout changes instead of cutting each other off.
+
+An inspection containing exactly one soul is kept automatically, including the
+last soul in the bag. This records the usual draw and keep events, preserving old
+replays. Multiple-soul inspections still allow a deliberate choice. After a turn,
+Jegudiel can begin Zeal directly by dragging from the rack into Heaven or drawing
+again. End turn saves the unused gift; tapping the Angel is still available.
+
+Completed Processions automatically reorder when their physical souls can form a
+legal sequence under the active decree. Already legal groups retain their order;
+joker identities are preserved when possible, and invalid memberships remain
+invalid. Sorting happens on placement/join, with physical tile animations and one
+Undo. Low-end repair suggestions count only tiles already present, so a missing
+earlier addition cannot push a later suggestion past the existing tiles.
+
+`bun run review:drag-recovery` forces lost capture, missing releases and blur for
+mouse/touch, and verifies a subsequent animated drop. `bun run review:smooth-play`
+checks low-end suggestions, automatic single/last-soul draws, direct Zeal plays and
+draws, animated out-of-order openings and overlapping draw flights. Its practice
+portion also accepts REVIEW_URL for a hosted preview.

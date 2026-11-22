@@ -25,6 +25,8 @@
   const box=surface.getBoundingClientRect(),bounds=viewport.getBoundingClientRect();if(clientX<bounds.left||clientX>bounds.right||clientY<bounds.top||clientY>bounds.bottom){clearTilePreview();return;}
   if(!external)previewScale=fitScale;externalOpening=openingMeld;external=normalizeGroup({id:'rack-drag-preview',x:Math.max(8,(clientX-box.left)/scale-tileSize/2-anchorIndex*step),y:Math.max(8,(clientY-box.top)/scale-tileHeight/2),tiles:[...tiles],zone:null});
  }
+ export function hasPreview(){return !!external;}
+ export function previewSnapshot(){return JSON.parse(JSON.stringify(external?[...groups,external]:groups)) as TileGroup[];}
  export function clearTilePreview(){external=null;externalOpening=false;}
  export function addToGroup(tile:Soul,id:string,index:number){const group=groups.find(g=>g.id===id);if(!group||!editable(group))return false;const before=capture();save();group.tiles=insertTiles(group.tiles,[tile],index);group.slots=undefined;group.jokerFaces=undefined;void animateLayout(before);return true;}
  export function removeTile(id:string){const group=groups.find(g=>g.tiles.some(t=>t.id===id));if(!group||!editable()||(!editable(group)&&!returnable.includes(id)))return false;const before=capture();save();groups=groups.map(g=>g.id===group.id?({...g,tiles:g.tiles.filter(t=>t.id!==id),slots:undefined,jokerFaces:jokerFacesFor(g.tiles.filter(t=>t.id!==id),g.jokerFaces)}):g).filter(g=>g.tiles.length);void animateLayout(before);return true;}

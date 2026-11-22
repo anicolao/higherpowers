@@ -63,8 +63,8 @@ appended to a second history.
 Temporary illegality is permitted **only** in the live stream. It cannot earn
 Favor, spend an organizing gift, move the turn, change inventory or score a round.
 Communion inspection is a durable separate event because looking spends the gift
-even if its selected soul is returned. A legal pre-gift stage records delivery
-before Forgiveness or Penance when needed; this also settles Scales credits at the
+even if its selected soul is returned. A pre-gift arrangement records delivery
+before Forgiveness or Penance when needed (it may still be temporarily illegal); this also settles Scales credits at the
 moment of delivery, permanently.
 
 ## Trust and replay

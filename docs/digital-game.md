@@ -1,6 +1,6 @@
 # Digital Higher Powers
 
-Play at `/play/`. Create a table, invite 3–5 people (or add computers), deal two
+Play at `/play/`. Create a table, invite 2–5 people (or add computers), deal two
 Angels to each player, and choose one. The current decree and your Angel’s full
 text are available at the table. Rounds, gifts, Favor, scoring and all five Final
 Judgments run through the TypeScript engine. The Markdown rulebook remains the
@@ -234,3 +234,9 @@ Leaving the screen does not remove an existing seat from the event transcript.
 configured backend: real creation, code/link clipboard contents, manual and pasted
 invites, unknown-code recovery, reload, modal bounds in both orientations, Leave,
 resume through an existing invite and rejection of a late join after dealing.
+
+The host can deal with 2–5 players, including two humans or one human and one
+computer. Add computer remains visible in a human lobby until all five seats are
+filled; only the host can use it, and additions stop when Angels are dealt.
+`bun run review:lobby` checks two-human and human/computer games, mixed-lobby
+additions, host permissions, synchronized rosters, Angel choices and the seat cap.

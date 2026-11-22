@@ -20,6 +20,15 @@ const enabled=!!process.env.FIRESTORE_EMULATOR_HOST;let env:RulesTestEnvironment
   const db=env.authenticatedContext('host').firestore(),room=doc(db,'games',id);await assertFails(setDoc(room,{...meta(s),revision:88}));await assertFails(setDoc(doc(room,'events','1'),{bad:true}));await assertFails(deleteDoc(doc(room,'events','1')));await assertFails(setDoc(doc(room,'events','900'),{version:1,sequence:900,id:'gap',actor:'host',command:{type:'draw',turn:0},createdAt:serverTimestamp()}));
   expect((await getDoc(room)).data()?.revision).toBe(s.revision+1);
  });
+ test('five-letter aliases preserve old tables and cannot be hijacked',async()=>{
+  const id=crypto.randomUUID();await write(id,'invite-host',null,'invite-host',{type:'create',name:'Host',seed:'aliases'});
+  const host=env.authenticatedContext('invite-host').firestore(),outsider=env.authenticatedContext('outsider').firestore();
+  const alias=(db:typeof host,code:string)=>runTransaction(db,async tx=>{await tx.get(doc(db,'tableInvites',id));tx.set(doc(db,'tableCodes',code),{table:id});tx.set(doc(db,'tableInvites',id),{code});});
+  await assertFails(alias(outsider,'ABCDE'));await assertFails(setDoc(doc(host,'tableCodes','ABCDE'),{table:id}));
+  await assertSucceeds(alias(host,'ABCDE'));expect((await getDoc(doc(outsider,'tableCodes','ABCDE'))).data()?.table).toBe(id);
+  await assertFails(setDoc(doc(host,'tableCodes','ABCDE'),{table:'another'}));await assertFails(alias(host,'FGHJK'));await assertFails(write('ABCDE','invite-host',null,'invite-host',{type:'create',name:'Host',seed:'collision'}));
+  expect((await getDocs(collection(host,'games',id,'events'))).size).toBe(1);
+ });
  test('live channels keep private rack state out and deny outsider writes',async()=>{
   const id=crypto.randomUUID(),host=env.authenticatedContext('live-host').database(),alice=env.authenticatedContext('live-alice').database(),outsider=env.authenticatedContext('outsider').database();
   await assertSucceeds(set(ref(host,`tables/${id}/control`),{owner:'live-host',members:{'live-host':true,'live-alice':true},actor:'live-alice',revision:8,turn:1,phase:'play'}));

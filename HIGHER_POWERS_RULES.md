@@ -16,7 +16,7 @@ tile histories or original ownership.
 
 ## 1. Objective and components
 
-For **3–5 players**, over **three rounds**. Finish with the highest cumulative
+For **2–5 players**, over **three rounds**. Finish with the highest cumulative
 score. In each round, deliver your souls into Heaven and try to be the first player
 with an empty hand. Purgatory does not prevent going out.
 

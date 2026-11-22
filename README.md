@@ -1,7 +1,7 @@
 # Higher Powers
 
 A painterly tabletop game of divine organization and heavenly bureaucracy for
-3–5 players. Three rounds, twelve Angels, and one promotion. Bring a standard
+2–5 players. Three rounds, twelve Angels, and one promotion. Bring a standard
 106-tile Rummikub set and racks; print the heavenly paperwork here.
 
 ## Run

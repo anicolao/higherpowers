@@ -4,3 +4,7 @@ build/
 tmp/
 .DS_Store
 .env*
+
+*-debug.log
+firebase-debug.log
+.firebase/

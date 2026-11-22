@@ -131,3 +131,14 @@ layered sources, and printable components are distributed under **GPL-3.0-only**
 see [LICENSE](LICENSE). Bundled fonts retain their upstream licenses, reproduced
 in `docs/licenses/`. Rummikub is a third-party game; this project supplies an
 independent variant’s supplementary components and does not distribute its tiles.
+
+## Digital playtest
+
+[Play Higher Powers](https://anicolao.github.io/higherpowers/play/) at a shared
+Firebase table or practice with two computers. Rearrange Heaven directly, drag
+souls from your rack, or tap matching suggestions. Other players see live drafts
+and drags before the completed action is committed.
+
+See [digital game architecture and development](docs/digital-game.md) for the
+Firestore event log, Realtime Database live stream, seeded replay, emulator setup,
+access rules, and playtest checks.

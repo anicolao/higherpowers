@@ -25,6 +25,12 @@ jobs:
       - run: bun install --frozen-lockfile
       - run: bun run check
       - run: bun test
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Test Firebase access rules and live drafts
+        run: bun run test:backend
       - name: Select production or retained PR path
         id: destination
         env:
@@ -64,6 +70,7 @@ jobs:
           PREVIEW_BASE: https://${{ github.repository_owner }}.github.io${{ steps.destination.outputs.base }}
         run: |
           echo "Preview: $PREVIEW_BASE/" >> "$GITHUB_STEP_SUMMARY"
+          echo "Play: $PREVIEW_BASE/play/" >> "$GITHUB_STEP_SUMMARY"
           echo "Components: $PREVIEW_BASE/gallery/" >> "$GITHUB_STEP_SUMMARY"
           echo "Rulebook: $PREVIEW_BASE/rules.html" >> "$GITHUB_STEP_SUMMARY"
           echo "Print & play: $PREVIEW_BASE/gallery/print/" >> "$GITHUB_STEP_SUMMARY"

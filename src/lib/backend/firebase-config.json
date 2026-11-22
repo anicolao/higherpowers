@@ -1,0 +1,11 @@
+{
+  "projectId": "higherpowers-anicolao",
+  "appId": "1:929117108485:web:ca24ea58b8a3f66f26df6c",
+  "storageBucket": "higherpowers-anicolao.firebasestorage.app",
+  "apiKey": "AIzaSyB-3P-RkiFjs_wfKgH8E8MVrq8wArPSnSg",
+  "authDomain": "higherpowers-anicolao.firebaseapp.com",
+  "messagingSenderId": "929117108485",
+  "projectNumber": "929117108485",
+  "version": "2",
+  "databaseURL": "https://higherpowers-anicolao-default-rtdb.firebaseio.com"
+}

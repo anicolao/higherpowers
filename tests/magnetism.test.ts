@@ -1,3 +1,4 @@
+import {formation} from '../src/lib/engine/formations';
 import {describe,test,expect} from 'bun:test';
 import {canonicalGroup,findVerticalSnap,alignedStack,transposeStack,geometry,groupRect,type Metrics} from '../src/lib/tabletop/magnetism';
 import {analyzeFormation,overlaps,type Soul,type Suit,type TileGroup} from '../src/lib/tabletop/rearrangement';
@@ -59,4 +60,13 @@ describe('Transpose into complementary formations',()=>{
   const stack=[procession('a','black',[4,5,6]),procession('b','red',[4,5,6],200,176.92)],other=[procession('blocked','green',[1,2,3,4,5],200,253.84)],out=transposeStack(stack,metrics,1200,other,makeId);
   expect(out.every(g=>other.every(o=>!overlaps(groupRect(g,47,62.92),groupRect(o,47,62.92),8)))).toBe(true);expect(ids(out)).toEqual(ids(stack));
  });
+});
+
+describe('Active-decree magnets',()=>{
+ const classify=(decree:number)=>(g:TileGroup)=>{const kind=formation(g.tiles,decree,g.jokerFaces);return kind==='poker'?'other' as const:kind;};
+ test('Candy Cane Processions align ranks while retaining alternating suits',()=>{const a=procession('a','black',[1,2,3],200,150),b=procession('b','red',[2,3,4],251,233);a.tiles[1].color='red';b.tiles[1].color='black';const active={...metrics,classify:classify(4)},snap=findVerticalSnap([a,b],'b',active,1200,700)!;expect(snap?.kind).toBe('procession');expect(snap.moving.x).toBe(247);expect(snap.moving.tiles.map(t=>t.color)).toEqual(['red','black','red']);});
+ test('repeated-colour Choirs keep separate physical copies',()=>{const a=choir('a',4,['black','black','red'],200,150),b=choir('b',5,['black','red','red'],204,233),snap=findVerticalSnap([a,b],'b',{...metrics,classify:classify(2)},1200,700)!;expect(snap?.kind).toBe('choir');expect(new Set(snap.moving.slots).size).toBe(3);expect(ids([snap.moving])).toEqual(ids([b]));});
+ test('Mirror Choirs are treated as Choirs, with their two different ranks preserved',()=>{const a=procession('a','red',[1,13],200,150),b=procession('b','red',[2,12],204,233),snap=findVerticalSnap([a,b],'b',{...metrics,classify:classify(10)},1200,700)!;expect(snap?.kind).toBe('choir');expect(snap.moving.tiles.map(t=>t.rank)).toEqual([2,12]);});
+ test('Eternal Circle Processions align across 13 to 1 without reordering their souls',()=>{const a=procession('a','black',[12,13,1],200,150),b=procession('b','red',[13,1,2],251,233),snap=findVerticalSnap([a,b],'b',{...metrics,classify:classify(5)},1200,700)!;expect(snap?.kind).toBe('procession');expect(snap.moving.x).toBe(247);expect(snap.moving.tiles.map(t=>t.rank)).toEqual([13,1,2]);});
+ test('Poker formations do not masquerade as Choirs',()=>{const a=procession('a','black',[2,2,5,5],200,150);expect(geometry(a,undefined,classify(6))).toBeNull();});
 });

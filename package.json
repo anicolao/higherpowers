@@ -22,7 +22,13 @@
     "emulators": "bun scripts/firebase.ts emulators:start --only auth,firestore,database --project demo-higher-powers",
     "dev:emulators": "VITE_FIREBASE_EMULATORS=true bun run dev",
     "test:backend": "bun scripts/firebase.ts emulators:exec --only auth,firestore,database --project demo-higher-powers \"bun test tests/backend\"",
-    "review:play": "bun scripts/review-play.ts"
+    "review:play": "bun scripts/review-play.ts",
+    "review:jokers": "bun scripts/review-jokers.ts",
+    "review:fullscreen": "bun scripts/review-fullscreen.ts",
+    "review:selection": "bun scripts/review-rack-selection.ts",
+    "review:snapping": "bun scripts/review-rack-snap.ts",
+    "review:computers": "bun scripts/review-computer-moves.ts",
+    "review:layout": "bun scripts/review-heaven-layout.ts"
   },
   "dependencies": {
     "@fontsource/atkinson-hyperlegible": "5.2.8",

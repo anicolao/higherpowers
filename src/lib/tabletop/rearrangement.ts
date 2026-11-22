@@ -99,3 +99,11 @@ export function fitInitialGroups(width:number,height:number,tileSize:number):Til
 }
 export interface Rect {x:number;y:number;width:number;height:number}
 export function overlaps(a:Rect,b:Rect,padding=0):boolean{return a.x<b.x+b.width+padding&&a.x+a.width+padding>b.x&&a.y<b.y+b.height+padding&&a.y+a.height+padding>b.y;}
+
+/** A split/removal must not leave a joker declaration on another group. */
+export function jokerFacesFor(tiles:readonly Soul[],faces?:Record<string,SoulSpec>):Record<string,SoulSpec>|undefined{
+ if(!faces)return undefined;
+ const jokers=new Set(tiles.filter(t=>t.rank==='joker').map(t=>t.id));
+ const entries=Object.entries(faces).filter(([id])=>jokers.has(id));
+ return entries.length?Object.fromEntries(entries):undefined;
+}

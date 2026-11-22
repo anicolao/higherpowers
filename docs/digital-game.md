@@ -6,30 +6,54 @@ text are available at the table. Rounds, gifts, Favor, scoring and all five Fina
 Judgments run through the TypeScript engine. The Markdown rulebook remains the
 rules authority.
 
-## Moving souls
+## The table
 
-Drag a rack tile into Heaven, or tap rack tiles and use **Play selected**. Drag
-within your rack to reorder it; keyboard arrows also reorder a focused rack tile.
-This remains available between turns. First meld a complete formation entirely
-from your own hand; after that, the same action can extend and rearrange Heaven.
+Heaven occupies a fixed play area beside a left status rail in landscape or below
+a top rail in portrait. It never scrolls; the tile plane scales only when needed.
+In landscape, the round decree or Final Judgment fills the rail width, with larger
+opponents stacked beneath it as illustrated cards, face-down souls, Favor
+medallions and parchment score slips (∑). The rail can scroll on short screens.
+Your Angel, Favor and score sit together at bottom left, alongside a bottom strip
+containing your rack, bag and chronicle. Favor is the single gold medallion; scores
+use paper. Opponent tile backs match their actual hand sizes, and the active rack
+and Angel glow. Three seals show round progress. Touch the round card to inspect
+it. There is no game header, footer, dashboard or dropdown.
 
-Click or drag a Heaven tile to split immediately before it. Double-tap selects its
-whole group for movement. Matching Processions snap north/south by rank; Choirs
-snap by suit. Select a stack and use the transpose control or T. Undo operates on
-the uncommitted arrangement. **Restore Heaven** cancels the draft. **Draw** also
-abandons it and begins the ordinary draw inspection.
+Drag one rack soul into Heaven, or tap several and drag any selected soul to move the whole selection as one group. The floating preview shows every selected soul, and one Undo reverses the complete group drop. Selected souls also reorder together within the rack. A refused play explains a pending draw or another Angel’s turn. Reorder on the wooden rack, including between
+turns. The two ivory tabs on the rack sort by number (1→13) or colour (four suit symbols). Jokers come last, and Scales commitments stay together in a separate section. Tap matching suggestions beside incomplete formations to fly that physical
+soul from your rack into position. First meld a complete formation entirely from
+your own hand; then extend or rearrange the table in the same action.
 
-Suggestions beside incomplete formations glow when a matching soul (or joker) is
-on your rack. Tapping one moves that physical tile into position and animates it
-from the rack. It never creates a tile. Multi-tile repairs can be completed one
-suggestion at a time. Suggestions use the active decree; the engine independently
-validates the final arrangement.
+Click or drag a Heaven soul to split before it; double-tap selects its whole group.
+Processions magnetize by rank and Choirs by suit. Select a stack and use the
+transpose emblem (or T). The small curved-arrow token undoes a rearrangement;
+the rewind token restores Heaven to the start of the attempted action.
 
-**Finish organizing** commits the complete action only when its formations,
-opening, ownership, gift and delivery requirements are satisfied. Sanctuary
-formations carry their owner’s name; only that owner can rearrange them. Purgatory
-appears only when occupied. Gifts use a panel to choose their targets. Communion
-reveals the entire chosen hand privately to its user; choosing a soul is deliberate.
+Touch the **halo** to finish organizing. It glows when the action can be committed;
+otherwise its tooltip or a brief cue explains what is still required. Horns show
+an illegal Heaven. The **soul bag** begins a draw; touch one of the souls above it
+to keep it. Choosing a draw abandons an uncommitted Organize attempt.
+
+Touch your **Angel card** to invoke its gift. Choose targets directly on the table:
+Heaven souls for retrieval, complete formations for Sanctuary, another Angel for
+Communion, and rack souls followed by another Angel for Banishment. Calling offers
+numbered soul tiles; Dance offers count tokens. Return Judgment souls to the bag.
+Foretelling displays up to eight souls immediately. Zeal is invoked from its Angel
+after a turn, or passed with the check seal. A sideways Angel has spent its gift.
+Right-click your Angel to inspect its card; Escape dismisses an inspection or
+unspent target selection.
+
+Communion turns the chosen opponent’s entire rack face up for its user. Touch a
+soul to bring it into Heaven; touch it again to return it. An unplayed opening does
+not prevent returning that temporary choice. Sanctuary’s painted ground surrounds
+its protected formations. Touch an active Sanctuary Angel to shelter or release a
+formation. Occupied Purgatory appears as its painted mat; touch its soul to start
+a rescue. Round-three choices use the same objects: another Angel for Shared Sins,
+or up to five rack souls followed by the Judgment card for Scales.
+
+The small compass at the lower left opens utility actions: invite, save replay,
+rulebook and leave table. Round scores appear on a parchment ledger, with a card
+pile to deal the next round. These changes are being iterated locally for approval.
 
 ## Two streams, one authority
 
@@ -104,6 +128,7 @@ bun run test:backend       # starts isolated emulator processes and runs access-
 bun run review:play        # against an already-running emulator-backed dev server
 bun run review:digital
 bun run review:magnetism
+bun run review:fullscreen    # full-screen object interactions, 3/5 seats and responsive sizes
 bun run build
 ```
 
@@ -126,3 +151,67 @@ exercise three independent identities, live illegal layouts/restoration, rack
 movement/order, matching suggestions, opening commitment, draw choices, reconnect
 and mobile layout. Computers use only their own rack and public table; they are
 intentionally simple and do not yet choose most Angel gifts.
+
+Joker declarations follow the physical joker when groups split or souls are removed.
+Drafts automatically discard orphan declarations and resolve a new legal identity
+when a changed formation requires one, preserving existing valid identities. This
+also repairs old damaged drafts in place; the reducer still rejects malformed
+commands and illegal formations. `bun run review:jokers` checks splitting, moving a
+joker out and back, and recovering a damaged draft with the production component.
+
+## Following play
+
+Rack drops use the same row-joining and north/south magnetic placement as souls
+already in Heaven. While dragging, a caret previews a join and a translucent
+outline previews rank/suit alignment. A complete opening from your rack may align
+or join after establishing that opening. The active decree is used for geometry,
+including mixed-colour and wrapping Processions and repeated-colour or Mirror
+Choirs; poker formations are not treated as Choirs. Protected Sanctuaries remain
+untouched, and one Undo reverses the complete rack drop and snap.
+
+Computer deliveries fly from their face-down racks into Heaven. Draws fly from
+the bag to their rack without showing the private face; moved public tiles also
+animate into their new positions. Further computer actions wait for the landing.
+Deals animate from the bag, and reduced-motion preferences skip the flights.
+Reloading restores the current table without animating historical moves.
+
+A small parchment chronicle shows completed public actions, powers, Favor gains
+and round results. It follows new entries while you are at its bottom, preserves
+your place when reading older moves, and rebuilds from the durable transcript on
+reload. Private draws and Judgment choices are described without revealing their
+contents. Rack sorting is excluded from the log. It is a view of the game events,
+not a second mutable history.
+
+`bun run review:snapping` checks actual rack drops against existing Processions,
+Choirs, joins and protected regions. `bun run review:computers` checks public and
+private tile flights, landing, reload, and chronicle behaviour on desktop/mobile.
+
+Heaven is a fixed, non-scrolling tile plane. It keeps normal tile size while the
+layout fits, then scales the entire arrangement to keep every soul visible above
+the rack. Pointer coordinates account for the scale; dragging does not change
+scale until release. Computer plays choose nearby clear space instead of assigning
+each new group another row. Extending an existing group also checks its neighbours.
+
+The Tidy Heaven control slides editable groups upward, then Processions left and
+Choirs right, stopping at other groups. Protected Sanctuaries remain stationary
+obstacles. Tidy preserves memberships, joker declarations and tile order, and is
+one undoable rearrangement. Transpose chooses the closest clear space to its
+original stack. Tidy, Transpose, Undo and automatic snap/scale adjustments animate
+the physical tiles between their previous and final positions. Reduced-motion
+preferences skip these animations. `bun run review:layout` checks animated tidy
+and transpose, mobile fitting, scaled dragging and the absence of scrolling.
+
+The game table reserves a status rail on the left in landscape and across the top
+in portrait (square screens use the portrait arrangement). It contains the legality
+halo, rearrangement tools, table menu, round card, opponents and occupied Purgatories. Heaven has its own remaining rectangle, so the rail does
+not obscure tiles. A separate bottom strip groups your Angel, Favor and score at bottom left,
+with the bag, chronicle and rack alongside; portrait screens put the rack beneath the other bottom-strip objects. The
+rail and compact opponent artifacts adapt to short landscape and narrow portrait
+screens. Orientation changes preserve the current arrangement and rack order.
+
+In landscape the round card fills the rail width, with larger opponents stacked
+vertically beneath it. The status rail can scroll on shorter screens or with more
+opponents; Heaven remains fixed. Portrait keeps the compact top-rail arrangement.
+Rack sorts and reorders use keyed tile animations, preserving physical identities
+and smoothly carrying each tile from its prior position to its new slot (including
+across rows). Reduced-motion preferences skip these transitions.

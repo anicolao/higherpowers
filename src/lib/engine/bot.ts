@@ -1,3 +1,5 @@
+import {nearestSpace} from '../tabletop/layout';
+import {overlaps} from '../tabletop/rearrangement';
 import {formation} from './formations';
 import {decree,allowance,type State,type Command,type Player,type Group} from './engine';
 // Public-information strategy: only the acting rack and shared table are inspected.
@@ -22,8 +24,10 @@ export function botCommand(s:State,p:Player):Command|null{
  if(p.opened)for(const g of s.heaven.filter(g=>g.zone===null||g.zone===p.id))for(const id of p.hand)for(let at=0;at<=g.tiles.length;at++){
   const ts=[...g.tiles.slice(0,at),id,...g.tiles.slice(at)];if(!formation(ts.map(id=>s.tiles[id]),decree(s)))continue;
   const groups=JSON.parse(JSON.stringify(s.heaven)) as Group[];const target=groups.find(q=>q.id===g.id)!;target.tiles=ts;delete target.slots;delete target.jokerFaces;
+  const size={width:ts.length*47-3,height:44*1.43},occupied=groups.filter(q=>q.id!==target.id).map(q=>({x:q.x,y:q.y,width:(Math.max(...q.tiles.map((_,i)=>q.slots?.[i]??i))+1)*47-3,height:44*1.43}));
+  if(occupied.some(r=>overlaps({...size,x:target.x,y:target.y},r,10))){const position=nearestSpace(size,occupied,target,1000);target.x=position.x;target.y=position.y;}
   return {type:'organize',groups,turn};
  }
- const meld=findMeld(s,p);if(meld){const group:Group={id:`bot-${s.revision}`,x:18,y:18+s.heaven.length*90,tiles:meld,zone:null};return {type:'organize',groups:[...s.heaven,group],...(!p.opened?{opening:meld}:{}),turn};}
+ const meld=findMeld(s,p);if(meld){const group:Group={id:`bot-${s.revision}`,...nearestSpace({width:meld.length*47-3,height:44*1.43},s.heaven.map(g=>({x:g.x,y:g.y,width:(Math.max(...g.tiles.map((_,i)=>g.slots?.[i]??i))+1)*47-3,height:44*1.43})),{x:18,y:18},1000),tiles:meld,zone:null};return {type:'organize',groups:[...s.heaven,group],...(!p.opened?{opening:meld}:{}),turn};}
  return {type:'draw',turn,foretell:p.angel==='uriel'&&!p.used&&s.bag.length>0&&allowance(s,p.id)<8};
 }

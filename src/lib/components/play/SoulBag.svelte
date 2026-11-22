@@ -1,0 +1,11 @@
+<script lang="ts">
+ import InkNumeral from '../digital/InkNumeral.svelte';
+ let {count=0,active=false,label='Draw a soul',onpick}:{count?:number;active?:boolean;label?:string;onpick?:()=>void}=$props();
+</script>
+<button class="soul-bag" class:active aria-label={label} title={label} onclick={onpick} data-soul-bag>
+ <svg viewBox="0 0 180 200" fill="none" aria-hidden="true"><defs><linearGradient id="sack-cloth" x1="22" y1="36" x2="161" y2="172" gradientUnits="userSpaceOnUse"><stop stop-color="#fff4d2"/><stop offset=".35" stop-color="#dbbf84"/><stop offset=".64" stop-color="#f5e3b1"/><stop offset="1" stop-color="#9d7947"/></linearGradient><radialGradient id="sack-seal"><stop stop-color="#f9edc8"/><stop offset="1" stop-color="#d0ab61"/></radialGradient></defs><path d="M61 38 48 13q18 9 30 0 12-9 27 0 13 9 29 1l-16 26 3 12q46 38 44 93-1 43-74 43-72 0-74-43-2-52 44-92Z" fill="url(#sack-cloth)" stroke="#ad8b50" stroke-width="2"/><path d="M62 48q29 10 55 0M58 53q32 9 64-1M60 59q-8 25-16 43m74-45q18 32 20 70M65 35l4-16m41 16 5-15M36 139q-2 27 23 31m67-4q20-6 19-23" stroke="#977344" stroke-opacity=".5" stroke-width="2.5" stroke-linecap="round"/><path d="M61 49q-20-8-25 3-4 14 25 3m55-6q28-13 31 2 3 14-31 3m-55 1-13 28m66-28 19 26" stroke="#7e5d2e" stroke-width="3" stroke-linecap="round"/><circle cx="90" cy="126" r="35" fill="url(#sack-seal)" stroke="#b58b3e" stroke-width="2"/><circle cx="90" cy="126" r="29" stroke="#a67d34" stroke-width=".7"/><path d="m90 77 3 6 7 1-5 5 1 7-6-4-6 4 1-7-5-5 7-1Z" fill="#a68034"/></svg>
+ <span class="bag-count"><InkNumeral value={count} width={180} height={200} centerX={90} centerY={126} fontSize={36}/></span>
+</button>
+<style>
+ .soul-bag{position:relative;display:block;width:142px;aspect-ratio:180/200;min-height:0;padding:0;background:none;border:0;filter:drop-shadow(0 10px 7px #091d1777);transition:filter .2s,transform .2s;touch-action:manipulation}.soul-bag>svg{display:block;width:100%;height:100%}.bag-count{position:absolute;inset:0;color:#6b4b20;pointer-events:none}.soul-bag:hover{background:none;transform:translateY(-3px)}.soul-bag.active{filter:drop-shadow(0 0 12px #edcf7777) drop-shadow(0 6px 5px #081c1766)}.soul-bag:focus-visible{outline:2px solid #f3d481;outline-offset:5px;border-radius:45%}
+</style>

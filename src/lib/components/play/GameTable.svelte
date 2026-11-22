@@ -65,7 +65,7 @@
   const arranged=arrangeDraftGroup({id:'opening',x:0,y:0,tiles},currentDecree);const previousOpening=opening;if(!me.opened&&!opening&&tiles.every(t=>me.hand.includes(t.id))&&formation(arranged.tiles,currentDecree,arranged.jokerFaces))opening=arranged.tiles.map(t=>t.id);const placed=board.placeTiles(tiles,x,y,anchorIndex);if(placed)selected=[];else opening=previousOpening;return placed;
  }
  function previewRack(tiles:Soul[]|null,x:number,y:number,anchorIndex:number){const sequence=++rackPreviewSequence;
-  if(tiles&&(zealAvailable||zealStart)){const area=document.querySelector('.play-viewport')?.getBoundingClientRect();if(area&&x>=area.left&&x<=area.right&&y>=area.top&&y<=area.bottom)void startZeal().then(()=>{if(sequence===rackPreviewSequence)previewRack(tiles,x,y,anchorIndex);});return;}
+  if(tiles&&(zealAvailable||zealStart)){const area=document.querySelector('.play-viewport')?.getBoundingClientRect();if(area&&x>=area.left&&x<=area.right&&y>=area.top&&y<=area.bottom)void startZeal().then(()=>{if(sequence===rackPreviewSequence&&editable)previewRack(tiles,x,y,anchorIndex);});return;}
   if(!tiles||!editable){board.clearTilePreview();if(editable)publish?.(draft,false,draftPurgatory());return;}
   const arranged=arrangeDraftGroup({id:'opening-preview',x:0,y:0,tiles},currentDecree);board.previewTiles(tiles,x,y,anchorIndex,!me.opened&&!opening&&tiles.every(t=>me.hand.includes(t.id))&&!!formation(arranged.tiles,currentDecree,arranged.jokerFaces));publish?.(board.previewSnapshot().map(fromView),true,draftPurgatory());
  }

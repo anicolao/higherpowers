@@ -1,0 +1,151 @@
+{
+  "tool": "built-in image_gen",
+  "style": "Painterly classical fantasy; cream and antique gold; separate transparent foregrounds and frame.",
+  "jobs": [
+    {
+      "id": "heaven-background",
+      "prompt": "Use case: illustration-story. Asset type: layered tabletop card artwork and illustrated rulebook cover backdrop for Higher Powers. Paint a breathtaking celestial marble gateway above a sea of luminous clouds, ivory arches and restrained aged gold filigree, sunlit atmospheric depth, tiny cypress silhouettes, warm cream sky. Fine painterly oils with visible brushwork, elegant classical fantasy book illustration, sophisticated cream and antique gold palette with muted blue shadows. Portrait 2:3 composition, the gateway in upper middle, foreground cloud stairs below. Architecture and environment ONLY, no angels, no characters, no typography, no letters, no numerals, no card border, no watermark. This is the separate background layer; leave broad quiet areas so independent character and live typography layers can be overlaid.",
+      "transparent": false
+    },
+    {
+      "id": "frame",
+      "prompt": "Use case: stylized-concept. Asset: independent ornamental frame layer for Higher Powers playing cards. A very slender rectangular antique gold leaf border with restrained acanthus corner flourishes and small winged sun at top center, painterly hand gilded texture. Portrait aspect ratio 63:88. All of the interior must be genuinely transparent, including the center and bottom. No opaque paper panel, no illustration, no text, no letters, no numerals. Elegant delicate ornament kept within the outermost 5 percent of the image. Transparent background.",
+      "transparent": true
+    },
+    {
+      "id": "zadkiel",
+      "prompt": "Use case: illustration-story. Asset type: standalone foreground layer for a premium Higher Powers tabletop card. Painterly classical fantasy illustration in luminous ivory, warm cream, antique gold, subtle muted blue-grey shadows, visible oil brushwork, expressive and dignified rather than generic digital fantasy. Portrait composition, complete subject with breathing room around every edge, isolated on a genuinely transparent background. No scenery, no text, no letters, no numbers, no frame, no watermark. Subject: Zadkiel, a compassionate mature angel with copper-brown skin, flowing silver hair, great ivory feathered wings and softly draped cream robes with embroidered gold cuffs, gently lifting a single luminous ivory soul-stone with an open hand. Waist-up three-quarter portrait; calm humane face, spare gold halo.",
+      "transparent": true
+    },
+    {
+      "id": "raphael",
+      "prompt": "Use case: illustration-story. Asset type: standalone foreground layer for a premium Higher Powers tabletop card. Painterly classical fantasy illustration in luminous ivory, warm cream, antique gold, subtle muted blue-grey shadows, visible oil brushwork, expressive and dignified rather than generic digital fantasy. Portrait composition, complete subject with breathing room around every edge, isolated on a genuinely transparent background. No scenery, no text, no letters, no numbers, no frame, no watermark. Subject: Raphael, an androgynous angel healer with warm olive skin, curly dark hair, ivory feathered wings and ivory linen robes with muted sage-gold sash, holding a small alabaster bowl containing one softly glowing amber soul-stone. Waist-up three-quarter portrait; thoughtful face, gold halo.",
+      "transparent": true
+    },
+    {
+      "id": "selaphiel",
+      "prompt": "Use case: illustration-story. Asset type: standalone foreground layer for a premium Higher Powers tabletop card. Painterly classical fantasy illustration in luminous ivory, warm cream, antique gold, subtle muted blue-grey shadows, visible oil brushwork, expressive and dignified rather than generic digital fantasy. Portrait composition, complete subject with breathing room around every edge, isolated on a genuinely transparent background. No scenery, no text, no letters, no numbers, no frame, no watermark. Subject: Selaphiel, a serene dark-skinned feminine angel with long braided black hair, magnificent ivory feathered wings, pearl-cream robes and filigree gold collar, sheltering three tiny glowing stones beneath cupped hands. Waist-up three-quarter portrait; gentle protective gaze, thin gold halo.",
+      "transparent": true
+    },
+    {
+      "id": "barachiel",
+      "prompt": "Use case: illustration-story. Asset type: independent foreground illustration layer for Higher Powers tabletop cards. Painterly classical fantasy, luminous ivory and antique gold, subtle muted blue-grey shadows, fine visible oil brushwork. Dignified individual character with anatomically convincing face and hands. Waist-up portrait with entire wings and held objects within frame, generous margin, isolated on a truly transparent background. No scenery, no text, no letters, no numerals, no card frame or watermark. Subject: Barachiel, a smiling older angel with East Asian features, flowing ivory beard, pearl white feathered wings, cream and gold robes, holding a long curved gold branch with five small luminous soul-stones arranged along it. Quiet joyful expression.",
+      "transparent": true
+    },
+    {
+      "id": "chamuel",
+      "prompt": "Use case: illustration-story. Asset type: independent foreground illustration layer for Higher Powers tabletop cards. Painterly classical fantasy, luminous ivory and antique gold, subtle muted blue-grey shadows, fine visible oil brushwork. Dignified individual character with anatomically convincing face and hands. Waist-up portrait with entire wings and held objects within frame, generous margin, isolated on a truly transparent background. No scenery, no text, no letters, no numerals, no card frame or watermark. Subject: Chamuel, an angel with deep brown skin, short natural curly hair, ivory wings and warm cream robes with muted rose lining, extending one generous open hand and holding two softly glowing soul-stones close to their heart with the other. Warm attentive expression.",
+      "transparent": true
+    },
+    {
+      "id": "jophiel",
+      "prompt": "Use case: illustration-story. Asset type: independent foreground illustration layer for Higher Powers tabletop cards. Painterly classical fantasy, luminous ivory and antique gold, subtle muted blue-grey shadows, fine visible oil brushwork. Dignified individual character with anatomically convincing face and hands. Waist-up portrait with entire wings and held objects within frame, generous margin, isolated on a truly transparent background. No scenery, no text, no letters, no numerals, no card frame or watermark. Subject: Jophiel, a luminous feminine angel with olive skin and auburn curls, broad ivory feathered wings, intricate gold embroidered cream robe, holding two small alabaster soul-stones in each of two outstretched palms, an elegant gesture of balanced exchange.",
+      "transparent": true
+    },
+    {
+      "id": "uriel",
+      "prompt": "Use case: illustration-story. Asset type: independent foreground illustration layer for Higher Powers tabletop cards. Painterly classical fantasy, luminous ivory and antique gold, subtle muted blue-grey shadows, fine visible oil brushwork. Dignified individual character with anatomically convincing face and hands. Waist-up portrait with entire wings and held objects within frame, generous margin, isolated on a truly transparent background. No scenery, no text, no letters, no numerals, no card frame or watermark. Subject: Uriel, an androgynous angel with South Asian features, dark wavy hair and ivory feathered wings, cream robe and antique gold mantle, gazing at a large luminous crystal orb cupped in both hands, contemplative expression and subtle halo.",
+      "transparent": true
+    },
+    {
+      "id": "decree-1",
+      "prompt": "Use case: illustration-story. Independent symbolic foreground layer for a Higher Powers Heavenly Decree card. Painterly classical fantasy oil still life with delicate visible brushwork, luminous ivory marble and antique gold, subtle muted blue-grey shadows, cream highlights. Elegant tangible metaphor, rich hand painted detail rather than a flat icon. Centered compact composition with generous empty margins. Truly transparent background. No humans, no scenery, no writing, no letters, no numerals, no border, no watermark. Subject: two interleaving short staircases made of polished ivory soul-stones, alternating steps highlighted in antique gold, six stones total, clear rhythm of skipping every other step.",
+      "transparent": true
+    },
+    {
+      "id": "decree-2",
+      "prompt": "Use case: illustration-story. Independent symbolic foreground layer for a Higher Powers Heavenly Decree card. Painterly classical fantasy oil still life with delicate visible brushwork, luminous ivory marble and antique gold, subtle muted blue-grey shadows, cream highlights. Elegant tangible metaphor, rich hand painted detail rather than a flat icon. Centered compact composition with generous empty margins. Truly transparent background. No humans, no scenery, no writing, no letters, no numerals, no border, no watermark. Subject: an open circular golden laurel wreath welcoming four polished soul-stones in muted ruby, sapphire, charcoal and ochre, two ruby stones nestled together, soft warm radiance.",
+      "transparent": true
+    },
+    {
+      "id": "decree-3",
+      "prompt": "Use case: illustration-story. Independent symbolic foreground layer for a Higher Powers Heavenly Decree card. Painterly classical fantasy oil still life with delicate visible brushwork, luminous ivory marble and antique gold, subtle muted blue-grey shadows, cream highlights. Elegant tangible metaphor, rich hand painted detail rather than a flat icon. Centered compact composition with generous empty margins. Truly transparent background. No humans, no scenery, no writing, no letters, no numerals, no border, no watermark. Subject: an ascending graceful arc of seven polished marble soul-stones in muted ruby, sapphire, charcoal and warm ochre, each slightly taller than the last, joined by a slender gold ribbon.",
+      "transparent": true
+    },
+    {
+      "id": "decree-4",
+      "prompt": "Use case: illustration-story. Independent symbolic foreground layer for a Higher Powers Heavenly Decree card. Painterly classical fantasy oil still life with delicate visible brushwork, luminous ivory marble and antique gold, subtle muted blue-grey shadows, cream highlights. Elegant tangible metaphor, rich hand painted detail rather than a flat icon. Centered compact composition with generous empty margins. Truly transparent background. No humans, no scenery, no writing, no letters, no numerals, no border, no watermark. Subject: a gracefully twisting ivory-and-gold ceremonial staff wrapped in two alternating bands of muted ruby and sapphire silk, small suspended soul-stones alternate these two colors along its curve.",
+      "transparent": true
+    },
+    {
+      "id": "decree-5",
+      "prompt": "Use case: illustration-story. Independent symbolic foreground layer for a Higher Powers Heavenly Decree card. Painterly classical fantasy oil still life with delicate visible brushwork, luminous ivory marble and antique gold, subtle muted blue-grey shadows, cream highlights. Elegant tangible metaphor, rich hand painted detail rather than a flat icon. Centered compact composition with generous empty margins. Truly transparent background. No humans, no scenery, no writing, no letters, no numerals, no border, no watermark. Subject: a floating unbroken ring of thirteen small ivory stepping-stones forming a luminous celestial circle, one gold ribbon links the last stone back to the first; elegant antique gold halo behind the ring.",
+      "transparent": true
+    },
+    {
+      "id": "jegudiel",
+      "prompt": "Use case: illustration-story. Asset type: independent foreground layer for Higher Powers tabletop card. Painterly classical fantasy oil illustration, visible delicate brushwork, warm ivory and cream robes, antique gold accents, restrained blue-grey shadows. Beautiful distinct dignified angel, anatomically convincing hands, broad ivory feathered wings entirely within frame, waist-up three-quarter portrait with generous transparent margin. Truly transparent background; no architecture, no scenery, no typography, no numbers, no border or watermark. Subject: Jegudiel, an energetic young masculine angel with warm brown skin, short curly hair and athletic build, holding a small winged golden hourglass, cream robes swept by wind, lively determined smile.",
+      "transparent": true
+    },
+    {
+      "id": "raguel",
+      "prompt": "Use case: illustration-story. Asset type: independent foreground layer for Higher Powers tabletop card. Painterly classical fantasy oil illustration, visible delicate brushwork, warm ivory and cream robes, antique gold accents, restrained blue-grey shadows. Beautiful distinct dignified angel, anatomically convincing hands, broad ivory feathered wings entirely within frame, waist-up three-quarter portrait with generous transparent margin. Truly transparent background; no architecture, no scenery, no typography, no numbers, no border or watermark. Subject: Raguel, an austere mature feminine angel with deep dark skin and silver braided hair, holding an antique gold balance scale with small pale stones on both pans, ivory robes edged in gold, wise contemplative face.",
+      "transparent": true
+    },
+    {
+      "id": "haniel",
+      "prompt": "Use case: illustration-story. Asset type: independent foreground layer for Higher Powers tabletop card. Painterly classical fantasy oil illustration, visible delicate brushwork, warm ivory and cream robes, antique gold accents, restrained blue-grey shadows. Beautiful distinct dignified angel, anatomically convincing hands, broad ivory feathered wings entirely within frame, waist-up three-quarter portrait with generous transparent margin. Truly transparent background; no architecture, no scenery, no typography, no numbers, no border or watermark. Subject: Haniel, a graceful East Asian feminine angel with dark hair tied in a soft knot, cream silk and antique gold ribbons curling around outstretched hands in an elegant dancing gesture, warm joyful face, ivory wings.",
+      "transparent": true
+    },
+    {
+      "id": "gabriel",
+      "prompt": "Use case: illustration-story. Asset type: independent foreground layer for Higher Powers tabletop card. Painterly classical fantasy oil illustration, visible delicate brushwork, warm ivory and cream robes, antique gold accents, restrained blue-grey shadows. Beautiful distinct dignified angel, anatomically convincing hands, broad ivory feathered wings entirely within frame, waist-up three-quarter portrait with generous transparent margin. Truly transparent background; no architecture, no scenery, no typography, no numbers, no border or watermark. Subject: Gabriel, a noble masculine angel with olive skin and wavy chestnut hair, holding a long slender golden trumpet raised beside his face and a single ivory soul-stone in the other hand, rich cream drapery, purposeful expression.",
+      "transparent": true
+    },
+    {
+      "id": "michael",
+      "prompt": "Use case: illustration-story. Asset type: independent foreground layer for Higher Powers tabletop card. Painterly classical fantasy oil illustration, visible delicate brushwork, warm ivory and cream robes, antique gold accents, restrained blue-grey shadows. Beautiful distinct dignified angel, anatomically convincing hands, broad ivory feathered wings entirely within frame, waist-up three-quarter portrait with generous transparent margin. Truly transparent background; no architecture, no scenery, no typography, no numbers, no border or watermark. Subject: Michael, a resolute angel with bronze skin and long dark hair, pearl and antique gold ceremonial armor over cream robes, great ivory wings, sheathed sword at his side, open hand gently sending away a small glowing ivory soul-stone. No violence; dignified protector.",
+      "transparent": true
+    },
+    {
+      "id": "judgment-1",
+      "prompt": "Use case: illustration-story. Asset type: independent symbolic foreground layer for Higher Powers Final Judgment tabletop cards. Museum-quality painterly classical fantasy oil still life with visible brushwork, warm cream and luminous ivory, rich antique gold accents, subtle smoky blue-grey shadow, gentle dramatic light. A rich allegorical object composition, not a flat icon. Centered with generous empty margins, genuinely transparent background. No humans, no scenery, no typography, no letters, no numerals, no border or watermark. Subject: an ornate gold crown resting tilted on a broken ivory pedestal, two gold lightning-shaped rays behind it, a symbolic reckoning for a favorite, no violence.",
+      "transparent": true
+    },
+    {
+      "id": "judgment-2",
+      "prompt": "Use case: illustration-story. Asset type: independent symbolic foreground layer for Higher Powers Final Judgment tabletop cards. Museum-quality painterly classical fantasy oil still life with visible brushwork, warm cream and luminous ivory, rich antique gold accents, subtle smoky blue-grey shadow, gentle dramatic light. A rich allegorical object composition, not a flat icon. Centered with generous empty margins, genuinely transparent background. No humans, no scenery, no typography, no letters, no numerals, no border or watermark. Subject: two ivory vessels joined by a single flowing gold ribbon, a small polished stone weighing down one vessel while the other glows warmly, a metaphor for shared burdens.",
+      "transparent": true
+    },
+    {
+      "id": "judgment-3",
+      "prompt": "Use case: illustration-story. Asset type: independent symbolic foreground layer for Higher Powers Final Judgment tabletop cards. Museum-quality painterly classical fantasy oil still life with visible brushwork, warm cream and luminous ivory, rich antique gold accents, subtle smoky blue-grey shadow, gentle dramatic light. A rich allegorical object composition, not a flat icon. Centered with generous empty margins, genuinely transparent background. No humans, no scenery, no typography, no letters, no numerals, no border or watermark. Subject: a magnificent antique gold balance scale with five small ivory soul-stones in one pan and a tiny gold sun in the other, balanced delicately, translucent gold radiance.",
+      "transparent": true
+    },
+    {
+      "id": "judgment-4",
+      "prompt": "Use case: illustration-story. Asset type: independent symbolic foreground layer for Higher Powers Final Judgment tabletop cards. Museum-quality painterly classical fantasy oil still life with visible brushwork, warm cream and luminous ivory, rich antique gold accents, subtle smoky blue-grey shadow, gentle dramatic light. A rich allegorical object composition, not a flat icon. Centered with generous empty margins, genuinely transparent background. No humans, no scenery, no typography, no letters, no numerals, no border or watermark. Subject: ascending ivory marble steps with a small gold winged sandal already placed on the second step, delicate gold laurel branches and warm sun glow, a metaphor for a merciful head start.",
+      "transparent": true
+    },
+    {
+      "id": "judgment-5",
+      "prompt": "Use case: illustration-story. Asset type: independent symbolic foreground layer for Higher Powers Final Judgment tabletop cards. Museum-quality painterly classical fantasy oil still life with visible brushwork, warm cream and luminous ivory, rich antique gold accents, subtle smoky blue-grey shadow, gentle dramatic light. A rich allegorical object composition, not a flat icon. Centered with generous empty margins, genuinely transparent background. No humans, no scenery, no typography, no letters, no numerals, no border or watermark. Subject: a luminous ivory dove rising from an open golden circular seal and a gently unfurling blank cream parchment scroll, scattered gold leaf, an elegant metaphor for forgiveness and redemption.",
+      "transparent": true
+    },
+    {
+      "id": "decree-6",
+      "prompt": "Use case: illustration-story. Independent symbolic foreground layer for a Higher Powers Heavenly Decree card. Painterly classical fantasy oil still life, delicate brushwork, luminous ivory marble and antique gold, muted blue-grey shadows, rich hand-painted detail rather than flat icon. Centered compact composition with generous margin, genuinely transparent background. No people, no scenery, no writing, no letters, no numerals, no border or watermark. Subject: five ivory rectangular soul-stones arranged as a poker full house, one cluster of three with tiny gold sun emblems and another cluster of two with tiny gold crescent emblems. Luxurious gold laurel branches beneath.",
+      "transparent": true
+    },
+    {
+      "id": "decree-7",
+      "prompt": "Use case: illustration-story. Independent symbolic foreground layer for a Higher Powers Heavenly Decree card. Painterly classical fantasy oil still life, delicate brushwork, luminous ivory marble and antique gold, muted blue-grey shadows, rich hand-painted detail rather than flat icon. Centered compact composition with generous margin, genuinely transparent background. No people, no scenery, no writing, no letters, no numerals, no border or watermark. Subject: a magnificent long ceremonial procession of four ivory marble columns increasing in height, connected by a gold ribbon, small warm flames atop each column.",
+      "transparent": true
+    },
+    {
+      "id": "decree-8",
+      "prompt": "Use case: illustration-story. Independent symbolic foreground layer for a Higher Powers Heavenly Decree card. Painterly classical fantasy oil still life, delicate brushwork, luminous ivory marble and antique gold, muted blue-grey shadows, rich hand-painted detail rather than flat icon. Centered compact composition with generous margin, genuinely transparent background. No people, no scenery, no writing, no letters, no numerals, no border or watermark. Subject: an ascending floating staircase of ivory marble steps with irregular one-step and two-step gaps, delicate gold railing and small gold stars, viewed at elegant three-quarter angle.",
+      "transparent": true
+    },
+    {
+      "id": "decree-9",
+      "prompt": "Use case: illustration-story. Independent symbolic foreground layer for a Higher Powers Heavenly Decree card. Painterly classical fantasy oil still life, delicate brushwork, luminous ivory marble and antique gold, muted blue-grey shadows, rich hand-painted detail rather than flat icon. Centered compact composition with generous margin, genuinely transparent background. No people, no scenery, no writing, no letters, no numerals, no border or watermark. Subject: a matched pair of small standing alabaster soul-stones, one with a subtle ruby inset and one with a sapphire inset, framed by a delicate gold laurel arch, warm gentle glow.",
+      "transparent": true
+    },
+    {
+      "id": "decree-10",
+      "prompt": "Use case: illustration-story. Independent symbolic foreground layer for a Higher Powers Heavenly Decree card. Painterly classical fantasy oil still life, delicate brushwork, luminous ivory marble and antique gold, muted blue-grey shadows, rich hand-painted detail rather than flat icon. Centered compact composition with generous margin, genuinely transparent background. No people, no scenery, no writing, no letters, no numerals, no border or watermark. Subject: two complementary ivory stone halves meeting around an upright antique gold oval mirror, one half with a small gold sun and the other with a gold crescent, a balanced reflected composition, pearly reflections.",
+      "transparent": true
+    }
+  ]
+}

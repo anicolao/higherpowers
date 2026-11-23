@@ -1,0 +1,7 @@
+{
+  "mode": "Built-in image_gen edit",
+  "prompt": "Use case: precise-object-edit. Image 1 is the edit target: the blank ivory soul tile for Higher Powers. Change ONLY the size and necessary vertical placement of the circular recessed symbol well in the lower face. Enlarge its diameter to TWICE the existing diameter, about 32 percent of the tile's width. Center the new well horizontally and put its center at about 79 percent of the tile's height, moving it slightly upwards so its entire rim stays comfortably inside the fine gold rectangular border, never overlapping the border. Keep the well circular with a soft ceramic rim and shallow recessed pale ivory interior, large enough for a separately rendered standard card suit icon. The previous small well must be gone, leaving only one larger well. Preserve the exact outer silhouette, aspect ratio, proportions, thickness, ivory marble grain, warm porcelain color, gold border, bevels and lighting. Preserve genuine transparent background. Keep the entire rest of the face blank: no symbols, lettering, numerals or marks. Same portrait format, one complete isolated tile, nothing else.",
+  "input": "static/art/source/digital/soul-tile-body.png",
+  "source": "static/art/source/digital/soul-tile-body-v2.png",
+  "generatedSource": "/Users/anicolao/.codex/generated_images/01a1f726-df37-7052-baf4-7398eca03659/exec-e48f2b36-09b3-424c-9841-906ea68f098d.png"
+}

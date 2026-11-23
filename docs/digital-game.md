@@ -284,3 +284,9 @@ mouse/touch, and verifies a subsequent animated drop. `bun run review:smooth-pla
 checks low-end suggestions, automatic single/last-soul draws, direct Zeal plays and
 draws, animated out-of-order openings and overlapping draw flights. Its practice
 portion also accepts REVIEW_URL for a hosted preview.
+
+Mac pointer movement can carry a zero button mask while a captured drag is still
+active. Rack movement does not treat that mask as a release. The explicit pointer
+up completes the drop; cancellation, blur, Escape or re-entry after a missing
+outside-window release clear an abandoned gesture. The drag recovery review
+includes the zero-button ordering observed in native Chrome input.

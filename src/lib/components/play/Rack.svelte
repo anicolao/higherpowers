@@ -11,7 +11,8 @@
  function clearDrag(){const d=drag;drag=null;if(d){onDrag?.(null,0,0,0);if(rack?.hasPointerCapture(d.pointer))rack.releasePointerCapture(d.pointer);}return d;}
  function cancel(e?:Event){if(e instanceof PointerEvent&&drag&&e.pointerId!==drag.pointer)return;clearDrag();}
  function down(e:PointerEvent,tile:Soul){if(e.button!==0)return;e.preventDefault();cancel();rack.setPointerCapture(e.pointerId);const moving=selected.includes(tile.id)?tiles.filter(t=>selected.includes(t.id)):[tile];drag={tile,tiles:moving,anchorIndex:moving.findIndex(t=>t.id===tile.id),x:e.clientX,y:e.clientY,startX:e.clientX,startY:e.clientY,moving:false,pointer:e.pointerId};}
- function move(e:PointerEvent){if(!drag||e.pointerId!==drag.pointer)return;if(e.pointerType!=='touch'&&(e.buttons&1)===0){cancel();return;}drag.x=e.clientX;drag.y=e.clientY;drag.moving ||=Math.hypot(e.clientX-drag.startX,e.clientY-drag.startY)>5;if(drag.moving)onDrag?.(drag.tiles,e.clientX,e.clientY,drag.anchorIndex);}
+ function move(e:PointerEvent){if(!drag||e.pointerId!==drag.pointer)return;drag.x=e.clientX;drag.y=e.clientY;drag.moving ||=Math.hypot(e.clientX-drag.startX,e.clientY-drag.startY)>5;if(drag.moving)onDrag?.(drag.tiles,e.clientX,e.clientY,drag.anchorIndex);}
+ function reenter(e:PointerEvent){if(drag&&e.pointerType!=='touch'&&e.relatedTarget===null&&e.buttons===0)cancel(e);}
  function up(e:PointerEvent){
   if(!drag||e.pointerId!==drag.pointer)return;const d=clearDrag()!;
   if(!d.moving){onSelect?.(d.tile.id);return;}
@@ -23,7 +24,7 @@
   }else if(onDropMany){void (async()=>{try{if(!await onDropMany(d.tiles,e.clientX,e.clientY,d.anchorIndex))onBlockedDrop?.();}catch{onBlockedDrop?.();}})();}
   else if(!canPlay)onBlockedDrop?.();else onDrop?.(d.tile,e.clientX,e.clientY);
  }
- onMount(()=>{const escape=(e:KeyboardEvent)=>{if(e.key==='Escape')cancel();};window.addEventListener('pointermove',move,true);window.addEventListener('pointerup',up,true);window.addEventListener('pointercancel',cancel,true);window.addEventListener('blur',cancel);window.addEventListener('keydown',escape);return()=>{window.removeEventListener('pointermove',move,true);window.removeEventListener('pointerup',up,true);window.removeEventListener('pointercancel',cancel,true);window.removeEventListener('blur',cancel);window.removeEventListener('keydown',escape);cancel();};});
+ onMount(()=>{const escape=(e:KeyboardEvent)=>{if(e.key==='Escape')cancel();};window.addEventListener('pointermove',move,true);window.addEventListener('pointerup',up,true);window.addEventListener('pointercancel',cancel,true);window.addEventListener('pointerover',reenter,true);window.addEventListener('blur',cancel);window.addEventListener('keydown',escape);return()=>{window.removeEventListener('pointermove',move,true);window.removeEventListener('pointerup',up,true);window.removeEventListener('pointercancel',cancel,true);window.removeEventListener('pointerover',reenter,true);window.removeEventListener('blur',cancel);window.removeEventListener('keydown',escape);cancel();};});
  $effect(()=>{if(drag&&!drag.tiles.every(tile=>tiles.some(t=>t.id===tile.id)))cancel();});
  function portal(node:HTMLElement){document.body.appendChild(node);return {destroy(){node.remove();}};}
 

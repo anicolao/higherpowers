@@ -107,12 +107,15 @@ A joker represents one numbered soul of a specified rank and color that makes
 its formation legal. State its identity when placing it. Both jokers may appear
 in a formation if every represented position satisfies the active rules.
 
-During an Organize action, you may replace a joker with a numbered soul **from
-your hand** that is legal in its place. If several identities are possible, any
-legal replacement is sufficient. The exchange itself earns zero Favor. You must
-reuse the recovered joker in a legal formation in Heaven during that same action;
-you may change its represented identity. You may not retain it in your hand.
-Simply rearranging a joker already in Heaven also earns no Favor.
+During an Organize action, you may freely move jokers between formations and
+change their represented rank and color, as long as all of Heaven is legal when
+the action ends. You do not need a matching numbered soul in your hand, or any
+replacement tile, to move or reuse a joker. A joker already in Heaven must remain
+in Heaven unless a power explicitly retrieves it; you may not retain it in your
+hand through ordinary rearrangement. Sanctuary protection still applies.
+Rearranging or changing the identity of a joker already in Heaven earns no Favor;
+additional hand souls delivered during the action earn Favor normally. The usual
+opening and Organize action requirements still apply.
 
 Powers that explicitly retrieve a soul may retrieve a joker into a hand or
 Purgatory without requiring immediate replay. Opponents cannot recover a joker
@@ -173,8 +176,9 @@ Examples:
 - Replay the Forgiveness soul in the same action or on a later turn: **+1**.
 - Exchange two hand souls for two table souls with Transfiguration: **0**.
 - Rearrange Heaven or move a formation to or from a Sanctuary: **0**.
-- Replace a joker and replay it elsewhere in Heaven: **+1 overall**, because
-  the replacement is one additional tile in Heaven; the exchange step alone is 0.
+- Move or reassign a joker already in Heaven: **0**. No replacement is required.
+- Add one hand soul while reusing a table joker elsewhere: **+1 overall**, because
+  one additional tile is in Heaven; moving the joker itself earns 0.
 
 Favor never decreases during a round. Transfiguration's two retrieved souls
 offset two contributions within its action; additional contributions earn Favor

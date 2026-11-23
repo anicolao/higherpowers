@@ -12,6 +12,7 @@ bun run dev
 ```
 
 - Home: http://127.0.0.1:5198/
+- Shared touchscreen tabletop: http://127.0.0.1:5198/tabletop
 - Component gallery: http://127.0.0.1:5198/gallery
 - Digital component study: http://127.0.0.1:5198/gallery?collection=digital
 - Illustrated rulebook: http://127.0.0.1:5198/rules.html
@@ -38,6 +39,26 @@ undo, ordinary-formation legality emblems and completion hints. Matching ranks
 or suits snap north/south; the transpose control regroups an aligned stack
 into complementary formations and leftover pieces.
 Run `bun run review:digital` for its browser checks.
+
+## Shared touchscreen table
+
+Open `/tabletop` on a horizontal touchscreen. Eight positions surround Heaven:
+three on each long edge and one on each short edge. Join at any two to five
+positions, then touch the central Angel deck to deal. Play order follows the
+occupied positions clockwise. Computers may occupy chosen positions too.
+
+Place a physical privacy screen over each player's rack area before touching
+**Screen in place · reveal**. Angel choices, racks, bag inspection, and Communion
+choices appear inside that player's rotated area. Cover the rack before removing
+the physical screen. Racks are covered on reload, tab hiding/window blur, and at
+each new round; reveal choices are never stored or sent to Firebase.
+
+The shared browser controls its seated human players and computers. Firebase
+stores the same deterministic event log used by personal-screen play, with seat
+positions included in the log. The Tabletop menu supports fullscreen and replay
+export. `/tabletop?local=1` provides a separate browser-local table for offline
+play and UI review. `bun run review:tabletop` checks seating, privacy, rotated
+rack interaction, and portrait layout.
 
 ## The tabletop kit
 

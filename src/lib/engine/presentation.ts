@@ -5,6 +5,7 @@ export function describeEvent(event:GameEvent,before:State|null,after:State):Chr
  switch(c.type){
   case 'create':text='opened the table.';break;
   case 'join':text='joined the table.';break;
+  case 'seat':text=`seated ${name(c.id)}.`;break;
   case 'bot':text=`invited ${name(c.id)}.`;break;
   case 'start':text='dealt two Angels to everyone.';break;
   case 'angel':text='chose an Angel.';break;

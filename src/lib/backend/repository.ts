@@ -1,3 +1,4 @@
+import type {TableSeat} from '../tabletop/seats';
 import {draftQueue} from './draft-queue';
 import {newTableCode} from './codes';
 import {collection,doc,query,orderBy,getDocFromServer,getDocsFromServer,onSnapshot,runTransaction,serverTimestamp,type Firestore} from 'firebase/firestore';
@@ -6,7 +7,7 @@ import {applyEvent,commandEvent,replay,type State,type GameEvent,type Command} f
 import {decodeLive,type LiveDraft} from './live';
 import {firebase} from './firebase';
 const clean=<T>(v:T):T=>JSON.parse(JSON.stringify(v));
-const metadata=(s:State)=>({version:1,owner:s.owner,members:s.players.map(p=>p.id),bots:s.players.filter(p=>p.bot).map(p=>p.id),phase:s.phase,revision:s.revision});
+const metadata=(s:State)=>({version:1,owner:s.owner,members:s.players.map(p=>p.id),bots:s.players.filter(p=>p.bot).map(p=>p.id),phase:s.phase,revision:s.revision,...(s.tabletop?{locals:s.players.filter(p=>p.local).map(p=>p.id)}:{})});
 const path=(db:Firestore,id:string)=>doc(db,'games',id);
 export async function resolveTableCode(code:string){const {db}=await firebase();if(!/^[A-Z]{5}$/.test(code))return code;const alias=await getDocFromServer(doc(db,'tableCodes',code));return alias.exists()?alias.data().table as string:code;}
 export async function shareTableCode(id:string){if(/^[A-Z]{5}$/.test(id))return id;const {db}=await firebase();
@@ -15,14 +16,14 @@ export async function shareTableCode(id:string){if(/^[A-Z]{5}$/.test(id))return 
 }
 export async function canResumeGame(id:string){id=await resolveTableCode(id);const {db,uid}=await firebase();const room=await getDocFromServer(path(db,id));if(!room.exists())throw new Error('That table does not exist.');return room.data().members.includes(uid) as boolean;}
 export async function readGame(id:string):Promise<State>{const {db}=await firebase();for(let attempt=0;attempt<4;attempt++){const room=await getDocFromServer(path(db,id));if(!room.exists())throw new Error('That table does not exist.');const events=await getDocsFromServer(query(collection(db,'games',id,'events'),orderBy('sequence')));const state=replay(events.docs.map(d=>d.data() as GameEvent));if(state.revision>=room.data().revision)return state;}throw new Error('The game is still synchronizing. Please reconnect.');}
-export async function createGame(name:string){const {db,uid}=await firebase();if(!name.trim()||name.trim().length>40)throw new Error('Use a name of 1–40 characters.');
- const event=commandEvent(null,uid,{type:'create',name:name.trim(),seed:crypto.randomUUID()},crypto.randomUUID()),state=applyEvent(null,event);
+export async function createGame(name:string,seat?:TableSeat){const {db,uid}=await firebase();if(!name.trim()||name.trim().length>40)throw new Error('Use a name of 1–40 characters.');
+ const event=commandEvent(null,uid,{type:'create',name:name.trim(),seed:crypto.randomUUID(),...(seat?{seat}:{})},crypto.randomUUID()),state=applyEvent(null,event);
  for(let attempt=0;attempt<8;attempt++){const id=newTableCode();const created=await runTransaction(db,async tx=>{const room=path(db,id);const existing=await tx.get(room),alias=await tx.get(doc(db,'tableCodes',id));if(existing.exists()||alias.exists())return false;tx.set(room,metadata(state));tx.set(doc(room,'events','1'),{...event,createdAt:serverTimestamp()});return true;});if(created)return id;}
  throw new Error('Could not reserve a table code. Try again.');
 }
 export async function append(id:string,state:State,actor:string,command:Command):Promise<State>{const {db,uid}=await firebase();const eventId=crypto.randomUUID();let current=state;for(let attempt=0;attempt<5;attempt++){
  if(current.eventIds.includes(eventId))return current;
- if(actor!==uid&&!(current.owner===uid&&current.players.some(p=>p.id===actor&&p.bot)))throw new Error('You do not control that player.');
+ if(actor!==uid&&!(current.owner===uid&&current.players.some(p=>p.id===actor&&(p.bot||p.local))))throw new Error('You do not control that player.');
  const event=commandEvent(current,actor,clean(command),eventId),next=applyEvent(current,event);
  try{await runTransaction(db,async tx=>{const room=path(db,id),snap=await tx.get(room);if(!snap.exists()||snap.data().revision!==current.revision)throw new Error('revision-conflict');tx.set(doc(room,'events',String(event.sequence)),{...event,createdAt:serverTimestamp()});tx.update(room,metadata(next));});return next;}catch(e){const fresh=await readGame(id);if(fresh.eventIds.includes(eventId))return fresh;if(fresh.revision===current.revision)throw e;current=fresh;}
  }throw new Error('The table changed. Try the action again.');}

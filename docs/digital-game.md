@@ -93,6 +93,23 @@ moment of delivery, permanently.
 
 ## Trust and replay
 
+The `/tabletop` route shares one browser among up to five players at eight
+physical positions: three per long edge and one per short edge. `create.seat`
+marks a shared table, and host-authored `seat` commands add local human actors.
+Seat positions persist in the event log; `start` orders occupied positions
+clockwise before dealing. Ordinary tables and their existing logs are unchanged.
+The room's optional `locals` list grants only the host browser control over those
+actors. Other members cannot impersonate them or expand that list. Player order
+may change without changing membership or controller sets.
+
+Each local rack and private choice is rendered in its seat's orientation after
+an explicit reveal behind a physical screen. Cover state exists only in the
+shared browser's UI; reload, window blur, tab hiding, and new rounds cover all
+seats. Private bag and Communion choices remain in the screened rack area, and
+flights into racks show tile backs. A remote personal-screen member's hand stays
+covered on the shared table. `/tabletop?local=1` keeps a separate event log in
+local storage for offline play; it can be exported and replayed in `/play`.
+
 This is a trusted-client game, following the neighboring projects. Members can
 read the full durable transcript, including the seed, hands and private choices;
 the normal UI shows only the appropriate player’s private information. There is

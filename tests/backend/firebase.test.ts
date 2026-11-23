@@ -8,7 +8,7 @@ const enabled=!!process.env.FIRESTORE_EMULATOR_HOST;let env:RulesTestEnvironment
 (enabled?describe:describe.skip)('Firebase durable events and live drafts',()=>{
  beforeAll(async()=>{env=await initializeTestEnvironment({projectId:'demo-higher-powers',firestore:{host:'127.0.0.1',port:18301,rules:readFileSync('firestore.rules','utf8')},database:{host:'127.0.0.1',port:19001,rules:readFileSync('database.rules.json','utf8')}});});
  afterAll(async()=>{await env.cleanup();});
- const meta=(s:State)=>({version:1,owner:s.owner,members:s.players.map(p=>p.id),bots:s.players.filter(p=>p.bot).map(p=>p.id),phase:s.phase,revision:s.revision});
+ const meta=(s:State)=>({version:1,owner:s.owner,members:s.players.map(p=>p.id),bots:s.players.filter(p=>p.bot).map(p=>p.id),phase:s.phase,revision:s.revision,...(s.tabletop?{locals:s.players.filter(p=>p.local).map(p=>p.id)}:{})});
  async function write(id:string,auth:string,s:State|null,actor:string,c:Command){const db=env.authenticatedContext(auth).firestore(),event=commandEvent(s,actor,c,crypto.randomUUID()),next=applyEvent(s,event);await runTransaction(db,async tx=>{const room=doc(db,'games',id);await tx.get(room);tx.set(room,meta(next));tx.set(doc(room,'events',String(event.sequence)),{...event,createdAt:serverTimestamp()});});return next;}
  test('membership, actor control, immutable log, atomic revision, and competing joins',async()=>{
   const id=crypto.randomUUID();let s=await write(id,'host',null,'host',{type:'create',name:'Host',seed:'cloud'});
@@ -19,6 +19,18 @@ const enabled=!!process.env.FIRESTORE_EMULATOR_HOST;let env:RulesTestEnvironment
   const results=await Promise.allSettled([write(id,'bob',s,'bob',{type:'join',name:'Bob'}),write(id,'eve',s,'eve',{type:'join',name:'Eve'})]);expect(results.filter(r=>r.status==='fulfilled')).toHaveLength(1);
   const db=env.authenticatedContext('host').firestore(),room=doc(db,'games',id);await assertFails(setDoc(room,{...meta(s),revision:88}));await assertFails(setDoc(doc(room,'events','1'),{bad:true}));await assertFails(deleteDoc(doc(room,'events','1')));await assertFails(setDoc(doc(room,'events','900'),{version:1,sequence:900,id:'gap',actor:'host',command:{type:'draw',turn:0},createdAt:serverTimestamp()}));
   expect((await getDoc(room)).data()?.revision).toBe(s.revision+1);
+ });
+ test('shared-table hosts control local humans without granting control to other members',async()=>{
+  const id=crypto.randomUUID();let s=await write(id,'screen-host',null,'screen-host',{type:'create',name:'Host',seed:'shared',seat:'south'});
+  s=await write(id,'screen-host',s,'screen-host',{type:'seat',id:'screen-north',name:'North',seat:'north'});
+  s=await write(id,'screen-guest',s,'screen-guest',{type:'join',name:'Guest',seat:'east'});
+  s=await write(id,'screen-host',s,'screen-host',{type:'start'});
+  const north=s.players.find(p=>p.id==='screen-north')!;
+  await assertFails(write(id,'screen-guest',s,north.id,{type:'angel',angel:north.options[0]}));
+  s=await write(id,'screen-host',s,north.id,{type:'angel',angel:north.options[0]});
+  expect(s.players.find(p=>p.id===north.id)?.angel).toBe(north.options[0]);
+  const db=env.authenticatedContext('screen-guest').firestore(),event=commandEvent(s,'screen-guest',{type:'angel',angel:s.players.find(p=>p.id==='screen-guest')!.options[0]},crypto.randomUUID());
+  await assertFails(runTransaction(db,async tx=>{await tx.get(doc(db,'games',id));tx.set(doc(db,'games',id),{...meta(applyEvent(s,event)),locals:['screen-north','screen-host']});tx.set(doc(db,'games',id,'events',String(event.sequence)),{...event,createdAt:serverTimestamp()});}));
  });
  test('five-letter aliases preserve old tables and cannot be hijacked',async()=>{
   const id=crypto.randomUUID();await write(id,'invite-host',null,'invite-host',{type:'create',name:'Host',seed:'aliases'});

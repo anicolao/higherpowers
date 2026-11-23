@@ -68,6 +68,11 @@ player must first meld a complete legal formation entirely from their own hand;
 there is no 30-point minimum. They may then extend or rearrange Heaven in that
 same Organize action and on later turns.
 
+Jokers already in Heaven may be freely rearranged and given new legal identities;
+no matching hand tile or replacement is required. All of Heaven must be legal
+when the action ends, and Sanctuary protection still applies. Only an explicit
+retrieval power may take a table joker into a hand or Purgatory.
+
 [`HIGHER_POWERS_RULES.md`](HIGHER_POWERS_RULES.md) is authoritative and contains all
 confirmed rulings. The two earlier Markdown files are historical inputs.
 `bun run catalog` extracts complete Angel, Decree, and Judgment rules into

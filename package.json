@@ -39,7 +39,9 @@
     "review:lobby": "bun scripts/review-lobby.ts",
     "review:live": "bun scripts/review-live-table.ts",
     "review:drag-recovery": "bun scripts/review-drag-recovery.ts",
-    "review:smooth-play": "bun scripts/review-smooth-play.ts"
+    "review:smooth-play": "bun scripts/review-smooth-play.ts",
+    "catalogue:register": "node scripts/register-catalogue.cjs",
+    "test:launch": "VITE_FIREBASE_EMULATORS=true bun scripts/firebase.ts emulators:exec --only auth,firestore,database --project demo-higher-powers \"bun scripts/review-launch.ts\""
   },
   "dependencies": {
     "@fontsource/atkinson-hyperlegible": "5.2.8",

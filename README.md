@@ -67,6 +67,37 @@ export. `/tabletop?local=1` provides a separate browser-local table for offline
 play and UI review. `bun run review:tabletop` checks seating, privacy, rotated
 rack interaction, and portrait layout.
 
+## Game Room and tabletop launcher
+
+Both launchers read the existing LauncherUI `Applications/higherpowers` document.
+Its `URL` opens `/tabletop/` directly: eight join positions, Angel selection without
+names, and the tabletop menu’s Exit action (`window.close()`). Its `WebURL` opens
+`/play/` for personal-screen play. `GameroomEnabled: integrated` enables Game Room;
+`Hidden: false` keeps the game visible on the tabletop launcher.
+
+Game Room supplies `?launch=create|join&table=CODE&name=NAME`. Higher Powers creates
+that eight-character table or waits for its host and joins automatically. Firebase
+anonymous Auth identifies each player; names are display preferences and may
+repeat. Reopening either invitation resumes the same seat without writing another
+event. A different owner cannot take over an existing code. A full or started
+lobby rejects new arrivals. Legacy `returnTo` parameters are accepted without
+navigation: Game Room stays open in its original tab. Regular sharing still shows
+a five-letter invitation code. The protocol manifest is available at both
+`/gameroom-launch.json` and `/play/gameroom-launch.json`.
+
+`bun run test:launch` runs independent-browser launch checks against demo Auth,
+Firestore, and Realtime Database emulators on this repository’s dedicated ports.
+It covers guest-first arrival, duplicate names, invitation reloads, concurrent
+joins, collisions, capacity, dealing, alias reloads, and tabletop entry.
+
+`bun run catalogue:register` previews a single-document registration. Add `--apply`
+to register after deployment; `--site=https://anicolao.github.io/higherpowers/pr6/`
+selects a retained preview while the PR is under review. Omitting `--site` selects
+production. The script checks deployed URLs and the matching launch manifest,
+backs up the catalogue, uses an update-time precondition, and reads the result
+back. Existing titles, visibility, unrelated fields, and other documents are
+preserved. No changes to either launcher’s source are needed.
+
 ## The tabletop kit
 
 Print one each of **12 Angel cards, 10 Heavenly Decrees, and 5 Final Judgments**.

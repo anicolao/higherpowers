@@ -18,11 +18,14 @@ export async function shareTableCode(id:string){if(/^[A-Z]{5}$/.test(id))return 
 export async function canResumeGame(id:string){id=await resolveTableCode(id);const {db,uid}=await firebase();const room=await getDocFromServer(path(db,id));if(!room.exists())throw new Error('That table does not exist.');return room.data().members.includes(uid) as boolean;}
 async function readTranscript(id:string){const {db}=await firebase();for(let attempt=0;attempt<4;attempt++){const room=await getDocFromServer(path(db,id));if(!room.exists())throw new Error('That table does not exist.');const snapshot=await getDocsFromServer(query(collection(db,'games',id,'events'),orderBy('sequence'))),events=snapshot.docs.map(d=>d.data() as GameEvent),state=replay(events);if(state.revision>=room.data().revision)return {state,events};}throw new Error('The game is still synchronizing. Please reconnect.');}
 export async function readGame(id:string):Promise<State>{return (await readTranscript(id)).state;}
-export async function createGame(name:string,seat?:TableSeat,chooseOnJoin=false){const {db,uid}=await firebase();if(!name.trim()||name.trim().length>40)throw new Error('Use a name of 1–40 characters.');
+export async function createGame(name:string,seat?:TableSeat,chooseOnJoin=false,invitationCode?:string){const {db,uid}=await firebase();if(!name.trim()||name.trim().length>40)throw new Error('Use a name of 1–40 characters.');
+ if(invitationCode&&!/^[A-Z0-9]{8}$/.test(invitationCode))throw new Error('Invalid Game Room table code.');
  const event=commandEvent(null,uid,{type:'create',name:name.trim(),seed:crypto.randomUUID(),...(seat?{seat}:{}),...(chooseOnJoin?{chooseOnJoin:true}:{})},crypto.randomUUID()),state=applyEvent(null,event);
- for(let attempt=0;attempt<8;attempt++){const id=newTableCode();const created=await runTransaction(db,async tx=>{const room=path(db,id);const existing=await tx.get(room),alias=await tx.get(doc(db,'tableCodes',id));if(existing.exists()||alias.exists())return false;tx.set(room,metadata(state));tx.set(doc(room,'events','1'),{...event,createdAt:serverTimestamp()});return true;});if(created)return id;}
+ for(let attempt=0;attempt<8;attempt++){const id=invitationCode??newTableCode();const created=await runTransaction(db,async tx=>{const room=path(db,id);const existing=await tx.get(room),alias=await tx.get(doc(db,'tableCodes',id));if(existing.exists()){if(invitationCode){if(existing.data().owner===uid)return true;throw new Error('This table already belongs to someone else. Launch a new table.');}return false;}if(alias.exists())return false;tx.set(room,metadata(state));tx.set(doc(room,'events','1'),{...event,createdAt:serverTimestamp()});return true;});if(created)return id;if(invitationCode)throw new Error('This table code is already in use. Launch a new table.');}
  throw new Error('Could not reserve a table code. Try again.');
 }
+/** Guests may open their invitations before the host has committed creation. */
+export async function waitForGame(id:string,ready:()=>void,error:(e:Error)=>void){const {db}=await firebase();return onSnapshot(path(db,id),{includeMetadataChanges:true},snapshot=>{if(snapshot.exists()&&!snapshot.metadata.fromCache&&!snapshot.metadata.hasPendingWrites)ready();},error);}
 export async function append(id:string,state:State,actor:string,command:Command):Promise<State>{const {db,uid}=await firebase();const eventId=crypto.randomUUID();let current=state;for(let attempt=0;attempt<5;attempt++){
  if(current.eventIds.includes(eventId))return current;
  if(actor!==uid&&!(current.owner===uid&&current.players.some(p=>p.id===actor&&(p.bot||p.local))))throw new Error('You do not control that player.');
@@ -30,7 +33,22 @@ export async function append(id:string,state:State,actor:string,command:Command)
  const event=commandEvent(current,actor,clean(command),eventId),next=applyEvent(current,event);
  try{await runTransaction(db,async tx=>{const room=path(db,id),snap=await tx.get(room);if(!snap.exists()||snap.data().revision!==current.revision)throw new Error('revision-conflict');tx.set(doc(room,'events',String(event.sequence)),{...event,createdAt:serverTimestamp()});tx.update(room,metadata(next));});return next;}catch(e){const fresh=await readTranscript(id);if(fresh.state.eventIds.includes(eventId)||hasCommittedKeep(fresh.events,actor,command))return fresh.state;if(fresh.state.revision===current.revision)throw e;current=fresh.state;}
  }throw new Error('The table changed. Try the action again.');}
-export async function joinGame(id:string,name:string){id=await resolveTableCode(id);const {uid,db}=await firebase();if(!name.trim()||name.length>40)throw new Error('Use a name of 1–40 characters.');const eventId=crypto.randomUUID();await runTransaction(db,async tx=>{const room=path(db,id),snapshot=await tx.get(room);if(!snapshot.exists())throw new Error('That table does not exist.');const data=snapshot.data();if(data.members.includes(uid))return;if(data.phase!=='lobby'||data.members.length>=5)throw new Error('The lobby is full or the game has started.');const sequence=data.revision+1;tx.set(doc(room,'events',String(sequence)),{version:1,sequence,id:eventId,actor:uid,command:{type:'join',name:name.trim()},createdAt:serverTimestamp()});tx.update(room,{members:[...data.members,uid],revision:sequence});});return readGame(id);}
+export async function joinGame(id:string,name:string){
+ id=await resolveTableCode(id);const {uid,db}=await firebase();if(!name.trim()||name.trim().length>40)throw new Error('Use a name of 1–40 characters.');const eventId=crypto.randomUUID();
+ for(let attempt=0;attempt<5;attempt++){
+  let revision=0;
+  try{
+   await runTransaction(db,async tx=>{const room=path(db,id),snapshot=await tx.get(room);if(!snapshot.exists())throw new Error('That table does not exist.');const data=snapshot.data();revision=data.revision;if(data.members.includes(uid))return;if(data.phase!=='lobby'||data.members.length>=5)throw new Error('The lobby is full or the game has started.');const sequence=data.revision+1;tx.set(doc(room,'events',String(sequence)),{version:1,sequence,id:eventId,actor:uid,command:{type:'join',name:name.trim()},createdAt:serverTimestamp()});tx.update(room,{members:[...data.members,uid],revision:sequence});});
+   return readGame(id);
+  }catch(error){
+   // Rules can reject a stale getAfter view before the SDK reports an ordinary
+   // transaction conflict. Retry only when a competing committed event proves it.
+   if(!['permission-denied','aborted'].includes((error as {code?:string}).code??'')||attempt===4)throw error;
+   const latest=await getDocFromServer(path(db,id));if(!latest.exists()||latest.data().revision===revision)throw error;
+  }
+ }
+ throw new Error('The table changed. Try joining again.');
+}
 export async function watchGame(id:string,onState:(s:State,events:GameEvent[])=>void,onError:(e:Error)=>void){const {db}=await firebase();let last=0;return onSnapshot(query(collection(db,'games',id,'events'),orderBy('sequence')),{includeMetadataChanges:true},snap=>{if(snap.metadata.fromCache||snap.metadata.hasPendingWrites)return;try{const events=snap.docs.map(d=>d.data() as GameEvent),state=replay(events);if(state.revision>last){last=state.revision;onState(state,events);}}catch(e){onError(e as Error);}},onError);}
 export async function liveChannel(id:string,onDraft:(d:LiveDraft|null)=>void,onError:(e:Error)=>void,onReady:()=>void=()=>{}){
  const {live,uid}=await firebase(),draftRef=ref(live,`tables/${id}/draft`),presence=ref(live,`tables/${id}/presence/${uid}`),session=crypto.randomUUID();

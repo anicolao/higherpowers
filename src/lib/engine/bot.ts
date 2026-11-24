@@ -14,7 +14,7 @@ export function findMeld(s:State,p:Player):string[]|null{
 }
 export function botCommand(s:State,p:Player):Command|null{
  const turn=s.turnNumber;
- if(s.phase==='angels'&&!p.angel)return {type:'angel',angel:p.options[0]};
+ if((s.phase==='angels'||s.phase==='lobby'&&s.chooseOnJoin)&&!p.angel)return {type:'angel',angel:p.options[0]};
  if(s.phase==='judgment'&&!p.ready)return s.judgment===2?{type:'judgment-choice',target:s.players.find(q=>q.id!==p.id)!.id}:{type:'judgment-choice',tiles:[]};
  if(s.phase==='dance'&&s.dance&&!s.dance.choices[p.id])return {type:'dance-choice',tiles:p.hand.slice(0,s.dance.count),turn};
  if(s.players[s.turn].id!==p.id)return null;

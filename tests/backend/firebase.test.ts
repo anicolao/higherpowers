@@ -21,16 +21,16 @@ const enabled=!!process.env.FIRESTORE_EMULATOR_HOST;let env:RulesTestEnvironment
   expect((await getDoc(room)).data()?.revision).toBe(s.revision+1);
  });
  test('shared-table hosts control local humans without granting control to other members',async()=>{
-  const id=crypto.randomUUID();let s=await write(id,'screen-host',null,'screen-host',{type:'create',name:'Host',seed:'shared',seat:'south'});
+  const id=crypto.randomUUID();let s=await write(id,'screen-host',null,'screen-host',{type:'create',name:'Host',seed:'shared',seat:'south',chooseOnJoin:true});
   s=await write(id,'screen-host',s,'screen-host',{type:'seat',id:'screen-north',name:'North',seat:'north'});
   s=await write(id,'screen-guest',s,'screen-guest',{type:'join',name:'Guest',seat:'east'});
-  s=await write(id,'screen-host',s,'screen-host',{type:'start'});
   const north=s.players.find(p=>p.id==='screen-north')!;
   await assertFails(write(id,'screen-guest',s,north.id,{type:'angel',angel:north.options[0]}));
   s=await write(id,'screen-host',s,north.id,{type:'angel',angel:north.options[0]});
   expect(s.players.find(p=>p.id===north.id)?.angel).toBe(north.options[0]);
   const db=env.authenticatedContext('screen-guest').firestore(),event=commandEvent(s,'screen-guest',{type:'angel',angel:s.players.find(p=>p.id==='screen-guest')!.options[0]},crypto.randomUUID());
   await assertFails(runTransaction(db,async tx=>{await tx.get(doc(db,'games',id));tx.set(doc(db,'games',id),{...meta(applyEvent(s,event)),locals:['screen-north','screen-host']});tx.set(doc(db,'games',id,'events',String(event.sequence)),{...event,createdAt:serverTimestamp()});}));
+  s=await write(id,'screen-guest',s,'screen-guest',event.command);s=await write(id,'screen-host',s,'screen-host',{type:'angel',angel:s.players.find(p=>p.id==='screen-host')!.options[0]});s=await write(id,'screen-host',s,'screen-host',{type:'start'});expect(s.phase).toBe('play');
  });
  test('five-letter aliases preserve old tables and cannot be hijacked',async()=>{
   const id=crypto.randomUUID();await write(id,'invite-host',null,'invite-host',{type:'create',name:'Host',seed:'aliases'});

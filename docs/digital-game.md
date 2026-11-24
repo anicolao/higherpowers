@@ -97,7 +97,11 @@ The `/tabletop` route shares one browser among up to five players at eight
 physical positions: three per long edge and one per short edge. `create.seat`
 marks a shared table, and host-authored `seat` commands add local human actors.
 Seat positions persist in the event log; `start` orders occupied positions
-clockwise before dealing. Ordinary tables and their existing logs are unchanged.
+clockwise before dealing. New shared tables opt into `create.chooseOnJoin`: each
+arrival reserves two distinct seeded Angel options, chooses one in the lobby,
+and is identified by that Angel. Starting requires everyone to have chosen and
+deals the souls directly. Closing or reloading the chooser preserves the options.
+Ordinary tables and earlier shared-table logs retain their original setup.
 The room's optional `locals` list grants only the host browser control over those
 actors. Other members cannot impersonate them or expand that list. Player order
 may change without changing membership or controller sets.

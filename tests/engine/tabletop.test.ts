@@ -29,3 +29,12 @@ test('shared human actors play complete deterministic games using the existing r
  expect(t.state.phase).toBe('ended');expect(replay(t.events)).toEqual(t.state);
 });
 test('ordinary tables cannot acquire local human controllers',()=>{const t=fixture();t.act('host',{type:'create',name:'Host',seed:'old'});expect(()=>t.act('host',{type:'seat',id:'extra',name:'Extra',seat:'west'})).toThrow('not a shared');});
+test('name-free tabletop joining reserves two distinct Angels and preserves choices through clockwise dealing',()=>{
+ const t=fixture();t.act('host',{type:'create',name:'Angel',seed:'walk-up',seat:'north',chooseOnJoin:true});
+ expect(t.state.players[0].options).toHaveLength(2);const hostOptions=[...t.state.players[0].options];t.act('host',{type:'angel',angel:hostOptions[1]});expect(t.state.phase).toBe('lobby');expect(t.state.players[0].name.toLowerCase()).toBe(hostOptions[1]);
+ t.act('host',{type:'seat',id:'south',name:'Angel',seat:'south'});t.act('host',{type:'bot',id:'bot',name:'Computer',seat:'east'});
+ expect(new Set(t.state.players.flatMap(p=>p.options)).size).toBe(6);expect(()=>t.act('host',{type:'start'})).toThrow('choose');expect(()=>t.act('south',{type:'angel',angel:hostOptions[0]})).toThrow('two Angels');
+ for(const p of t.state.players.filter(p=>!p.angel))t.act(p.id,p.bot?botCommand(t.state,p)!:{type:'angel',angel:p.options[0]});
+ const choices=Object.fromEntries(t.state.players.map(p=>[p.id,{options:p.options,angel:p.angel,name:p.name}]));t.act('host',{type:'start'});
+ expect(t.state.phase).toBe('play');expect(t.state.players.map(p=>p.seat)).toEqual(['south','east','north']);for(const p of t.state.players){expect({options:p.options,angel:p.angel,name:p.name}).toEqual(choices[p.id]);expect(p.hand).toHaveLength(14);}expect(replay(t.events)).toEqual(t.state);assertInventory(t.state);
+});

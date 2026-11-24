@@ -31,9 +31,9 @@
  const me=$derived(gameState.players.find(p=>p.id===uid)!);
  const active=$derived(gameState.players[gameState.turn]);
  const myTurn=$derived(active?.id===uid&&gameState.phase==='play');
- let uncovered=$state<string[]>([]),turning=$state(false);
+ let uncovered=$state<string[]>([]),turning=$state(false),motionPending=$state(false);
  const privateVisible=$derived(!tabletop||uncovered.includes(uid));
- const editable=$derived(myTurn&&!busy&&privateVisible&&!turning);
+ const editable=$derived(myTurn&&!busy&&privateVisible&&!turning&&(!tabletop||!motionPending));
  const zealAvailable=$derived(active?.id===uid&&gameState.phase==='after-turn'&&me.angel==='jegudiel'&&!me.used&&!busy&&privateVisible);
  let zealStart:Promise<void>|null=null,rackPreviewSequence=0;
  function startZeal(){if(zealStart)return zealStart;if(!zealAvailable)return Promise.resolve();zealStart=(async()=>{await action({type:'continue',zeal:true,turn:gameState.turnNumber});await tick();})().finally(()=>zealStart=null);return zealStart;}
@@ -52,7 +52,7 @@
  const facing=$derived((gameState.round>0?active:gameState.players.find(p=>p.id===gameState.owner))?.seat);
  const targetAngle=$derived(tabletop&&facing?seatPose(facing,portrait).angle:0);
  let tableAngle=$state(0),turnTimer:ReturnType<typeof setTimeout>|undefined,playArea:HTMLDivElement;let turnAnimation:Animation|undefined;
- $effect(()=>{const target=targetAngle;untrack(()=>{
+ $effect(()=>{const target=targetAngle;if(tabletop&&motionPending)return;untrack(()=>{
   const start=playArea?elementPose(playArea).angle:tableAngle,delta=(((target-start+540)%360+360)%360)-180;if(Math.abs(delta)<.01)return;
   clearTimeout(turnTimer);turnAnimation?.cancel();tableAngle=start+delta;turning=!window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   if(turning){
@@ -110,7 +110,7 @@
  async function useBefore(){const returned=[...selected];cancelDraft();const map:Record<string,'judgment'|'dance'|'calling'|'banish'>={raguel:'judgment',haniel:'dance',gabriel:'calling',michael:'banish'};await action({type:'before',power:map[me.angel!],rank:Number(rank),target,tiles:returned,count:Number(count),turn:gameState.turnNumber});}
 
  let flights=$state<Flight[]>([]),motionTiles=$state<string[]>([]);let priorScene:State|null=null,motionSequence=0;const motionBatches=new Map<number,{ids:string[];timer?:ReturnType<typeof setTimeout>}>();
- function refreshMotionTiles(){motionTiles=[...new Set([...motionBatches.values()].flatMap(batch=>batch.ids))];}
+ function refreshMotionTiles(){motionPending=motionBatches.size>0;motionTiles=[...new Set([...motionBatches.values()].flatMap(batch=>batch.ids))];}
  type Box={x:number;y:number;width:number;height:number;angle?:number};
  function renderedTiles(includeFlights=false){const boxes=new Map<string,Box>();for(const selector of ['[data-tile-back]','[data-rack-tile]','[data-purgatory-tile]','[data-tile-id]',...(includeFlights?['[data-flight-id]']:[])])for(const node of document.querySelectorAll<HTMLElement>(selector)){const id=node.dataset.tileBack??node.dataset.rackTile??node.dataset.purgatoryTile??node.dataset.tileId??node.dataset.flightId;if(id){const p=elementPose(node);boxes.set(id,{x:p.x,y:p.y,width:p.width*p.scale,height:p.height*p.scale,angle:p.angle});}}return boxes;}
  function bagBox():Box|null{const b=document.querySelector('[data-soul-bag]')?.getBoundingClientRect();return b?{x:b.x+b.width/2-22,y:b.y+b.height*.6-31,width:44,height:63}:null;}
@@ -126,7 +126,6 @@
   if(window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
   const source=renderedTiles(true),bag=bagBox(),sequence=++motionSequence;motionBatches.set(sequence,{ids:[...new Set([...transfers.map(t=>t.id),...shifted])]});refreshMotionTiles();onAnimating?.(true);
   void tick().then(async()=>{
-   if(tabletop&&turning)await new Promise(resolve=>setTimeout(resolve,700));
    if(!motionBatches.has(sequence))return;
 
    const destination=renderedTiles(),toBag=bagBox()??bag;
@@ -149,7 +148,7 @@
  const cue=$derived.by(()=>{if(message)return message;if(zealAvailable)return 'Play again to use Zeal, or end your turn to save it.';if(gameState.phase==='judgment'&&!me.ready)return gameState.judgment===2?'Choose another Angel.':'Set aside up to five souls, then touch the Judgment card.';if(gameState.phase==='dance'&&!gameState.dance?.choices[uid])return `Choose ${gameState.dance?.count} souls to pass to the right.`;if(zoneMode)return 'Touch a formation to shelter or release it.';if(!giftOpen)return '';if(['zadkiel','raphael','jophiel'].includes(me.angel!))return `Touch ${me.angel==='jophiel'?'two unprotected souls':'an unprotected soul'} in Heaven.`;if(['selaphiel','barachiel'].includes(me.angel!))return 'Touch a complete formation to shelter it.';if(me.angel==='chamuel')return 'Choose another Angel to look at their rack.';if(me.angel==='michael')return 'Choose a rank on your rack, then another Angel.';if(me.angel==='raguel')return 'Choose souls on your rack, then return them to the bag.';return '';});
  $effect(()=>{if(message){const timer=setTimeout(()=>message='',5500);return()=>clearTimeout(timer);}});
  async function finish(){if(busy||active?.id!==uid||!privateVisible||turning)return;if(gameState.phase==='after-turn'){await action({type:'continue',turn:gameState.turnNumber});return;}if(organizing.error){message=organizing.error;return;}await action(organizing.command);}
- async function drawFromBag(){if(zealAvailable||zealStart)await startZeal();if(!myTurn||busy)return;if(giftOpen&&me.angel==='raguel'){if(!selected.length){message='Choose the souls to return first.';return;}await useBefore();return;}await action({type:'draw',turn:gameState.turnNumber});}
+ async function drawFromBag(){if(zealAvailable||zealStart)await startZeal();if(!myTurn||busy||tabletop&&(motionPending||turning))return;if(giftOpen&&me.angel==='raguel'){if(!selected.length){message='Choose the souls to return first.';return;}await useBefore();return;}await action({type:'draw',turn:gameState.turnNumber});}
  function selectRack(id:string){if(gameState.phase==='judgment'&&gameState.judgment===3&&gameState.tiles[id].rank==='joker'){message='Scales takes numbered souls.';return;}if(giftOpen&&me.angel==='michael'){const r=gameState.tiles[id].rank;if(r==='joker'){message='Choose a numbered soul.';return;}rank=r;selected=me.hand.filter(t=>gameState.tiles[t].rank===r);return;}toggle(id);}
  async function activateAngel(){if(busy)return;message='';if(gameState.phase==='dance'&&!gameState.dance?.choices[uid]){await passDance();return;}if(gameState.phase==='after-turn'&&active.id===uid&&me.angel==='jegudiel'){await startZeal();return;}if(myTurn&&me.sanctuary&&me.used){zoneMode=!zoneMode;giftOpen=false;return;}if(!myTurn||me.used||me.purgatory){focusedCard=angel??null;return;}if(power){message='This gift is already in your arrangement.';return;}if(me.angel==='uriel'){await action({type:'draw',foretell:true,turn:gameState.turnNumber});return;}giftOpen=!giftOpen;zoneMode=false;giftTiles=[];}
  async function opponentPicked(id:string){if(busy)return;message='';if(gameState.phase==='judgment'&&gameState.judgment===2&&!me.ready){await action({type:'judgment-choice',target:id});return;}if(giftOpen&&me.angel==='chamuel'){await action({type:'communion',target:id,turn:gameState.turnNumber});return;}if(giftOpen&&me.angel==='michael'){if(!selected.length){message='Choose a rank from your rack first.';return;}target=id;await useBefore();return;}focusedCard=angels.find(a=>a.id===gameState.players.find(p=>p.id===id)?.angel)??null;}
@@ -169,12 +168,12 @@
    {#if gameState.phase==='dance'&&!gameState.dance?.choices[uid]}<button class="station-choice" disabled={busy} onclick={passDance}>Pass {gameState.dance?.count} souls →</button>{/if}
   {/if}
   {#if gameState.communion?.player===uid}<div class="tabletop-inspection communion-private" aria-label="Communion: choose a soul from the opponent’s hand">{#each gameState.players.find(p=>p.id===gameState.communion!.target)!.hand as id}<button class="tile-object" disabled={busy} class:taken={communionTile===id} aria-label={`Choose ${gameState.tiles[id].color} ${gameState.tiles[id].rank} with Communion`} onclick={()=>selectCommunion(id)}><SoulTile rank={gameState.tiles[id].rank} color={gameState.tiles[id].color} size={25}/></button>{/each}</div>{/if}
- {:else}<Rack size={32} rotation={angle} tapToPlace tiles={player.hand.map(id=>gameState.tiles[id])} committed={player.scales} onReorder={tiles=>void sendAs?.(player.id,{type:'rack',tiles})} onBlockedDrop={()=>{message='Wait for your turn to play into Heaven.';}}/>{/if}
+ {:else}<Rack size={32} rotation={angle} tapToPlace hidden={motionTiles} tiles={player.hand.map(id=>gameState.tiles[id])} committed={player.scales} onReorder={tiles=>void sendAs?.(player.id,{type:'rack',tiles})} onBlockedDrop={()=>{message='Wait for your turn to play into Heaven.';}}/>{/if}
 {/snippet}
 <svelte:window bind:innerWidth={screenWidth} bind:innerHeight={screenHeight} onkeydown={e=>{if(e.key==='Escape'){focusedCard=null;giftOpen=false;zoneMode=false;}}}/>
 <div class="game-table" style={`--bottom-strip:${bottomStrip}px;--opponent-scale:${opponentScale};--table-depth:${edgeDepth}px;--heaven-width:${heavenWidth}px;--heaven-height:${heavenHeight}px;--table-angle:${tableAngle}deg;--seat-angle:${me.seat?seatPose(me.seat,portrait).angle:0}deg`} class:portrait class:tabletop class:in-round={gameState.round>0} data-fullscreen-table>
- {#if tabletop}<TabletopRing state={gameState} {uid} {busy} onJoin={(seat,name,bot)=>onJoin?.(seat,name,bot)} onFocus={onFocus} onPrivacy={ids=>{uncovered=ids;if(!ids.includes(uid)){giftOpen=false;zoneMode=false;selected=[];}}} onAngel={(id,angel)=>void sendAs?.(id,{type:'angel',angel})} onCard={id=>{if(gameState.phase==='angels')return;if(id===uid&&privateVisible)void activateAngel();else void opponentPicked(id);}} station={tabletopStation}/>{/if}
- <div class="play-area" bind:this={playArea} class:tabletop-play-area={tabletop} data-turning={turning} data-square={squareHeaven} data-angle={targetAngle}>
+ {#if tabletop}<TabletopRing state={gameState} {uid} {busy} onJoin={(seat,name,bot)=>onJoin?.(seat,name,bot)} onFocus={onFocus} hidden={motionTiles} onPrivacy={ids=>{uncovered=ids;if(!ids.includes(uid)){giftOpen=false;zoneMode=false;selected=[];}}} onAngel={(id,angel)=>void sendAs?.(id,{type:'angel',angel})} onCard={id=>{if(gameState.phase==='angels')return;if(id===uid&&privateVisible)void activateAngel();else void opponentPicked(id);}} station={tabletopStation}/>{/if}
+ <div class="play-area" bind:this={playArea} class:tabletop-play-area={tabletop} data-turning={turning} data-transferring={motionPending} data-square={squareHeaven} data-angle={targetAngle}>
  {#if gameState.round>0}
   <SharedHeaven bind:this={board} game insetX={8} insetY={8} reserveBottom={8} {controlsHost} initialGroups={initial} boardKey={`${boardKey}/${boardReset}`} readOnly={!editable} canTouch={allowed} magnetKind={g=>{const k=formation(g.tiles,currentDecree,g.jokerFaces);return k==='poker'?'other':k;}} orderGroup={g=>g.zone&&g.zone!==uid?g:arrangeDraftGroup(g,currentDecree)} normalizeGroup={g=>g.zone&&g.zone!==uid?g:normalizeDraftGroup(g,currentDecree)} onChange={changed} onSuggestion={suggestion} hand={privateVisible?playableRack:[]} inspect={tiles=>inspectFormation(tiles,currentDecree)} zoneLabel={zone=>gameState.players.find(p=>p.id===zone)?.name??''} onFinish={myTurn?finish:undefined} finishAllowed={canFinish} finishReason={organizing.error??''} onTilePick={pickHeaven} tapToPlace={tabletop&&selected.some(id=>rackIds.includes(id))} onPlaceTap={tabletop?(x,y)=>void placeSelected(x,y):undefined} pickedTiles={giftTiles} {motionTiles} returnable={communionTile?[communionTile]:[]}/>
  {/if}
@@ -189,7 +188,7 @@
   {#if gameState.phase==='after-turn'&&active.id===uid}<button class="end-turn-seal ivory-token" aria-label="End turn" title="Pass on Zeal and end your turn" onclick={()=>action({type:'continue',turn:gameState.turnNumber})}><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m8 16 6 6L26 9"/></svg></button>{/if}
  {/if}
  </div></aside>
- {#if tabletop&&gameState.round>0}<div class="tabletop-bag"><SoulBag count={gameState.bag.length} active={(myTurn||zealAvailable)&&privateVisible&&!turning} label="Draw a soul" onpick={drawFromBag}/></div><div class="tabletop-log"><GameLog {events}/></div>{/if}
+ {#if tabletop&&gameState.round>0}<div class="tabletop-bag"><SoulBag count={gameState.bag.length} active={(myTurn||zealAvailable)&&privateVisible&&!turning&&!motionPending} label="Draw a soul" onpick={drawFromBag}/></div><div class="tabletop-log"><GameLog {events}/></div>{/if}
  </div>
  {#if !tabletop}<div class="bottom-strip" aria-label="Your cards and rack">
  {#if gameState.phase!=='lobby'&&gameState.phase!=='angels'}

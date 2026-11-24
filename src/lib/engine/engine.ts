@@ -32,14 +32,19 @@ function endTurn(s:State,changed:boolean){s.changed ||=changed;if(checkWinner(s)
 function spend(p:Player,angel:string){requireRule(p.angel===angel&&!p.used,'That gift is unavailable.');p.used=true;}
 function handTransfers(s:State){for(const p of s.players)p.scales=p.scales.filter(id=>p.hand.includes(id));}
 function groupLegal(s:State,g:Group){return formation(g.tiles.map(id=>s.tiles[id]),decree(s),g.jokerFaces??{});}
+/** Firestore may reorder map keys. Compare the physical arrangement, not its encoding. */
+function unchangedGroup(a:Group,b:Group){
+ const shape=(g:Group)=>[g.id,g.x,g.y,g.zone,g.tiles,g.slots??g.tiles.map((_,i)=>i),Object.entries(g.jokerFaces??{}).sort(([a],[b])=>a.localeCompare(b)).map(([id,face])=>[id,face.color,face.rank])];
+ return JSON.stringify(shape(a))===JSON.stringify(shape(b));
+}
 function organize(s:State,p:Player,c:Extract<Command,{type:'organize'}>){
  const old=s.heaven,allOld=ids(old),allNew=ids(c.groups),handBefore=[...p.hand];
  requireRule(c.groups.length<=106&&unique(c.groups.map(g=>g.id))&&unique(allNew),'Each soul and group must appear once.');
  for(const g of c.groups){requireRule(typeof g.id==='string'&&g.id.length>0&&g.id.length<=128&&g.tiles.length>0&&g.tiles.every(id=>!!s.tiles[id]),'Unknown or empty formation.');requireRule(Number.isFinite(g.x)&&Number.isFinite(g.y)&&g.x>=0&&g.y>=0&&g.x<=20000&&g.y<=20000,'Invalid table position.');requireRule(g.zone===null||s.players.some(p=>p.id===g.zone),'Unknown Sanctuary.');requireRule(!g.slots||g.slots.length===g.tiles.length&&g.slots.every((n,i)=>Number.isInteger(n)&&n>=0&&n<=106&&(i===0||n>g.slots![i-1])),'Invalid tile spacing.');for(const [id,face]of Object.entries(g.jokerFaces??{}))requireRule(g.tiles.includes(id)&&s.tiles[id]?.rank==='joker'&&suits.includes(face.color)&&Number.isInteger(face.rank)&&face.rank>=1&&face.rank<=13,'Invalid joker face.');requireRule(!!groupLegal(s,g),'Every formation in Heaven must be legal.');}
  const stage=c.stage??old,stageIds=ids(stage);
- if(c.stage){requireRule(!!c.power&&unique(stageIds)&&allOld.every(id=>stageIds.includes(id))&&stageIds.every(id=>allOld.includes(id)||handBefore.includes(id))&&stage.every(g=>g.zone===null||old.some(o=>JSON.stringify(o)===JSON.stringify(g))),'Invalid pre-gift arrangement.');for(const g of stage)requireRule(g.tiles.every(id=>s.tiles[id]),'Unknown soul in the pre-gift arrangement.');}
+ if(c.stage){requireRule(!!c.power&&unique(stageIds)&&allOld.every(id=>stageIds.includes(id))&&stageIds.every(id=>allOld.includes(id)||handBefore.includes(id))&&stage.every(g=>g.zone===null||old.some(o=>unchangedGroup(o,g))),'Invalid pre-gift arrangement.');for(const g of stage)requireRule(g.tiles.every(id=>s.tiles[id]),'Unknown soul in the pre-gift arrangement.');}
  // Other players’ protected formations cannot be changed, including their positions.
- for(const other of s.players.filter(q=>q.id!==p.id)){requireRule(JSON.stringify(old.filter(g=>g.zone===other.id))===JSON.stringify(c.groups.filter(g=>g.zone===other.id)),'Only the owner may rearrange a Sanctuary.');}
+ for(const other of s.players.filter(q=>q.id!==p.id)){const protectedGroups=old.filter(g=>g.zone===other.id),next=c.groups.filter(g=>g.zone===other.id);requireRule(protectedGroups.length===next.length&&protectedGroups.every(g=>next.some(n=>unchangedGroup(g,n))),'Only the owner may rearrange a Sanctuary.');}
  const power=c.power;requireRule(!power||['forgive','penance','transfigure','sanctuary'].includes(power.kind),'Unknown organizing gift.');let retrieved:string[]=[],purgOut:string|null=null,purgIn:string|null=null;
  if(power){requireRule(!p.purgatory,'Rescue Purgatory or draw.');if(power.kind==='forgive'){spend(p,'zadkiel');retrieved=[power.tile];}if(power.kind==='penance'){spend(p,'raphael');purgIn=power.tile;}if(power.kind==='transfigure'){spend(p,'jophiel');requireRule(power.tiles.length===2&&unique(power.tiles),'Transfiguration retrieves exactly two souls.');retrieved=power.tiles;}if(power.kind==='sanctuary')spend(p,p.angel==='selaphiel'?'selaphiel':'barachiel');}
  for(const id of [...retrieved,...(purgIn?[purgIn]:[])]){

@@ -31,3 +31,25 @@ test('Barachiel protects additions, then can release a split soul while the rema
 test('Scales commitment ends when Judgment returns a soul, even if it is immediately redrawn',()=>{let found=false;for(let i=0;i<250;i++){const s=fixture('raguel');s.seed=`redraw-${i}`;s.round=3;s.judgment=3;s.players[0].scales=['blue-a-6'];const n=act(s,{type:'before',power:'judgment',tiles:['blue-a-6'],turn:7});if(n.players[0].hand.includes('blue-a-6')){expect(n.players[0].scales).toEqual([]);found=true;break;}}expect(found).toBe(true);});
 
 test('Penance can clear an excess newly played soul from a temporarily illegal table and finish with occupied Purgatory',()=>{const s=fixture('raphael');s.players[0].opened=false;s.players[0].hand=['red-a-1','red-a-2','red-a-3','blue-a-8'];rebalance(s);const n=act(s,{type:'organize',opening:['red-a-1','red-a-2','red-a-3'],stage:[g(['red-a-1','red-a-2','red-a-3']),g(['blue-a-8'],'excess')],groups:[g(['red-a-1','red-a-2','red-a-3'])],power:{kind:'penance',tile:'blue-a-8'},turn:7});expect(n.winner).toBe('a');expect(n.players[0].purgatory).toBe('blue-a-8');expect(n.players[0].favor).toBe(4);});
+
+test('unchanged Sanctuaries survive Firestore property order, group order, and UI round trips',()=>{
+ const s=fixture('raguel'),safe=g(['black-a-7','red-a-7','blue-a-7','green-a-7'],'safe','b'),joker={...g(['black-a-8','red-a-8','joker-1'],'joker-safe','b'),jokerFaces:{'joker-1':{rank:8,color:'blue' as const}}};
+ // Server maps and UI records need not have the same insertion order.
+ s.heaven=[{zone:safe.zone,tiles:safe.tiles,y:safe.y,x:safe.x,id:safe.id},joker];s.players[1].sanctuary=true;rebalance(s);
+ const unchanged:Group[]=[{jokerFaces:{'joker-1':{color:'blue' as const,rank:8}},zone:joker.zone,tiles:joker.tiles,x:joker.x,y:joker.y,id:joker.id},{...safe,slots:[0,1,2,3],jokerFaces:{}}];
+ const next=act(s,{type:'organize',groups:[...unchanged,g(['red-a-1','red-a-2','red-a-3'],'new')],turn:7});
+ expect(next.players[0].favor).toBe(3);expect(next.heaven.filter(g=>g.zone==='b').flatMap(g=>g.tiles).sort()).toEqual(s.heaven.flatMap(g=>g.tiles).sort());
+ for(const changed of [{...safe,x:19},{...safe,tiles:safe.tiles.slice(0,3)},{...safe,id:'renamed'},{...safe,zone:null},{...safe,slots:[0,1,2,4]}]){
+  expect(()=>act(s,{type:'organize',groups:[changed,joker,g(['red-a-1','red-a-2','red-a-3'],'new')],turn:7})).toThrow('Only the owner');
+ }
+ expect(()=>act(s,{type:'organize',groups:[safe,{...joker,jokerFaces:{'joker-1':{color:'green',rank:8}}},g(['red-a-1','red-a-2','red-a-3'],'new')],turn:7})).toThrow('Only the owner');
+});
+
+test('an organizing gift accepts an unchanged protected formation in the pre-gift stage',()=>{
+ const s=fixture('zadkiel'),safe=g(['black-a-7','red-a-7','blue-a-7'],'safe','b');
+ s.heaven=[{zone:safe.zone,tiles:safe.tiles,y:safe.y,x:safe.x,id:safe.id}];s.players[1].sanctuary=true;s.players[0].hand.push('red-a-4');rebalance(s);
+ const stage=[safe,g(['red-a-1','red-a-2','red-a-3','red-a-4'],'new')];
+ const next=act(s,{type:'organize',stage,groups:[safe,g(['red-a-1','red-a-2','red-a-3'],'new')],power:{kind:'forgive',tile:'red-a-4'},turn:7});
+ expect(next.players[0].used).toBe(true);expect(next.players[0].hand).toContain('red-a-4');
+ expect(()=>act(s,{type:'organize',stage:[{...safe,x:99},stage[1]],groups:[safe,g(['red-a-1','red-a-2','red-a-3'],'new')],power:{kind:'forgive',tile:'red-a-4'},turn:7})).toThrow('Invalid pre-gift');
+});

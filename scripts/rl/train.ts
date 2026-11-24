@@ -2,6 +2,8 @@ import {createHash} from 'node:crypto';
 import {mkdir,appendFile,cp} from 'node:fs/promises';import {initialWeights,type Model} from '../../src/lib/engine/rl/policy';import {cohort,summarize,type Result} from './simulate';import {evaluate} from './pool';
 const level=(process.env.LEVEL??'easy') as Model['level'],namespace=process.env.TRAIN_NAMESPACE??`hp-rl-training-${level}-v1`,generations=Number(process.env.GENERATIONS??20),population=Number(process.env.POPULATION??16),games=Number(process.env.GAMES??48),workers=Number(process.env.WORKERS??8),output=process.env.OUTPUT??`tmp/rl/${level}-candidate.json`;
 if(!['easy','standard','hard'].includes(level)||/heldout|development|evaluation/.test(namespace))throw Error('Use a training namespace');
+const playerCount=process.env.PLAYERS==='all'?null:Number(process.env.PLAYERS??2);if(playerCount!==null&&![2,3,4,5].includes(playerCount))throw Error('Use 2–5 players.');
+const batch=(namespace:string,n:number,offset=0)=>playerCount?cohort(namespace,n*4,offset*4).filter(s=>s.players===playerCount).slice(0,n):cohort(namespace,n,offset);
 const opponent:Model|null=process.env.OPPONENT?await Bun.file(process.env.OPPONENT).json():null;
 let state=Number(process.env.TRAIN_SEED??613299)>>>0;function random(){state=(Math.imul(1664525,state)+1013904223)>>>0;return (state+.5)/4294967296;}const normal=()=>Math.sqrt(-2*Math.log(random()))*Math.cos(2*Math.PI*random());
 let champion:Model=process.env.RESUME?await Bun.file(process.env.RESUME).json():{version:1,level,algorithm:'episodic cross-entropy reinforcement learning',weights:[...initialWeights],powers:level!=='easy',planning:level==='easy'?1:level==='standard'?2:3};champion={...champion,level,powers:level!=='easy',planning:level==='easy'?1:level==='standard'?2:3};
@@ -9,16 +11,20 @@ const warmStart=process.env.RESUME?{path:process.env.RESUME,sha256:createHash('s
 if(level!=='easy')while(champion.weights.length<29)champion.weights.push(0);
 let mean=[...champion.weights],sigma=mean.map((_,i)=>[0,6].includes(i)?0:.8),best=-Infinity;await mkdir('tmp/rl',{recursive:true});
 const sourceRoot=`${process.cwd()}/tmp/rl/sources/${namespace}-${Date.now()}`;await mkdir(`${sourceRoot}/src`,{recursive:true});await mkdir(`${sourceRoot}/scripts`,{recursive:true});await cp('src/lib',`${sourceRoot}/src/lib`,{recursive:true});await cp('scripts/rl',`${sourceRoot}/scripts/rl`,{recursive:true});process.env.RL_SOURCE_ROOT=sourceRoot;
-console.log(JSON.stringify({sourceRoot,kind:'configuration',level,namespace,generations,population,games,workers,opponent:process.env.OPPONENT??'frozen heuristic'}));
+console.log(JSON.stringify({playerCount,sourceRoot,kind:'configuration',level,namespace,generations,population,games,workers,opponent:process.env.OPPONENT??'frozen heuristic'}));
+const devSpecs=batch(`hp-rl-development-${level}${playerCount?`-p${playerCount}`:''}-v1`,96);
+const objective=(r:Awaited<ReturnType<typeof evaluate>>)=>r.summary.winRate+.08*Math.min(...Object.values(r.byAngel).map(s=>s.winRate))+.08*Math.min(...Object.values(r.byPlayers).map(s=>s.winRate))+.001*Math.tanh(r.summary.meanMargin/100);
+let selectedGeneration=0,bestDev=await evaluate(champion,opponent,devSpecs,workers);best=objective(bestDev);
+console.log(JSON.stringify({kind:'warm-start-development',summary:bestDev.summary}));
 for(let generation=0;generation<generations;generation++){
- const specs=cohort(`${namespace}/generation-${generation}`,games,generation*games),models=Array.from({length:population},(_,i)=>({...champion,weights:i===0?[...champion.weights]:mean.map((w,j)=>j===6?30:Math.max(-12,Math.min(12,w+normal()*sigma[j])))}));
+ const specs=batch(`${namespace}/generation-${generation}`,games,generation*games),models=Array.from({length:population},(_,i)=>({...champion,weights:i===0?[...champion.weights]:mean.map((w,j)=>j===6?30:Math.max(-12,Math.min(12,w+normal()*sigma[j])))}));
  const results:{index:number;model:Model;fitness:number;wins:number}[]=[];
- // A process is a rollout worker, not an agent; limit total CPU use.
- let next=0;await Promise.all(Array.from({length:Math.min(workers,population)},async()=>{while(next<models.length){const index=next++,model=models[index],r=await evaluate(model,opponent,specs,1);results.push({index,model,wins:r.summary.wins,fitness:r.summary.winRate+.08*Math.min(...Object.values(r.byAngel).map(s=>s.winRate))+.08*Math.min(...Object.values(r.byPlayers).map(s=>s.winRate))+.001*Math.tanh(r.summary.meanMargin/100)});}}));
+ let next=0;await Promise.all(Array.from({length:Math.min(workers,population)},async()=>{while(next<models.length){const index=next++,model=models[index],r=await evaluate(model,opponent,specs,1);results.push({index,model,wins:r.summary.wins,fitness:objective(r)});}}));
  results.sort((a,b)=>b.fitness-a.fitness||a.index-b.index);const elites=results.slice(0,Math.max(3,Math.floor(population/4)));mean=mean.map((_,j)=>elites.reduce((n,r)=>n+r.model.weights[j],0)/elites.length);sigma=sigma.map((v,j)=>[0,6].includes(j)?0:Math.max(.06,.4*v+.6*Math.sqrt(elites.reduce((n,r)=>n+(r.model.weights[j]-mean[j])**2,0)/elites.length)));
- const candidate=results[0].model,dev=await evaluate(candidate,opponent,cohort(`hp-rl-development-${level}-v1`,96),workers),fitness=dev.summary.winRate+.08*Math.min(...Object.values(dev.byAngel).map(s=>s.winRate))+.08*Math.min(...Object.values(dev.byPlayers).map(s=>s.winRate))+.001*Math.tanh(dev.summary.meanMargin/100);champion=candidate;
- const entry={generation:generation+1,training:results[0],development:dev.summary,byAngel:Object.fromEntries(Object.entries(dev.byAngel).map(([a,r])=>[a,r.winRate])),byPlayers:Object.fromEntries(Object.entries(dev.byPlayers).map(([a,r])=>[a,r.winRate]))};
+ const candidate=results[0].model,dev=await evaluate(candidate,opponent,devSpecs,workers),fitness=objective(dev);
+ if(fitness>best){best=fitness;champion=candidate;bestDev=dev;selectedGeneration=generation+1;}
+ const entry={generation:generation+1,training:results[0],development:dev.summary,selectedGeneration,bestDevelopment:bestDev.summary,byAngel:Object.fromEntries(Object.entries(bestDev.byAngel).map(([a,r])=>[a,r.winRate])),byPlayers:Object.fromEntries(Object.entries(bestDev.byPlayers).map(([a,r])=>[a,r.winRate]))};
  console.log(JSON.stringify(entry));await appendFile(`${output}.jsonl`,JSON.stringify(entry)+'\n');
- if(fitness>best){best=fitness;await Bun.write(output,JSON.stringify({...candidate,training:{namespace,warmStart,sourceRoot:sourceRoot.replace(process.cwd()+'/', ''),seed:Number(process.env.TRAIN_SEED??613299),generation:generation+1,episodes:(generation+1)*population*games,opponent:process.env.OPPONENT??'heuristic',development:dev.summary}},null,2));}
- if(dev.summary.winRate>=Number(process.env.STOP_RATE??1.1)&&Object.values(dev.byAngel).every(r=>r.winRate>=.875)&&Object.values(dev.byPlayers).every(r=>r.winRate>=.875))break;
+ await Bun.write(output,JSON.stringify({...champion,training:{namespace,playerCount,warmStart,sourceRoot:sourceRoot.replace(process.cwd()+'/', ''),seed:Number(process.env.TRAIN_SEED??613299),generation:generation+1,selectedGeneration,episodes:(generation+1)*population*games,opponent:process.env.OPPONENT??'heuristic',development:bestDev.summary}},null,2));
+ if(bestDev.summary.winRate>=Number(process.env.STOP_RATE??1.1)&&Object.values(bestDev.byAngel).every(r=>r.winRate>=.875)&&Object.values(bestDev.byPlayers).every(r=>r.winRate>=.875))break;
 }

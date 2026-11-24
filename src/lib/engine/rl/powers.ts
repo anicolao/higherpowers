@@ -1,7 +1,7 @@
 import {formation} from '../formations';
 import type {Command,Group} from '../types';
 import type {Observation} from './observation';
-import {greedyPlan,rearrangePlan,placedGroup,tileValue,type Plan} from './planner';
+import {greedyPlan,refinedPlan,placedGroup,tileValue,type Plan} from './planner';
 export function powerChoices(o:Observation,plans:Plan[],depth=2):Command[]{
  const p=o.me,turn=o.turn,commands:Command[]=[];if(p.used||p.purgatory)return commands;
  const own=(plan:Plan):Extract<Command,{type:'organize'}>=>({type:'organize',...plan,turn});
@@ -45,7 +45,7 @@ export function powerChoices(o:Observation,plans:Plan[],depth=2):Command[]{
    pairs.push({tiles,groups,priority});
   }
   for(const pair of pairs.sort((a,b)=>b.priority-a.priority).slice(0,16)){
-   const altered={...o,heaven:pair.groups},base=greedyPlan(o,p.hand,pair.groups),plan=rearrangePlan(altered,base,depth);
+   const altered={...o,heaven:pair.groups},base=greedyPlan(o,p.hand,pair.groups),plan=refinedPlan(altered,base,depth);
    if(plan.groups.flatMap(g=>g.tiles).filter(id=>p.hand.includes(id)).length>=2)commands.push({...own(plan),power:{kind:'transfigure',tiles:pair.tiles}});
   }
  }

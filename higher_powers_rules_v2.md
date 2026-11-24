@@ -183,7 +183,7 @@ Once per round, place one complete Choir into your private Sanctuary.
 
 Only you may rearrange or retrieve souls from that Sanctuary.
 
-The protected Choir must remain legal.
+Create the Sanctuary with exactly one Choir. Later, extend and split protected formations; entirely new formations cannot be added. All protected Choirs must remain legal.
 
 **Barachiel — Sanctuary of Processions**
 
@@ -191,7 +191,7 @@ Once per round, place one complete Procession into your private Sanctuary.
 
 Only you may rearrange or retrieve souls from that Sanctuary.
 
-The protected Procession must remain legal.
+Create the Sanctuary with exactly one Procession. Later, extend and split protected formations; entirely new formations cannot be added. All protected Processions must remain legal.
 
 **Chamuel — Communion**
 

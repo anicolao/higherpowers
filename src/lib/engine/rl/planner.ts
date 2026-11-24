@@ -48,42 +48,28 @@ export function rearrangePlan(o:Observation,base:Plan,depth:number,mode=0):Plan{
  while(selected.length&&selected.flatMap(g=>g.tiles).length+hand.length>(depth===3?106:62))selected.pop();
  const locked=o.heaven.filter(g=>!selected.includes(g));
  const ids=[...selected.flatMap(g=>g.tiles),...hand];if(!selected.length||!o.me.opened&&!base.opening)return base;
- const index=new Map(ids.map((id,i)=>[id,i])),mask=(ts:string[])=>ts.reduce((m,id)=>m|(1n<<BigInt(index.get(id)!)),0n),all=(1n<<BigInt(ids.length))-1n;
- const mandatory=mask([...selected.flatMap(g=>g.tiles),...(base.opening??[])]),own=mask(hand);
+ type Bits=[number,number,number,number];
+ const index=new Map(ids.map((id,i)=>[id,i]));
+ const bits=(tiles:string[]):Bits=>{const b:Bits=[0,0,0,0];for(const id of tiles){const i=index.get(id)!;b[i>>>5]|=1<<(i&31);}return b;};
+ const requiredBits=bits([...selected.flatMap(g=>g.tiles),...(base.opening??[])]);
  let ts=melds(ids.map(id=>o.tiles[id]),o.decree,depth===1?600:depth===2?1000:3000);for(const g of selected)if(!ts.some(t=>t.join(',')===g.tiles.join(',')))ts.push(g.tiles);
  if(depth===3)ts=copyVariants(ts,o,ids);
- const entries=ts.map(tiles=>({tiles,mask:depth===3?0n:mask(tiles),gain:tiles.filter(id=>hand.includes(id)).reduce((n,id)=>n+(mode===1?tileValue(o,id):10),0)}));
- const byTile=depth===3?[]:ids.map((_,i)=>entries.filter(e=>!!(e.mask&(1n<<BigInt(i)))));
+ const packed=ts.map(tiles=>({tiles,bits:bits(tiles),gain:tiles.filter(id=>hand.includes(id)).reduce((n,id)=>n+(mode===1?tileValue(o,id):10),0)}));
  let best=base,score=base.groups.flatMap(g=>g.tiles).filter(id=>hand.includes(id)).reduce((n,id)=>n+(mode===1?tileValue(o,id):10),0),nodes=0;const budget=depth===1?80:depth===2?Math.max(3,o.rivals.length+1)*160:1800,maxGain=hand.reduce((n,id)=>n+(mode===1?tileValue(o,id):10),0);
- function visit(left:bigint,covered:typeof entries,gain:number){
-  if(score>=maxGain||++nodes>budget)return;
-  const required=mandatory&left;
-  if(!required){
-   if(gain>score){score=gain;let groups=[...locked];for(const e of covered){const old=selected.find(g=>g.tiles.join(',')===e.tiles.join(','));groups.push(old??placedGroup(o,e.tiles,groups,nodes));}best={groups,...(base.opening?{opening:base.opening}:{})};}
-   // Finish packing any entirely private formations.
-   for(const e of entries.filter(e=>e.gain&&!(e.mask&~left)).sort((a,b)=>b.gain-a.gain).slice(0,12))visit(left^e.mask,[...covered,e],gain+e.gain);
-   return;
-  }
-  let options:typeof entries|undefined;
-  for(let i=0;i<ids.length;i++)if(required&(1n<<BigInt(i))){const available=byTile[i].filter(e=>!(e.mask&~left));if(!available.length)return;if(!options||available.length<options.length)options=available;}
-  for(const e of options!.sort((a,b)=>b.gain-a.gain||b.tiles.length-a.tiles.length))visit(left^e.mask,[...covered,e],gain+e.gain);
- }
- if(depth!==3){visit(all,[],0);return best;}
- // The larger search uses four 32-bit words instead of millions of BigInt
- // comparisons; the mandatory-cover rule and physical-tile identity stay exact.
- type Bits=[number,number,number,number];
- const bits=(mask:bigint):Bits=>[Number(mask&0xffffffffn)|0,Number((mask>>32n)&0xffffffffn)|0,Number((mask>>64n)&0xffffffffn)|0,Number((mask>>96n)&0xffffffffn)|0];
- const packed=entries.map(e=>{const b:Bits=[0,0,0,0];for(const id of e.tiles){const i=index.get(id)!;b[i>>>5]|=1<<(i&31);}return {...e,bits:b};}),requiredBits=bits(mandatory),cells=ids.map((_,i)=>packed.filter(e=>!!(e.bits[i>>>5]&(1<<(i&31))))),order=ids.map((_,i)=>i).sort((a,b)=>cells[a].length-cells[b].length);
+ // Four numeric words cover every physical tile. Standard retains its exhaustive
+ // minimum-remaining-values scan; hard bounds that scan to eight cells.
+ const cells=ids.map((_,i)=>packed.filter(e=>!!(e.bits[i>>>5]&(1<<(i&31))))),order=ids.map((_,i)=>i);
+ if(depth===3)order.sort((a,b)=>cells[a].length-cells[b].length);
  const fits=(b:Bits,left:Bits)=>!(b[0]&~left[0])&&!(b[1]&~left[1])&&!(b[2]&~left[2])&&!(b[3]&~left[3]);
  function numeric(left:Bits,covered:typeof packed,gain:number){
   if(score>=maxGain||++nodes>budget)return;
   let options:typeof packed|undefined,scanned=0;
-  for(const i of order)if(requiredBits[i>>>5]&left[i>>>5]&(1<<(i&31))){const available=cells[i].filter(e=>fits(e.bits,left));if(!available.length)return;if(!options||available.length<options.length)options=available;if(available.length===1||++scanned===8)break;}
+  for(const i of order)if(requiredBits[i>>>5]&left[i>>>5]&(1<<(i&31))){const available=cells[i].filter(e=>fits(e.bits,left));if(!available.length)return;if(!options||available.length<options.length)options=available;if(depth===3&&(available.length===1||++scanned===8))break;}
   if(!options){
    if(gain>score){score=gain;let groups=[...locked];for(const e of covered){const old=selected.find(g=>g.tiles.join(',')===e.tiles.join(','));groups.push(old??placedGroup(o,e.tiles,groups,nodes));}best={groups,...(base.opening?{opening:base.opening}:{})};}
    options=packed.filter(e=>e.gain&&fits(e.bits,left)).sort((a,b)=>b.gain-a.gain).slice(0,12);
   }else options.sort((a,b)=>b.gain-a.gain||b.tiles.length-a.tiles.length);
   for(const e of options)numeric([left[0]^e.bits[0],left[1]^e.bits[1],left[2]^e.bits[2],left[3]^e.bits[3]],[...covered,e],gain+e.gain);
  }
- numeric(bits(all),[],0);return best;
+ numeric(bits(ids),[],0);return best;
 }

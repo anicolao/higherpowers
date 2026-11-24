@@ -22,6 +22,7 @@
     "emulators": "bun scripts/firebase.ts emulators:start --only auth,firestore,database --project demo-higher-powers",
     "dev:emulators": "VITE_FIREBASE_EMULATORS=true bun run dev",
     "test:backend": "bun scripts/firebase.ts emulators:exec --only auth,firestore,database --project demo-higher-powers \"bun test tests/backend\"",
+    "review:tabletop-concurrent-keep": "bun scripts/review-tabletop-concurrent-keep.ts",
     "review:tabletop-draw-order": "bun scripts/review-tabletop-draw-order.ts",
     "review:tabletop-actions": "bun scripts/review-tabletop-actions.ts",
     "review:tabletop": "bun scripts/review-tabletop.ts",

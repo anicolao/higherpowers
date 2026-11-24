@@ -62,7 +62,10 @@ bots, phase, revision and schema version. `games/{id}/events/{sequence}` is the
 append-only durable transcript. A transaction reads the expected revision, appends
 one command event, and updates metadata atomically. Concurrent independent choices
 retry against a refreshed committed prefix. Commands retain their original turn
-token, and event identifiers make retries idempotent. Every client reconstructs
+token, and event identifiers make retries idempotent. If several tabs finish the
+same inspection, an exact matching actor/turn/tile keep already present in the
+durable log settles the duplicate without another event. Other stale actions
+remain rejected; the client never changes their turn token. Every client reconstructs
 state with the same pure reducer and rejects invalid events, unknown versions,
 gaps, duplicate IDs, or loss/duplication of any of the 106 souls.
 

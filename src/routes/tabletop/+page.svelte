@@ -8,7 +8,10 @@
  import {elementPose} from '$lib/tabletop/coordinates';
  import {parseTableCode} from '$lib/backend/codes';
  import {applyEvent,commandEvent,replay,type State,type Command,type GameEvent,type Group} from '$lib/engine/engine';
- import {botCommand} from '$lib/engine/bot';
+ import {trainedCommand,closeBotWorker} from '$lib/engine/trained-worker';
+ import {botPending,availableBotLevels,defaultBotLevel} from '$lib/engine/trained-bot';
+ import type {BotLevel} from '$lib/engine/types';
+ let botDifficulty=$state<BotLevel>(defaultBotLevel);
  import type {LiveDraft} from '$lib/backend/live';
  import type {TableSeat} from '$lib/tabletop/seats';
  let gameState=$state<State|null>(null),owner=$state(''),table=$state(''),events=$state<GameEvent[]>([]),busy=$state(false),error=$state(''),connecting=$state(true),focus=$state(''),local=$state(false),liveDraft=$state<LiveDraft|null>(null),menuOpen=$state(false),menuAngle=$state(0),animating=false;
@@ -16,7 +19,10 @@
  const pending=$derived.by(()=>{const s=gameState;return s?.players.filter(p=>!p.bot&&(p.id===owner||p.local)&&(s.phase==='angels'||s.phase==='lobby'&&s.chooseOnJoin?!p.angel:s.phase==='judgment'?!p.ready:s.phase==='dance'?!s.dance?.choices[p.id]:false))??[];});
  const uid=$derived(pending.length?(pending.find(p=>p.id===focus)?.id??pending[0].id):(gameState&&['play','inspect','after-turn'].includes(gameState.phase)&&!gameState.players[gameState.turn].bot&&(gameState.players[gameState.turn].id===owner||gameState.players[gameState.turn].local)?gameState.players[gameState.turn].id:owner));
  function received(next:State,log?:GameEvent[]){if(disposed)return;if(log&&(!gameState||next.revision>=gameState.revision))events=log;if(gameState&&gameState.revision>=next.revision)return;gameState=next;if(!local)void channel?.authorize(next).catch(e=>error=e.message);schedule();}
- function schedule(){clearTimeout(timer);if(!gameState||busy||animating||disposed)return;for(const p of gameState.players.filter(p=>p.bot)){const c=botCommand(gameState,p);if(c){timer=setTimeout(()=>void sendAs(p.id,c),500);break;}}}
+ function schedule(){
+  clearTimeout(timer);if(!gameState||busy||animating||disposed)return;const state=gameState,id=table,p=state.players.find(p=>botPending(state,p));if(!p)return;
+  timer=setTimeout(async()=>{try{const c=await trainedCommand(state,p);if(disposed||busy||animating||table!==id||gameState?.revision!==state.revision||gameState.eventIds[0]!==state.eventIds[0])return;if(c)await sendAs(p.id,c);}catch(e){if(!disposed&&table===id&&gameState?.revision===state.revision&&gameState.eventIds[0]===state.eventIds[0])error=(e as Error).message;}},500);
+ }
  async function run(work:()=>Promise<void>){if(busy)return;busy=true;error='';try{await work();}catch(e){error=e instanceof Error?e.message:String(e);}finally{busy=false;schedule();}}
  async function send(c:Command,actor:string){if(!gameState)return;let next:State;
   if(local){const event=commandEvent(gameState,actor,c,crypto.randomUUID());next=applyEvent(gameState,event);events=[...events,event];localStorage.setItem('hp-tabletop-local',JSON.stringify(events));received(next);}
@@ -29,7 +35,7 @@
  async function connect(id:string){off?.();channel?.close();table=await resolveTableCode(id);const restored=await readGame(table);if(!restored.tabletop)throw new Error('This is a personal-screen table. Open it in Play.');if(restored.owner!==owner)throw new Error('Open this shared table on the browser that created it. Use Play to join from another device.');received(restored);off=await watchGame(table,received,e=>error=e.message);channel=await liveChannel(table,d=>liveDraft=d,e=>error=e.message);await channel.authorize(restored);localStorage.setItem('hp-tabletop',table);history.replaceState(null,'',`${base}/tabletop?table=${table}`);}
  function join(seat:TableSeat,name:string,bot:boolean){void run(async()=>{
   if(!gameState){if(local){owner='tabletop-owner';const event=commandEvent(null,owner,{type:'create',name,seed:crypto.randomUUID(),seat,chooseOnJoin:true},crypto.randomUUID());events=[event];localStorage.setItem('hp-tabletop-local',JSON.stringify(events));received(applyEvent(null,event));}else{owner=(await firebase()).uid;await connect(await createGame(name,seat,true));}}
-  else await send(bot?{type:'bot',id:`bot-${crypto.randomUUID().slice(0,8)}`,name,seat}:{type:'seat',id:`seat-${crypto.randomUUID().slice(0,8)}`,name,seat},owner);
+  else await send(bot?{type:'bot',id:`bot-${crypto.randomUUID().slice(0,8)}`,name,seat,difficulty:botDifficulty}:{type:'seat',id:`seat-${crypto.randomUUID().slice(0,8)}`,name,seat},owner);
  });}
  function publish(groups:Group[],dragging:boolean,purgatory:string|null){if(!gameState)return;latest={groups,purgatory,actor:uid,turn:gameState.turnNumber,revision:gameState.revision};if(!local)channel?.publish({version:1,...latest,dragging});}
  function animationChanged(active:boolean){animating=active;if(active)clearTimeout(timer);else schedule();}
@@ -41,11 +47,11 @@
  onMount(()=>{const params=new URL(location.href).searchParams;local=params.get('local')==='1';void(async()=>{try{
   if(local){const saved=localStorage.getItem('hp-tabletop-local');owner='tabletop-owner';if(saved){events=JSON.parse(saved);received(replay(events));}}
   else{owner=(await firebase()).uid;const id=params.get('table')??localStorage.getItem('hp-tabletop');if(id)await connect(parseTableCode(id));}
- }catch(e){error=e instanceof Error?e.message:String(e);}finally{connecting=false;}})();heartbeat=setInterval(()=>{if(!local&&gameState&&latest&&latest.turn===gameState.turnNumber&&latest.revision===gameState.revision)channel?.publish({version:1,...latest,dragging:false});},10000);return()=>{disposed=true;off?.();channel?.close();clearTimeout(timer);clearInterval(heartbeat);};});
+ }catch(e){error=e instanceof Error?e.message:String(e);}finally{connecting=false;}})();heartbeat=setInterval(()=>{if(!local&&gameState&&latest&&latest.turn===gameState.turnNumber&&latest.revision===gameState.revision)channel?.publish({version:1,...latest,dragging:false});},10000);return()=>{disposed=true;closeBotWorker();off?.();channel?.close();clearTimeout(timer);clearInterval(heartbeat);};});
 </script>
 <svelte:head><title>Shared tabletop · Higher Powers</title><meta name="description" content="Play Higher Powers around one shared touchscreen. Eight join positions, two to five Angels, and racks revealed behind physical screens."/></svelte:head>
 {#snippet utilities()}<button class="tabletop-menu-trigger" aria-label="Tabletop menu" title="Tabletop menu" aria-haspopup="dialog" onclick={openMenu}>✧</button>{/snippet}
-{#if menuOpen}<dialog class="tabletop-menu" aria-label="Tabletop menu" style:transform={`rotate(${menuAngle}deg)`} use:mountMenu onclose={()=>menuOpen=false} oncancel={()=>menuOpen=false}><button class="menu-close" aria-label="Close tabletop menu" onclick={()=>menuOpen=false}>×</button><strong>{local?'Local tabletop':table}</strong><nav><button onclick={()=>void fullscreen()}>Fullscreen</button><button onclick={()=>void saveReplay()}>Save replay</button><a href={`${base}/rules.html`} target="_blank" rel="noreferrer">Rulebook ↗</a><button onclick={newTable}>New tabletop</button><a href={`${base}/play`}>Personal screens</a><button onclick={()=>window.close()}>Exit</button></nav></dialog>{/if}
+{#if menuOpen}<dialog class="tabletop-menu" aria-label="Tabletop menu" style:transform={`rotate(${menuAngle}deg)`} use:mountMenu onclose={()=>menuOpen=false} oncancel={()=>menuOpen=false}><button class="menu-close" aria-label="Close tabletop menu" onclick={()=>menuOpen=false}>×</button><strong>{local?'Local tabletop':table}</strong><nav><label>New computers<select aria-label="Tabletop computer difficulty" bind:value={botDifficulty}>{#each availableBotLevels as level}<option value={level}>{level[0].toUpperCase()+level.slice(1)}</option>{/each}</select></label><button onclick={()=>void fullscreen()}>Fullscreen</button><button onclick={()=>void saveReplay()}>Save replay</button><a href={`${base}/rules.html`} target="_blank" rel="noreferrer">Rulebook ↗</a><button onclick={newTable}>New tabletop</button><a href={`${base}/play`}>Personal screens</a><button onclick={()=>window.close()}>Exit</button></nav></dialog>{/if}
 <main id="main" class="tabletop-page">
  {#if connecting}<div class="tabletop-welcome">Opening the table…</div>
  {:else if gameState}<GameTable state={gameState} {uid} {busy} {events} tabletop tableId={table||'tabletop-local'} send={c=>sendAs(c.type==='start'||c.type==='next-round'?owner:uid,c)} {sendAs} onJoin={join} onFocus={id=>focus=id} {liveDraft} {publish} onAnimating={animationChanged} {utilities}/>

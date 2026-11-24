@@ -3,7 +3,7 @@ import {readFileSync} from 'node:fs';
 import {initializeTestEnvironment,assertFails,assertSucceeds,type RulesTestEnvironment} from '@firebase/rules-unit-testing';
 import {doc,runTransaction,getDoc,collection,getDocs,serverTimestamp,setDoc,deleteDoc} from 'firebase/firestore';
 import {ref,set,get} from 'firebase/database';
-import {applyEvent,commandEvent,type State,type Command} from '../../src/lib/engine/engine';
+import {applyEvent,commandEvent,replay,type State,type Command} from '../../src/lib/engine/engine';
 const enabled=!!process.env.FIRESTORE_EMULATOR_HOST;let env:RulesTestEnvironment;
 (enabled?describe:describe.skip)('Firebase durable events and live drafts',()=>{
  beforeAll(async()=>{env=await initializeTestEnvironment({projectId:'demo-higher-powers',firestore:{host:'127.0.0.1',port:18301,rules:readFileSync('firestore.rules','utf8')},database:{host:'127.0.0.1',port:19001,rules:readFileSync('database.rules.json','utf8')}});});
@@ -40,6 +40,15 @@ const enabled=!!process.env.FIRESTORE_EMULATOR_HOST;let env:RulesTestEnvironment
   await assertSucceeds(alias(host,'ABCDE'));expect((await getDoc(doc(outsider,'tableCodes','ABCDE'))).data()?.table).toBe(id);
   await assertFails(setDoc(doc(host,'tableCodes','ABCDE'),{table:'another'}));await assertFails(alias(host,'FGHJK'));await assertFails(write('ABCDE','invite-host',null,'invite-host',{type:'create',name:'Host',seed:'collision'}));
   expect((await getDocs(collection(host,'games',id,'events'))).size).toBe(1);
+ });
+ test('trained difficulties persist in events; unknown levels and non-bot difficulty fields are rejected',async()=>{
+  const id=crypto.randomUUID();let s=await write(id,'rl-host',null,'rl-host',{type:'create',name:'Host',seed:'rl-backend'});
+  for(const difficulty of ['easy','standard','hard'] as const)s=await write(id,'rl-host',s,'rl-host',{type:'bot',id:`rl-${difficulty}`,name:difficulty,difficulty});
+  const db=env.authenticatedContext('rl-host').firestore(),events=await getDocs(collection(db,'games',id,'events'));
+  expect(replay(events.docs.map(d=>d.data()).sort((a,b)=>a.sequence-b.sequence) as any).players.slice(1).map(p=>p.difficulty)).toEqual(['easy','standard','hard']);
+  const event=commandEvent(s,'rl-host',{type:'bot',id:'bad-level',name:'Bad',difficulty:'easy'},crypto.randomUUID()),next=applyEvent(s,event);
+  await assertFails(runTransaction(db,async tx=>{const room=doc(db,'games',id);await tx.get(room);tx.set(room,meta(next));tx.set(doc(room,'events',String(event.sequence)),{...event,command:{...event.command,difficulty:'expert'},createdAt:serverTimestamp()});}));
+  const start=commandEvent(s,'rl-host',{type:'start'},crypto.randomUUID()),begun=applyEvent(s,start);await assertFails(runTransaction(db,async tx=>{const room=doc(db,'games',id);await tx.get(room);tx.set(room,meta(begun));tx.set(doc(room,'events',String(start.sequence)),{...start,command:{...start.command,difficulty:'easy'},createdAt:serverTimestamp()});}));
  });
  test('live channels keep private rack state out and deny outsider writes',async()=>{
   const id=crypto.randomUUID(),host=env.authenticatedContext('live-host').database(),alice=env.authenticatedContext('live-alice').database(),outsider=env.authenticatedContext('outsider').database();

@@ -49,6 +49,8 @@ occupied positions clockwise. Computers may occupy chosen positions too.
 Heaven and its public controls turn toward the current player. With only
 long-edge seats occupied it uses the full available width; an occupied short
 edge makes it square so every quarter-turn fits. Rack stations stay in place.
+Select rack tiles and tap Heaven to place them together, or drag them there.
+Undo reverses one rearrangement; Restore Heaven resets the entire uncommitted action.
 
 Place a physical privacy screen over each player's rack area before touching
 **Screen in place · reveal**. Angel choices, racks, bag inspection, and Communion

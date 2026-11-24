@@ -28,7 +28,7 @@
 <svelte:document onvisibilitychange={()=>{if(document.hidden)cover();}}/>
 <div class="tabletop-ring" style={`--table-depth:${depth}px`} aria-label="Eight tabletop positions">
  {#each tableSeats as seat}{@const p=gameState?.players.find(p=>p.seat===seat)}{@const pose=location(seat)}
- <section class="tabletop-port" data-tabletop-seat={seat} data-player-seat={p?.id} data-angle={pose.angle} class:occupied={!!p} class:turn={!!p&&gameState?.players[gameState.turn]?.id===p.id&&gameState?.round>0} style={`left:${pose.x}px;top:${pose.y}px;width:480px;height:144px;transform:translate(-50%,-50%) rotate(${pose.angle}deg) scale(${scale})`} aria-label={p?`${p.name} at ${seat}`:`Join at ${seat}`}>
+ <section class="tabletop-port" data-tabletop-seat={seat} data-player-seat={p?.id} data-angle={pose.angle} class:occupied={!!p} class:joinable={!p&&(!gameState||gameState.phase==='lobby')} class:turn={!!p&&gameState?.players[gameState.turn]?.id===p.id&&gameState?.round>0} style={`left:${pose.x}px;top:${pose.y}px;width:480px;height:144px;transform:translate(-50%,-50%) rotate(${pose.angle}deg) scale(${scale})`} aria-label={p?`${p.name} at ${seat}`:`Join at ${seat}`}>
   {#if p}
    <div class="seat-public">
     <button class="seat-angel" class:spent={p.used} aria-label={`${p.name}’s Angel`} onclick={()=>onCard?.(p.id)}><GameCard card={angels.find(a=>a.id===p.angel)??angels[0]} back={!p.angel||(gameState?.phase==='angels'&&!gameState.players.every(p=>p.angel))}/></button>
@@ -56,8 +56,9 @@
 </div>
 <style>
  .tabletop-ring{position:absolute;inset:0;pointer-events:none;z-index:160}
- .tabletop-port{position:absolute;transform-origin:center;pointer-events:auto;box-sizing:border-box;color:#f9eac5;--favor-size:42px;isolation:isolate}
- .tabletop-port.occupied{display:grid;grid-template-columns:162px minmax(0,1fr);gap:8px;padding:5px;border-radius:12px;background:linear-gradient(#ddc88c0d,#0c241c44);box-shadow:0 1px 0 #dfc78e33}
+ .tabletop-port{position:absolute;transform-origin:center;pointer-events:none;box-sizing:border-box;color:#f9eac5;--favor-size:42px;isolation:isolate}
+ .tabletop-port.joinable{pointer-events:auto}
+ .tabletop-port.occupied{pointer-events:auto;display:grid;grid-template-columns:162px minmax(0,1fr);gap:8px;padding:5px;border-radius:12px;background:linear-gradient(#ddc88c0d,#0c241c44);box-shadow:0 1px 0 #dfc78e33}
  .turn{outline:1px solid #f0d38966;box-shadow:0 0 20px #f4db8222!important}
  .seat-public{display:grid;grid-template-columns:88px minmax(0,1fr);align-items:center;gap:7px;min-width:0}
  .seat-angel{width:88px;border:0;background:none;padding:0;min-height:0;filter:drop-shadow(0 3px 4px #0007)}

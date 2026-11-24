@@ -74,6 +74,15 @@ try{
    await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await cdp.detach();
   }else{await page.mouse.move(first!.x+first!.width/2,first!.y+first!.height/2);await page.mouse.down();await page.mouse.move(area!.x+area!.width*.55,area!.y+area!.height*.45,{steps:15});await page.mouse.up();}
   for(const id of opening)await expect(page.locator(`[data-tile-id="${id}"]`)).toBeVisible();
+  // Undo the dragged opening, then place the same selection with a tap instead.
+  await page.getByRole('button',{name:'Undo',exact:true}).click();await expect(page.locator('[data-tile-id]')).toHaveCount(0);
+  for(const id of opening)await privateRack.locator(`[data-rack-tile="${id}"]`).click();
+  const tapArea=await page.locator('.play-viewport').boundingBox(),tapX=tapArea!.x+tapArea!.width*.55,tapY=tapArea!.y+tapArea!.height*.45;
+  if(seat==='east'){
+   const cdp=await page.context().newCDPSession(page);await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:tapX,y:tapY}]});await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await cdp.detach();
+  }else await page.mouse.click(tapX,tapY);
+  for(const id of opening)await expect(page.locator(`[data-tile-id="${id}"]`)).toBeVisible();
+  await expect(privateRack.locator('[data-rack-tile][aria-pressed="true"]')).toHaveCount(0);
   const view=await page.locator('.play-viewport').boundingBox();
   await expect(page.locator('.play-area')).toHaveAttribute('data-square',String(seat==='east'||seat==='west'));
   if(seat==='east'||seat==='west')expect(Math.abs(view!.width-view!.height)).toBeLessThan(2);else expect(view!.width/view!.height).toBeGreaterThan(2);
@@ -103,5 +112,5 @@ try{
  await page.getByRole('button',{name:'Reveal Mover’s rack',exact:true}).click();
  await page.locator('[data-private-seat="tabletop-owner"] .tabletop-inspection button').first().click();
  await page.evaluate(()=>window.dispatchEvent(new Event('blur')));await expect(page.locator('[data-private-seat]')).toHaveCount(0);
- expect(errors).toEqual([]);console.log('PASS: eight walk-up seats, five-player cap, clockwise setup, screened Angel choices/racks, rotating full-width/square Heaven, openings and pointer-correct table drags from all four edges (including touch), automatic single draws, private two-choice inspection across reload, blur cover, portrait fit.');
+ expect(errors).toEqual([]);console.log('PASS: eight walk-up seats, five-player cap, clockwise setup, screened Angel choices/racks, rotating full-width/square Heaven, tap-to-place openings and pointer-correct table drags from all four edges (including touch), automatic single draws, private two-choice inspection across reload, blur cover, portrait fit.');
 }finally{await writeFile('tmp/qa/tabletop/errors.json',JSON.stringify(errors));await browser.close();}

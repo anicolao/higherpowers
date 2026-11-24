@@ -1,10 +1,15 @@
 # Learned opponents
 
+The current ladder uses the corrected Sanctuary rule: exactly one formation on
+creation, then extensions and splits of protected formations, with no independent
+formation imports. New events use rules version 2; historical version-1 events
+remain replayable. Previous models are archived under
+`models/archive/before-sanctuary-v2/`; their results describe the old rule only.
+
 The difficulty ladder uses complete three-round games. Easy must beat the frozen
 heuristic; standard must beat frozen easy; hard must beat frozen standard. A
 promotion benchmark uses head-to-head matches against the predecessor, with
-all twelve Angels and rotated seats. Easy and standard also passed the stronger
-one-versus-field benchmark across 2–5 players. Multiplayer cohorts remain useful
+all twelve Angels and rotated seats. Multiplayer cohorts remain useful
 diagnostics; set `PLAYERS=all` to run them. Ties do not count as wins.
 
 Head-to-head promotion requires at least 80% outright wins overall and an overall
@@ -92,26 +97,44 @@ and legacy behavior. `bun run review:bots` checks worker-driven play, animation
 handoff, reload, and tabletop difficulty selection. Firebase emulator tests cover
 persistent registration and reject invalid difficulty values.
 
-## Recorded results
+## Recorded results under corrected Sanctuary rules
 
-The head-to-head target is the primary promotion test. Easy and standard also
-passed separate, more demanding one-versus-field 2–5-player cohorts. Failed
+The head-to-head target is the primary promotion test. Earlier full-field and
+head-to-head reports describe the previous Sanctuary rule. Historical and failed
 exploratory reports are retained rather than overwritten.
 
 | Level | Frozen opponent | Head-to-head wins | Win rate |
 | --- | --- | --- | --- |
-| Easy | Original heuristic | 1,169 / 1,200 | 97.4% |
-| Standard | Easy | 543 / 600 | 90.5% |
-| Hard | Standard | 989 / 1,200 | 82.4% |
+| Easy | Original heuristic | 1,175 / 1,200 | 97.9% |
+| Standard | Easy | 1,089 / 1,200 | 90.75% |
+| Hard | Standard | 1,072 / 1,200 | 89.33% |
 
-Easy’s new duel report is `reports/rl/hp-rl-heldout-easy-heads-v1.json`.
-Standard’s duel subset and its 2,137/2,400 full-field result are in
-`reports/rl/hp-rl-heldout-standard-v3.json`. All twelve powers were used in
-standard’s cohort. Reports include each Angel separately; the overall balanced
-win rate is the promotion target.
+The current reports use the namespace `hp-rl-heldout-<level>-sanctuary-v2`.
+Standard and hard exercised every gift. Reports include each Angel separately; the overall
+balanced win rate is the promotion target, rather than an 80% claim for each
+Angel or against a multiplayer field.
 
-Hard’s independent report is `reports/rl/hp-rl-heldout-hard-heads-v1.json`.
-Its overall 95% Wilson interval is 80.2–84.5%. Individual Angel win rates
-range from 68% (Jophiel) to 97% (Barachiel), with every gift exercised.
-This qualifies the balanced head-to-head policy; it does not establish an
-80% win rate for each Angel or against a multiplayer field of standard bots.
+To replace a level after a rule change, promotion requires an explicit
+`MODEL_GENERATION=before-sanctuary-v2` archive directory. It preserves the old
+model bytes and qualification before installing the newly qualified candidate.
+Never apply an earlier rule generation's performance claim to a changed engine.
+
+Hard's overall 95% Wilson interval is 87.46–90.96%. Its breakdown against
+corrected-rule standard is below. Each Angel has 100 complete three-round games;
+activations are counts across 300 rounds, rather than a measure of the benefit
+caused by using a gift.
+
+| Angel | Gift | Wins / 100 | Activations |
+| --- | --- | --- | --- |
+| Raguel | Judgment | 97 | 281 |
+| Zadkiel | Forgiveness | 94 | 289 |
+| Raphael | Penance | 94 | 233 |
+| Barachiel | Sanctuary of Processions | 91 | 295 |
+| Chamuel | Communion | 91 | 292 |
+| Gabriel | Calling | 90 | 274 |
+| Michael | Banishment | 90 | 209 |
+| Jegudiel | Zeal | 87 | 300 |
+| Uriel | Foretelling | 86 | 282 |
+| Jophiel | Transfiguration | 86 | 58 |
+| Haniel | Heavenly Dance | 84 | 236 |
+| Selaphiel | Sanctuary of Choirs | 82 | 292 |

@@ -24,23 +24,52 @@
   "powers": false,
   "planning": 1,
   "training": {
-    "namespace": "hp-rl-training-easy-v3",
-    "sourceRoot": "tmp/rl/sources/hp-rl-training-easy-v3-1795512290956",
+    "namespace": "hp-rl-training-easy-sanctuary-v2",
+    "playerCount": 2,
+    "warmStart": {
+      "path": "models/easy.json",
+      "sha256": "f5efd014ddb1969b5f56485f87d6f3b7200e2d2aec8095cb5d978097116ebd90",
+      "training": {
+        "namespace": "hp-rl-training-easy-v3",
+        "sourceRoot": "tmp/rl/sources/hp-rl-training-easy-v3-1795512290956",
+        "seed": 613299,
+        "generation": 2,
+        "episodes": 1152,
+        "opponent": "heuristic",
+        "development": {
+          "games": 96,
+          "wins": 94,
+          "ties": 0,
+          "winRate": 0.9791666666666666,
+          "wilson95": [
+            0.9271914417038553,
+            0.9942681502898628
+          ],
+          "meanMargin": 270.6770833333333,
+          "meanSteps": 455.1458333333333,
+          "powers": {
+            "uriel": 24
+          }
+        }
+      }
+    },
+    "sourceRoot": "tmp/rl/sources/hp-rl-training-easy-sanctuary-v2-1795530607454",
     "seed": 613299,
     "generation": 2,
-    "episodes": 1152,
+    "selectedGeneration": 0,
+    "episodes": 288,
     "opponent": "heuristic",
     "development": {
       "games": 96,
-      "wins": 94,
+      "wins": 93,
       "ties": 0,
-      "winRate": 0.9791666666666666,
+      "winRate": 0.96875,
       "wilson95": [
-        0.9271914417038553,
-        0.9942681502898628
+        0.912111738510863,
+        0.989316123222122
       ],
-      "meanMargin": 270.6770833333333,
-      "meanSteps": 455.1458333333333,
+      "meanMargin": 163.21875,
+      "meanSteps": 564.0208333333334,
       "powers": {
         "uriel": 24
       }

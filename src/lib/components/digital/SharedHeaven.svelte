@@ -7,8 +7,8 @@
  import SuitSymbol from './SuitSymbol.svelte';
  import {tileColumn,groupRect,geometry,findVerticalSnap,alignedStack,transposeStack,type MagnetKind} from '$lib/tabletop/magnetism';
  import {analyzeFormation,jokerFacesFor,fitInitialGroups,insertTiles,splitTiles,overlaps,type TileGroup,type Soul,type Rect,type Formation,type SoulSpec,type Repair} from '$lib/tabletop/rearrangement';
- let {moved=false,rescued=false,resetKey=0,game=false,initialGroups=[],boardKey='',readOnly=false,canTouch=()=>true,onChange,onSuggestion,hand=[],inspect=analyzeFormation,zoneLabel=()=>'',normalizeGroup=(g:TileGroup)=>g,orderGroup=(g:TileGroup)=>g,onFinish,finishAllowed=false,finishReason='',onTilePick,pickedTiles=[],insetX=0,insetY=0,returnable=[],motionTiles=[],magnetKind,controlsHost=null,reserveBottom}:{moved?:boolean;rescued?:boolean;resetKey?:number;game?:boolean;initialGroups?:TileGroup[];boardKey?:string;readOnly?:boolean;canTouch?:(g:TileGroup)=>boolean;onChange?:(g:TileGroup[],dragging:boolean)=>void;onSuggestion?:(s:SoulSpec,g:string,r:Repair)=>void;hand?:Soul[];inspect?:(tiles:Soul[])=>Formation;zoneLabel?:(zone:string)=>string;normalizeGroup?:(g:TileGroup)=>TileGroup;orderGroup?:(g:TileGroup)=>TileGroup;onFinish?:()=>void;finishAllowed?:boolean;finishReason?:string;onTilePick?:(tile:string,group:string)=>boolean;pickedTiles?:string[];insetX?:number;insetY?:number;returnable?:string[];motionTiles?:string[];magnetKind?:MagnetKind;controlsHost?:HTMLElement|null;reserveBottom?:number}=$props();
- let appliedKey:string|null=null;
+ let {moved=false,rescued=false,resetKey=0,game=false,initialGroups=[],boardKey='',readOnly=false,canTouch=()=>true,onChange,onSuggestion,hand=[],inspect=analyzeFormation,zoneLabel=()=>'',normalizeGroup=(g:TileGroup)=>g,orderGroup=(g:TileGroup)=>g,onFinish,finishAllowed=false,finishReason='',onTilePick,onPlaceTap,tapToPlace=false,pickedTiles=[],insetX=0,insetY=0,returnable=[],motionTiles=[],magnetKind,controlsHost=null,reserveBottom}:{moved?:boolean;rescued?:boolean;resetKey?:number;game?:boolean;initialGroups?:TileGroup[];boardKey?:string;readOnly?:boolean;canTouch?:(g:TileGroup)=>boolean;onChange?:(g:TileGroup[],dragging:boolean)=>void;onSuggestion?:(s:SoulSpec,g:string,r:Repair)=>void;hand?:Soul[];inspect?:(tiles:Soul[])=>Formation;zoneLabel?:(zone:string)=>string;normalizeGroup?:(g:TileGroup)=>TileGroup;orderGroup?:(g:TileGroup)=>TileGroup;onFinish?:()=>void;finishAllowed?:boolean;finishReason?:string;onTilePick?:(tile:string,group:string)=>boolean;onPlaceTap?:(x:number,y:number)=>void;tapToPlace?:boolean;pickedTiles?:string[];insetX?:number;insetY?:number;returnable?:string[];motionTiles?:string[];magnetKind?:MagnetKind;controlsHost?:HTMLElement|null;reserveBottom?:number}=$props();
+ let appliedKey:string|null=null;let placePress:{pointer:number;x:number;y:number}|null=null;
  $effect(()=>{const key=boardKey;if(game&&key!==appliedKey){const incoming=initialGroups;untrack(()=>{clearTap();clearTilePreview();groups=JSON.parse(JSON.stringify(incoming));history=[];selected=null;wholeGroup=null;dragging=null;appliedKey=key;worldWidth=Math.max(viewportWidth-insetX,...groups.map(g=>g.x+(g.tiles.length+1)*47+20));worldHeight=Math.max(viewportHeight-insetY,...groups.map(g=>g.y+100));});}});
  $effect(()=>{const snapshot=JSON.stringify(groups),moving=!!dragging?.moved;if(game&&initialized)untrack(()=>{const normalized:TileGroup[]=JSON.parse(snapshot).map(normalizeGroup);if(JSON.stringify(normalized)!==snapshot)groups=normalized;onChange?.(normalized,moving);});});
  function controlPortal(node:HTMLElement,host:HTMLElement|null){const original=node.parentNode;function move(target:HTMLElement|null){if(target)target.append(node);else original?.appendChild(node);}move(host);return {update:move,destroy(){node.remove();}};}
@@ -123,7 +123,7 @@
  }
  function commitTap(){const tileId=pendingTap?.tileId;clearTap();if(tileId)cut(tileId);}
  function down(event:PointerEvent,id:string,tileId:string){
-  if(event.button!==0||dragging||readOnly)return;if(onTilePick?.(tileId,id)){event.preventDefault();return;}event.preventDefault();
+  if(event.button!==0||dragging)return;if(tapToPlace){event.preventDefault();placePress={pointer:event.pointerId,x:event.clientX,y:event.clientY};return;}if(readOnly)return;if(onTilePick?.(tileId,id)){event.preventDefault();return;}event.preventDefault();
   const secondTap=pendingTap?.tileId===tileId&&performance.now()-pendingTap.time<380;
   if(pendingTap){if(secondTap)clearTap();else commitTap();}
   const group=groups.find(g=>g.tiles.some(t=>t.id===tileId));if(!group)return;
@@ -132,6 +132,7 @@
   (event.currentTarget as HTMLButtonElement).focus({preventScroll:true});
  }
  function move(event:PointerEvent){
+  if(placePress?.pointer===event.pointerId&&Math.hypot(event.clientX-placePress.x,event.clientY-placePress.y)>8)placePress=null;
   if(!dragging||event.pointerId!==dragging.pointer)return;const delta=localVector(event.clientX-dragging.startX,event.clientY-dragging.startY,elementPose(surface)),dx=delta.x,dy=delta.y;
   if(!dragging.moved&&Math.hypot(dx,dy)<5)return;
   if(!dragging.moved){
@@ -142,14 +143,15 @@
   group.x=Math.max(8,Math.min(worldWidth-rect(group).width-8,dragging.x+dx));group.y=Math.max(8,Math.min(surfaceHeight-tileHeight-8,dragging.y+dy));
  }
  function up(event:PointerEvent){
+  if(placePress?.pointer===event.pointerId){const press=placePress;placePress=null;if(Math.hypot(event.clientX-press.x,event.clientY-press.y)<=8)onPlaceTap?.(event.clientX,event.clientY);return;}
   if(!dragging||event.pointerId!==dragging.pointer)return;const session=dragging;
   if(session.moved){const before=capture();finishDrop(session.id,session.whole);dragging=null;void animateLayout(before);}
   else if(session.secondTap){clearTap();wholeGroup=session.id;selected=session.id;announcement='Whole group selected. Drag any of its souls to move it together.';}
   else{clearTap();pendingTap={tileId:session.tileId,time:performance.now(),timer:setTimeout(commitTap,380)};}
   dragging=null;if(surface.hasPointerCapture(event.pointerId))surface.releasePointerCapture(event.pointerId);
  }
- function cancel(){if(dragging?.moved){const prior=history.pop();if(prior){groups=prior.groups;}selected=dragging.originalId;wholeGroup=dragging.whole?dragging.originalId:null;}dragging=null;clearTap();}
- function blank(event:PointerEvent){if(event.target!==surface||dragging)return;commitTap();selected=null;wholeGroup=null;}
+ function cancel(){placePress=null;if(dragging?.moved){const prior=history.pop();if(prior){groups=prior.groups;}selected=dragging.originalId;wholeGroup=dragging.whole?dragging.originalId:null;}dragging=null;clearTap();}
+ function blank(event:PointerEvent){if((event.target!==surface&&(!tapToPlace||(event.target as Element).closest('button')))||dragging||event.button!==0)return;commitTap();selected=null;wholeGroup=null;if(tapToPlace)placePress={pointer:event.pointerId,x:event.clientX,y:event.clientY};}
  function key(event:KeyboardEvent,id:string,tileId:string){if(!editable(groups.find(g=>g.id===id)))return;
   if((event.key==='Enter'||event.key===' ')&&event.shiftKey){event.preventDefault();clearTap();cut(tileId);return;}
   if(event.key==='Enter'||event.key===' '){event.preventDefault();clearTap();const target=wholeGroup===id?findJoin(id):null;if(target){save();merge(id,target.id,target.index,true);}else{selected=id;wholeGroup=id;announcement='Whole group selected.';}return;}

@@ -1,5 +1,5 @@
 import {applyEvent,commandEvent,total,angelIds,type State,type Command,type Angel} from '../../src/lib/engine/engine';
-import {botCommand} from '../../src/lib/engine/bot';
+import {frozenHeuristic} from './baseline';
 import {learnedCommand,type Model} from '../../src/lib/engine/rl/policy';
 export interface Match {seed:string;players:number;seat:number;angel:Angel;}
 export interface Result {seed:string;win:boolean;tie:boolean;margin:number;steps:number;seat:number;players:number;angel:Angel;powers:Record<string,number>;}
@@ -22,7 +22,7 @@ export function match(spec:Match,model:Model,opponent:Model|null):Result{
   let command:Command|null=null,actor='p0';
   if(s.phase==='round-end')command={type:'next-round'};
   else for(const p of s.players){
-   command=p.id===mine?learnedCommand(s,p.id,model):opponent?learnedCommand(s,p.id,opponent):botCommand(s,p);
+   command=p.id===mine?learnedCommand(s,p.id,model):opponent?learnedCommand(s,p.id,opponent):frozenHeuristic(s,p);
    if(command){actor=p.id;break;}
   }
   if(!command)throw Error(`No command in ${s.phase}`);

@@ -52,8 +52,8 @@ export function rearrangePlan(o:Observation,base:Plan,depth:number,mode=0):Plan{
  const mandatory=mask([...selected.flatMap(g=>g.tiles),...(base.opening??[])]),own=mask(hand);
  let ts=melds(ids.map(id=>o.tiles[id]),o.decree,depth===1?600:depth===2?1000:3000);for(const g of selected)if(!ts.some(t=>t.join(',')===g.tiles.join(',')))ts.push(g.tiles);
  if(depth===3)ts=copyVariants(ts,o,ids);
- const entries=ts.map(tiles=>({tiles,mask:mask(tiles),gain:tiles.filter(id=>hand.includes(id)).reduce((n,id)=>n+(mode===1?tileValue(o,id):10),0)}));
- const byTile=ids.map((_,i)=>entries.filter(e=>!!(e.mask&(1n<<BigInt(i)))));
+ const entries=ts.map(tiles=>({tiles,mask:depth===3?0n:mask(tiles),gain:tiles.filter(id=>hand.includes(id)).reduce((n,id)=>n+(mode===1?tileValue(o,id):10),0)}));
+ const byTile=depth===3?[]:ids.map((_,i)=>entries.filter(e=>!!(e.mask&(1n<<BigInt(i)))));
  let best=base,score=base.groups.flatMap(g=>g.tiles).filter(id=>hand.includes(id)).reduce((n,id)=>n+(mode===1?tileValue(o,id):10),0),nodes=0;const budget=depth===1?80:depth===2?Math.max(3,o.rivals.length+1)*160:1800,maxGain=hand.reduce((n,id)=>n+(mode===1?tileValue(o,id):10),0);
  function visit(left:bigint,covered:typeof entries,gain:number){
   if(score>=maxGain||++nodes>budget)return;
@@ -73,7 +73,7 @@ export function rearrangePlan(o:Observation,base:Plan,depth:number,mode=0):Plan{
  // comparisons; the mandatory-cover rule and physical-tile identity stay exact.
  type Bits=[number,number,number,number];
  const bits=(mask:bigint):Bits=>[Number(mask&0xffffffffn)|0,Number((mask>>32n)&0xffffffffn)|0,Number((mask>>64n)&0xffffffffn)|0,Number((mask>>96n)&0xffffffffn)|0];
- const packed=entries.map(e=>({...e,bits:bits(e.mask)})),requiredBits=bits(mandatory),cells=ids.map((_,i)=>packed.filter(e=>!!(e.bits[i>>>5]&(1<<(i&31))))),order=ids.map((_,i)=>i).sort((a,b)=>cells[a].length-cells[b].length);
+ const packed=entries.map(e=>{const b:Bits=[0,0,0,0];for(const id of e.tiles){const i=index.get(id)!;b[i>>>5]|=1<<(i&31);}return {...e,bits:b};}),requiredBits=bits(mandatory),cells=ids.map((_,i)=>packed.filter(e=>!!(e.bits[i>>>5]&(1<<(i&31))))),order=ids.map((_,i)=>i).sort((a,b)=>cells[a].length-cells[b].length);
  const fits=(b:Bits,left:Bits)=>!(b[0]&~left[0])&&!(b[1]&~left[1])&&!(b[2]&~left[2])&&!(b[3]&~left[3]);
  function numeric(left:Bits,covered:typeof packed,gain:number){
   if(score>=maxGain||++nodes>budget)return;

@@ -98,6 +98,20 @@ backs up the catalogue, uses an update-time precondition, and reads the result
 back. Existing titles, visibility, unrelated fields, and other documents are
 preserved. No changes to either launcher’s source are needed.
 
+## Learned computer players
+
+Practice, friends tables, and shared tabletops offer the installed trained levels.
+Choose **Computer difficulty** before adding a computer, or choose **New computers**
+in the tabletop menu. The selected level is recorded in the registration event;
+existing games without a level retain the original heuristic. New tables default
+to standard. Bot calculations run in a worker, cancel obsolete requests, and hand
+legal commands back to the same animated, event-sourced game.
+
+The [training notes](docs/rl-training.md) describe the reinforcement-learning
+ladder, public-information boundary, frozen models, and independent benchmarks.
+`bun run review:bots` checks the browser handoff and reloads; `bun run rl:verify`
+reproduces the installed models’ saved benchmarks.
+
 ## The tabletop kit
 
 Print one each of **12 Angel cards, 10 Heavenly Decrees, and 5 Final Judgments**.

@@ -64,6 +64,44 @@
       ],
       "powers": true,
       "planning": 2
+    },
+    "hard": {
+      "version": 1,
+      "level": "hard",
+      "algorithm": "episodic cross-entropy reinforcement learning",
+      "weights": [
+        0,
+        8.236559591147753,
+        0.553172578518684,
+        1.0166426272804459,
+        2.2200140109512576,
+        -0.5096757152264371,
+        30,
+        -1.7498793695553136,
+        -0.7465942391172843,
+        -3.0202197391534993,
+        -3.9849122811230995,
+        0.23048213520508765,
+        3.9573683234963135,
+        5.089610670978959,
+        3.0672692632808696,
+        0.11466237247159605,
+        1.4099369082981759,
+        0.706262636040134,
+        -5.997431778840396,
+        1,
+        2,
+        4,
+        -2,
+        12,
+        4,
+        0,
+        -2.294528583740516,
+        0,
+        -24
+      ],
+      "powers": true,
+      "planning": 3
     }
   },
   "qualifications": {
@@ -78,6 +116,13 @@
       "modelSha256": "24ca887f8566bd2755541debbf18288a5967e1c2a91f23d192446702e0fee3ab",
       "opponentSha256": "f5efd014ddb1969b5f56485f87d6f3b7200e2d2aec8095cb5d978097116ebd90",
       "winRate": 0.8904166666666666
+    },
+    "hard": {
+      "report": "reports/rl/hp-rl-heldout-hard-heads-v1.json",
+      "model": "models/hard.json",
+      "modelSha256": "033ca9d1c71c4f8d2f46f41d61d30b39eb6883df2cf587f0d67769ced6e3e38b",
+      "opponentSha256": "24ca887f8566bd2755541debbf18288a5967e1c2a91f23d192446702e0fee3ab",
+      "winRate": 0.8241666666666667
     }
   }
 }

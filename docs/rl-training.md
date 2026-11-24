@@ -91,3 +91,27 @@ all decrees, Communion, Purgatory, sanctuary release, deterministic difficulty,
 and legacy behavior. `bun run review:bots` checks worker-driven play, animation
 handoff, reload, and tabletop difficulty selection. Firebase emulator tests cover
 persistent registration and reject invalid difficulty values.
+
+## Recorded results
+
+The head-to-head target is the primary promotion test. Easy and standard also
+passed separate, more demanding one-versus-field 2–5-player cohorts. Failed
+exploratory reports are retained rather than overwritten.
+
+| Level | Frozen opponent | Head-to-head wins | Win rate |
+| --- | --- | --- | --- |
+| Easy | Original heuristic | 1,169 / 1,200 | 97.4% |
+| Standard | Easy | 543 / 600 | 90.5% |
+| Hard | Standard | 989 / 1,200 | 82.4% |
+
+Easy’s new duel report is `reports/rl/hp-rl-heldout-easy-heads-v1.json`.
+Standard’s duel subset and its 2,137/2,400 full-field result are in
+`reports/rl/hp-rl-heldout-standard-v3.json`. All twelve powers were used in
+standard’s cohort. Reports include each Angel separately; the overall balanced
+win rate is the promotion target.
+
+Hard’s independent report is `reports/rl/hp-rl-heldout-hard-heads-v1.json`.
+Its overall 95% Wilson interval is 80.2–84.5%. Individual Angel win rates
+range from 68% (Jophiel) to 97% (Barachiel), with every gift exercised.
+This qualifies the balanced head-to-head policy; it does not establish an
+80% win rate for each Angel or against a multiplayer field of standard bots.

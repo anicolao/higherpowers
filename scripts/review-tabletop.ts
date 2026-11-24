@@ -24,7 +24,7 @@ try{
   const port=page.locator('.tabletop-port').filter({has:page.locator(`[aria-label="Choose ${name}’s Angel"]`)});
   await port.locator('.seat-choices button').first().click();
  }
- await expect(page.locator('.heaven-board')).toBeVisible();await expect(page.locator('.computer-flight')).toHaveCount(0,{timeout:10000});
+ await expect(page.locator('.heaven-board')).toBeVisible();await expect(page.locator('.play-area')).toHaveAttribute('data-turning','false');await expect(page.locator('.computer-flight')).toHaveCount(0,{timeout:10000});
  // New rounds fold every private rack before any tile faces are rendered.
  await expect(page.locator('[data-private-seat]')).toHaveCount(0);
  await expect(page.locator('[data-rack-tile]')).toHaveCount(0);
@@ -43,7 +43,7 @@ try{
  await page.getByRole('button',{name:`Cover ${active.name}’s rack`,exact:true}).click();
  await expect(page.locator('[data-rack-tile]')).toHaveCount(0);
  await page.reload();await expect(page.locator('[data-private-seat]')).toHaveCount(0);
- await page.setViewportSize({width:1100,height:1800});await page.screenshot({path:'tmp/qa/tabletop/05-portrait.png'});
+ await page.setViewportSize({width:1100,height:1800});await expect(page.locator('.play-area')).toHaveAttribute('data-turning','false');await page.screenshot({path:'tmp/qa/tabletop/05-portrait.png'});
  for(const port of await page.locator('[data-tabletop-seat]').all()){const box=await port.boundingBox();expect(box!.x).toBeGreaterThanOrEqual(-1);expect(box!.y).toBeGreaterThanOrEqual(-1);expect(box!.x+box!.width).toBeLessThanOrEqual(1101);expect(box!.y+box!.height).toBeLessThanOrEqual(1801);}
  expect(await page.evaluate(()=>({x:document.documentElement.scrollWidth<=innerWidth,y:document.documentElement.scrollHeight<=innerHeight}))).toEqual({x:true,y:true});
 
@@ -63,7 +63,7 @@ try{
    if(opening.length){saved=transcript;break;}
   }
   expect(saved.length).toBeGreaterThan(0);
-  await page.evaluate(events=>localStorage.setItem('hp-tabletop-local',JSON.stringify(events)),saved);await page.reload();
+  await page.evaluate(events=>localStorage.setItem('hp-tabletop-local',JSON.stringify(events)),saved);await page.reload();await expect(page.locator('.play-area')).toHaveAttribute('data-turning','false');
   await page.getByRole('button',{name:'Reveal Mover’s rack',exact:true}).click();
   const privateRack=page.locator('[data-private-seat="tabletop-owner"]');
   for(const id of opening)await privateRack.locator(`[data-rack-tile="${id}"]`).click();
@@ -74,19 +74,27 @@ try{
    await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await cdp.detach();
   }else{await page.mouse.move(first!.x+first!.width/2,first!.y+first!.height/2);await page.mouse.down();await page.mouse.move(area!.x+area!.width*.55,area!.y+area!.height*.45,{steps:15});await page.mouse.up();}
   for(const id of opening)await expect(page.locator(`[data-tile-id="${id}"]`)).toBeVisible();
+  const view=await page.locator('.play-viewport').boundingBox();
+  await expect(page.locator('.play-area')).toHaveAttribute('data-square',String(seat==='east'||seat==='west'));
+  if(seat==='east'||seat==='west')expect(Math.abs(view!.width-view!.height)).toBeLessThan(2);else expect(view!.width/view!.height).toBeGreaterThan(2);
+  const movingTile=page.locator(`[data-tile-id="${opening[0]}"]`);await movingTile.dblclick();
+  const old=await movingTile.boundingBox();await page.mouse.move(old!.x+old!.width/2,old!.y+old!.height/2);await page.mouse.down();await page.mouse.move(old!.x+old!.width/2+50,old!.y+old!.height/2+35,{steps:12});await page.mouse.up();
+  await expect.poll(async()=>{const b=await movingTile.boundingBox();return Math.abs(b!.x-old!.x-50)+Math.abs(b!.y-old!.y-35);}).toBeLessThan(4);
+  await page.screenshot({path:`tmp/qa/tabletop/08-${seat}-facing.png`});
+
   await expect(page.getByRole('button',{name:'Finish organizing',exact:true})).toHaveAttribute('aria-disabled','false');
   await page.getByRole('button',{name:'Finish organizing',exact:true}).click();
   await expect.poll(async()=>page.evaluate(()=>JSON.parse(localStorage.getItem('hp-tabletop-local')!).at(-1).command.type)).toBe('organize');
-  await page.getByRole('button',{name:'Reveal Other’s rack',exact:true}).click();
-  await page.getByRole('button',{name:'Draw a soul',exact:true}).click();
+  await expect(page.locator('.play-area')).toHaveAttribute('data-turning','false');await page.getByRole('button',{name:'Reveal Other’s rack',exact:true}).click();
+  await expect(page.locator('.play-area')).toHaveAttribute('data-turning','false');await page.getByRole('button',{name:'Draw a soul',exact:true}).click();
   await expect.poll(async()=>page.evaluate(()=>JSON.parse(localStorage.getItem('hp-tabletop-local')!).at(-1).command.type)).toBe('keep');
   const after=replay(await page.evaluate(()=>JSON.parse(localStorage.getItem('hp-tabletop-local')!)));
   expect(after.players.find(p=>p.id==='tabletop-owner')!.opened).toBe(true);expect(after.players.find(p=>p.id==='other-player')!.hand).toHaveLength(15);
-  await page.screenshot({path:`tmp/qa/tabletop/06-${seat}-played.png`});
+  await expect(page.locator('.play-area')).toHaveAttribute('data-turning','false');await expect(page.locator('.computer-flight')).toHaveCount(0);await page.screenshot({path:`tmp/qa/tabletop/06-${seat}-played.png`});
  }
  // The leading player inspects two; those faces must stay behind their screen.
  await expect(page.locator('.computer-flight')).toHaveCount(0,{timeout:10000});
- await page.getByRole('button',{name:'Draw a soul',exact:true}).click();
+ await expect(page.locator('.play-area')).toHaveAttribute('data-turning','false');await page.getByRole('button',{name:'Draw a soul',exact:true}).click();
  await expect(page.locator('[data-private-seat="tabletop-owner"] .tabletop-inspection button')).toHaveCount(2);
  await expect(page.locator('.inspection-rack')).toHaveCount(0);
  await page.getByRole('button',{name:'Cover Mover’s rack',exact:true}).click();
@@ -95,5 +103,5 @@ try{
  await page.getByRole('button',{name:'Reveal Mover’s rack',exact:true}).click();
  await page.locator('[data-private-seat="tabletop-owner"] .tabletop-inspection button').first().click();
  await page.evaluate(()=>window.dispatchEvent(new Event('blur')));await expect(page.locator('[data-private-seat]')).toHaveCount(0);
- expect(errors).toEqual([]);console.log('PASS: eight walk-up seats, five-player cap, clockwise setup, screened Angel choices/racks, openings from all four edges (including touch), automatic single draws, private two-choice inspection across reload, blur cover, portrait fit.');
+ expect(errors).toEqual([]);console.log('PASS: eight walk-up seats, five-player cap, clockwise setup, screened Angel choices/racks, rotating full-width/square Heaven, openings and pointer-correct table drags from all four edges (including touch), automatic single draws, private two-choice inspection across reload, blur cover, portrait fit.');
 }finally{await writeFile('tmp/qa/tabletop/errors.json',JSON.stringify(errors));await browser.close();}

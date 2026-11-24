@@ -46,6 +46,9 @@ Open `/tabletop` on a horizontal touchscreen. Eight positions surround Heaven:
 three on each long edge and one on each short edge. Join at any two to five
 positions, then touch the central Angel deck to deal. Play order follows the
 occupied positions clockwise. Computers may occupy chosen positions too.
+Heaven and its public controls turn toward the current player. With only
+long-edge seats occupied it uses the full available width; an occupied short
+edge makes it square so every quarter-turn fits. Rack stations stay in place.
 
 Place a physical privacy screen over each player's rack area before touching
 **Screen in place · reveal**. Angel choices, racks, bag inspection, and Communion

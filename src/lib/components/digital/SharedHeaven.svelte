@@ -1,6 +1,7 @@
 <script lang="ts">
  import {onMount,tick,untrack} from 'svelte';
  import {base} from '$app/paths';
+ import {elementPose,localPoint,localVector} from '$lib/tabletop/coordinates';
  import {tidyGroups} from '$lib/tabletop/layout';
  import SoulTile from './SoulTile.svelte';
  import SuitSymbol from './SuitSymbol.svelte';
@@ -15,15 +16,15 @@
  export function placeTile(tile:Soul,clientX:number,clientY:number){return placeTiles([tile],clientX,clientY);}
  export function placeTiles(tiles:Soul[],clientX:number,clientY:number,anchorIndex=0){
   if(!editable()||!tiles.length||new Set(tiles.map(t=>t.id)).size!==tiles.length||tiles.some(tile=>groups.some(g=>g.tiles.some(t=>t.id===tile.id))))return false;
-  const box=surface.getBoundingClientRect(),bounds=viewport.getBoundingClientRect();if(clientX<bounds.left||clientX>bounds.right||clientY<bounds.top||clientY>bounds.bottom)return false;
-  const before=capture(true);save();const x=Math.max(8,(clientX-box.left)/scale-tileSize/2-anchorIndex*step),y=Math.max(8,(clientY-box.top)/scale-tileHeight/2),id=`placed-${crypto.randomUUID()}`;
+  const point=localPoint(clientX,clientY,elementPose(surface)),inside=localPoint(clientX,clientY,elementPose(viewport));if(inside.x<0||inside.x>viewport.clientWidth||inside.y<0||inside.y>viewport.clientHeight)return false;
+  const before=capture(true);save();const x=Math.max(8,point.x-tileSize/2-anchorIndex*step),y=Math.max(8,point.y-tileHeight/2),id=`placed-${crypto.randomUUID()}`;
   groups.push(normalizeGroup({id,x,y,tiles:[...tiles],zone:null}));worldWidth=Math.max(worldWidth,x+tiles.length*step+18);worldHeight=Math.max(worldHeight,y+tileHeight+18);
   finishDrop(id,false);void animateLayout(before);return true;
  }
  export function previewTiles(tiles:Soul[],clientX:number,clientY:number,anchorIndex=0,openingMeld=false){
   if(!editable()||!tiles.length){clearTilePreview();return;}
-  const box=surface.getBoundingClientRect(),bounds=viewport.getBoundingClientRect();if(clientX<bounds.left||clientX>bounds.right||clientY<bounds.top||clientY>bounds.bottom){clearTilePreview();return;}
-  if(!external)previewScale=fitScale;externalOpening=openingMeld;external=normalizeGroup({id:'rack-drag-preview',x:Math.max(8,(clientX-box.left)/scale-tileSize/2-anchorIndex*step),y:Math.max(8,(clientY-box.top)/scale-tileHeight/2),tiles:[...tiles],zone:null});
+  const point=localPoint(clientX,clientY,elementPose(surface)),inside=localPoint(clientX,clientY,elementPose(viewport));if(inside.x<0||inside.x>viewport.clientWidth||inside.y<0||inside.y>viewport.clientHeight){clearTilePreview();return;}
+  if(!external)previewScale=fitScale;externalOpening=openingMeld;external=normalizeGroup({id:'rack-drag-preview',x:Math.max(8,point.x-tileSize/2-anchorIndex*step),y:Math.max(8,point.y-tileHeight/2),tiles:[...tiles],zone:null});
  }
  export function hasPreview(){return !!external;}
  export function previewSnapshot(){return JSON.parse(JSON.stringify(external?[...groups,external]:groups)) as TileGroup[];}
@@ -34,19 +35,19 @@
  export function snapshot(){return structuredClone($state.snapshot(groups));}
 
  let automaticAnimations:Animation[]=[];const layoutFlights=new Map<string,{node:HTMLElement;animation:Animation;target:HTMLElement;visibility:string}>();
- function capture(includeSources=false){const nodes=[...surface?.querySelectorAll<HTMLElement>('[data-tile-id]')??[]];if(includeSources)for(const selector of ['[data-rack-tile]','[data-communion-tile]','[data-purgatory-tile]','[data-dragged-tile]'])nodes.push(...document.querySelectorAll<HTMLElement>(selector));return new Map(nodes.map(el=>{const id=el.dataset.tileId??el.dataset.rackTile??el.dataset.communionTile??el.dataset.purgatoryTile??el.dataset.draggedTile!,visible=layoutFlights.get(id)?.node??el;return [id,{box:visible.getBoundingClientRect(),node:visible.cloneNode(true) as HTMLElement,heaven:!!el.dataset.tileId}] as const;}));}
+ function capture(includeSources=false){const nodes=[...surface?.querySelectorAll<HTMLElement>('[data-tile-id]')??[]];if(includeSources)for(const selector of ['[data-rack-tile]','[data-communion-tile]','[data-purgatory-tile]','[data-dragged-tile]'])nodes.push(...document.querySelectorAll<HTMLElement>(selector));return new Map(nodes.map(el=>{const id=el.dataset.tileId??el.dataset.rackTile??el.dataset.communionTile??el.dataset.purgatoryTile??el.dataset.draggedTile!,visible=layoutFlights.get(id)?.node??el;return [id,{box:visible.getBoundingClientRect(),pose:elementPose(visible),node:visible.cloneNode(true) as HTMLElement,heaven:!!el.dataset.tileId}] as const;}));}
  async function animateLayout(before:ReturnType<typeof capture>){
   await tick();for(const flight of layoutFlights.values()){flight.animation.cancel();flight.node.remove();flight.target.style.visibility=flight.visibility;}layoutFlights.clear();if(window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
   const targets=[...surface.querySelectorAll<HTMLElement>('[data-tile-id]')];for(const el of document.querySelectorAll<HTMLElement>('[data-rack-tile]'))if(before.get(el.dataset.rackTile!)?.heaven&&!targets.some(t=>t.dataset.tileId===el.dataset.rackTile))targets.push(el);
   for(const el of targets){
-   const id=el.dataset.tileId??el.dataset.rackTile!;const old=before.get(id);if(!old)continue;const to=el.getBoundingClientRect(),from=old.box;
-   if(Math.abs(from.x-to.x)+Math.abs(from.y-to.y)+Math.abs(from.width-to.width)<1)continue;
+   const id=el.dataset.tileId??el.dataset.rackTile!;const old=before.get(id);if(!old)continue;const to=el.getBoundingClientRect(),from=old.box,toPose=elementPose(el),fromPose=old.pose,toAngle=fromPose.angle+((((toPose.angle-fromPose.angle+540)%360+360)%360)-180);
+   if(Math.abs(from.x-to.x)+Math.abs(from.y-to.y)+Math.abs(from.width-to.width)+Math.abs(fromPose.angle-toAngle)<1)continue;
    const clone=old.node;for(const attr of ['data-tile-id','data-rack-tile','data-communion-tile','data-purgatory-tile','data-dragged-tile'])clone.removeAttribute(attr);clone.setAttribute('aria-hidden','true');clone.inert=true;
-   Object.assign(clone.style,{position:'fixed',padding:'0',margin:'0',border:'0',minHeight:'0',background:'none',lineHeight:'0',boxSizing:'border-box',left:`${from.x}px`,top:`${from.y}px`,width:`${from.width}px`,height:`${from.height}px`,transformOrigin:'0 0',transform:'none',visibility:'visible',pointerEvents:'none',zIndex:'1900'});
+   Object.assign(clone.style,{position:'fixed',padding:'0',margin:'0',border:'0',minHeight:'0',background:'none',lineHeight:'0',boxSizing:'border-box',left:`${fromPose.x}px`,top:`${fromPose.y}px`,width:`${from.width}px`,height:`${from.height}px`,transformOrigin:'0 0',transform:'none',visibility:'visible',pointerEvents:'none',zIndex:'1900'});
    // Keep the tile's original logical dimensions inside its screen-sized flight.
-   clone.style.width=`${tileSize}px`;clone.style.height=`${tileHeight}px`;document.body.append(clone);
+   clone.style.width=`${fromPose.width}px`;clone.style.height=`${fromPose.height}px`;document.body.append(clone);
    const visibility=el.style.visibility;el.style.visibility='hidden';
-   const animation=clone.animate([{transform:`scale(${from.width/tileSize})`},{transform:`translate(${to.x-from.x}px,${to.y-from.y}px) scale(${to.width/tileSize})`}],{duration:460,easing:'cubic-bezier(.22,.7,.2,1)',fill:'forwards'});
+   const animation=clone.animate([{transform:`rotate(${fromPose.angle}deg) scale(${fromPose.scale})`},{transform:`translate(${toPose.x-fromPose.x}px,${toPose.y-fromPose.y}px) rotate(${toAngle}deg) scale(${toPose.scale*toPose.width/fromPose.width})`}],{duration:460,easing:'cubic-bezier(.22,.7,.2,1)',fill:'forwards'});
    layoutFlights.set(id,{node:clone,animation,target:el,visibility});automaticAnimations.push(animation);void animation.finished.catch(()=>{}).finally(()=>{clone.remove();if(layoutFlights.get(id)?.animation===animation){el.style.visibility=visibility;layoutFlights.delete(id);}automaticAnimations=automaticAnimations.filter(a=>a!==animation);});
   }
  }
@@ -131,7 +132,7 @@
   (event.currentTarget as HTMLButtonElement).focus({preventScroll:true});
  }
  function move(event:PointerEvent){
-  if(!dragging||event.pointerId!==dragging.pointer)return;const dx=(event.clientX-dragging.startX)/scale,dy=(event.clientY-dragging.startY)/scale;
+  if(!dragging||event.pointerId!==dragging.pointer)return;const delta=localVector(event.clientX-dragging.startX,event.clientY-dragging.startY,elementPose(surface)),dx=delta.x,dy=delta.y;
   if(!dragging.moved&&Math.hypot(dx,dy)<5)return;
   if(!dragging.moved){
    clearTap();save();dragging.moved=true;

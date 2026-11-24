@@ -18,7 +18,7 @@ export type Command=
  |{type:'angel';angel:Angel}
  |{type:'judgment-choice';tiles?:string[];target?:string}
  |{type:'rack';tiles:string[]}
- |{type:'organize';groups:Group[];opening?:string[];stage?:Group[];power?:OrganizingPower;communionTile?:string;turn:number}
+ |{type:'organize';groups:Group[];opening?:string[];stage?:Group[];power?:OrganizingPower;communionTile?:string;sanctuary?:string[][][];turn:number}
  |{type:'draw';foretell?:boolean;turn:number}
  |{type:'keep';tile:string;turn:number}
  |{type:'communion';target:string;turn:number}
@@ -26,4 +26,4 @@ export type Command=
  |{type:'dance-choice';tiles:string[];turn:number}
  |{type:'continue';zeal?:boolean;turn:number}
  |{type:'next-round'};
-export interface GameEvent {version:1;sequence:number;id:string;actor:string;command:Command}
+export interface GameEvent {version:1|2;sequence:number;id:string;actor:string;command:Command}

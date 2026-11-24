@@ -16,7 +16,6 @@ export function powerChoices(o:Observation,plans:Plan[],depth=2):Command[]{
  if(p.angel==='chamuel'&&p.hand.length)for(const target of o.rivals)commands.push({type:'communion',target:target.id,turn});
  if(p.angel==='selaphiel'||p.angel==='barachiel'){
   for(const plan of [...plans,...(p.opened?[{groups:o.heaven}]:[])])for(const g of plan.groups.filter(g=>g.zone===null&&formation(g.tiles.map(id=>o.tiles[id]),o.decree)===(p.angel==='selaphiel'?'choir':'procession')).slice(0,5))commands.push({...own(plan),groups:plan.groups.map(q=>q.id===g.id?{...q,zone:p.id}:q),power:{kind:'sanctuary',group:g.id}});
-  for(const plan of [...plans,...(p.opened?[{groups:o.heaven}]:[])]){const eligible=plan.groups.filter(g=>g.zone===null&&formation(g.tiles.map(id=>o.tiles[id]),o.decree)===(p.angel==='selaphiel'?'choir':'procession'));if(eligible.length)commands.push({...own(plan),groups:plan.groups.map(g=>eligible.includes(g)?{...g,zone:p.id}:g),power:{kind:'sanctuary',group:eligible[0].id}});}
  }
  if(p.angel==='raphael')for(const plan of [...plans,...(p.opened?[{groups:o.heaven}]:[])]){
   const placed=new Set(plan.groups.flatMap(g=>g.tiles)),remaining=p.hand.filter(id=>!placed.has(id));

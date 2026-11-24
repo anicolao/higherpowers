@@ -262,13 +262,20 @@ prevents your own empty-hand finish. Its Favor treatment is in section 5.
 
 During your Organize action, move one complete legal Choir from shared Heaven
 into your visible Sanctuary. This may be a Choir completed during that action.
+Create the Sanctuary with **exactly one formation** during that Organize action.
 Only you may move, add to, split, or rearrange protected tiles; any formations
 remaining in your Sanctuary must be legal Choirs. You may rearrange them together
 with unprotected Heaven on your turns. Moving them into your hand still requires
 a power that explicitly permits retrieval.
 
 Your Sanctuary is a special physical region on the table. All tiles currently
-inside it are protected, including tiles you add from your hand or shared Heaven.
+inside it are protected. After creation, you may add tiles from your hand or
+shared Heaven **by extending a formation already inside**. You may split and
+rearrange protected formations, so the Sanctuary may grow to contain several
+formations. You may not move an entirely new formation into an existing Sanctuary.
+For example, on a later action you may extend a protected 1–2–3 Procession to
+1–2–3–4–5–6, then split it into two protected Processions, 1–2–3 and 4–5–6.
+The split-off formation may consist entirely of the newly added tiles.
 Only you may rearrange or extend it, and all formations remaining inside must be
 legal Choirs at the end of the action.
 

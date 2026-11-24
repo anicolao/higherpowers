@@ -1,6 +1,7 @@
 import {isTableSeat,tableSeats} from '../tabletop/seats';
 import {suits} from '../tabletop/rearrangement';
 import {formation,resolveJokers} from './formations';
+import {sanctuaryError} from './sanctuary';
 import {shuffle,random} from './random';
 import {angelIds,botLevels,type State,type Player,type Group,type Command,type GameEvent} from './types';
 export * from './types';
@@ -37,7 +38,7 @@ function unchangedGroup(a:Group,b:Group){
  const shape=(g:Group)=>[g.id,g.x,g.y,g.zone,g.tiles,g.slots??g.tiles.map((_,i)=>i),Object.entries(g.jokerFaces??{}).sort(([a],[b])=>a.localeCompare(b)).map(([id,face])=>[id,face.color,face.rank])];
  return JSON.stringify(shape(a))===JSON.stringify(shape(b));
 }
-function organize(s:State,p:Player,c:Extract<Command,{type:'organize'}>){
+function organize(s:State,p:Player,c:Extract<Command,{type:'organize'}>,currentRules:boolean){
  const old=s.heaven,allOld=ids(old),allNew=ids(c.groups),handBefore=[...p.hand];
  requireRule(c.groups.length<=106&&unique(c.groups.map(g=>g.id))&&unique(allNew),'Each soul and group must appear once.');
  for(const g of c.groups){requireRule(typeof g.id==='string'&&g.id.length>0&&g.id.length<=128&&g.tiles.length>0&&g.tiles.every(id=>!!s.tiles[id]),'Unknown or empty formation.');requireRule(Number.isFinite(g.x)&&Number.isFinite(g.y)&&g.x>=0&&g.y>=0&&g.x<=20000&&g.y<=20000,'Invalid table position.');requireRule(g.zone===null||s.players.some(p=>p.id===g.zone),'Unknown Sanctuary.');requireRule(!g.slots||g.slots.length===g.tiles.length&&g.slots.every((n,i)=>Number.isInteger(n)&&n>=0&&n<=106&&(i===0||n>g.slots![i-1])),'Invalid tile spacing.');for(const [id,face]of Object.entries(g.jokerFaces??{}))requireRule(g.tiles.includes(id)&&s.tiles[id]?.rank==='joker'&&suits.includes(face.color)&&Number.isInteger(face.rank)&&face.rank>=1&&face.rank<=13,'Invalid joker face.');requireRule(!!groupLegal(s,g),'Every formation in Heaven must be legal.');}
@@ -63,8 +64,12 @@ function organize(s:State,p:Player,c:Extract<Command,{type:'organize'}>){
  if(c.communionTile)requireRule(newDeliveries>0,'Communion must accompany a soul from your hand.');
  if(power?.kind==='transfigure'){requireRule(retrieved.every(id=>allOld.includes(id)&&!allNew.includes(id))&&newDeliveries>=2,'Retrieve two souls into your hand and deliver at least two from your original hand.');}
  requireRule(newDeliveries>0||!!power||!!purgOut,'Deliver a soul or use an organizing gift.');
- if(power?.kind==='sanctuary'){const g=c.groups.find(g=>g.id===power.group);requireRule(g&&g.zone===p.id,'Choose a complete formation for your Sanctuary.');p.sanctuary=true;}
+ if(power?.kind==='sanctuary'){const g=c.groups.find(g=>g.id===power.group);requireRule(g&&g.zone===p.id,'Choose a complete formation for your Sanctuary.');if(currentRules)requireRule(c.groups.filter(g=>g.zone===p.id).length===1,'Create a Sanctuary with exactly one formation.');p.sanctuary=true;}
  for(const g of c.groups.filter(g=>g.zone===p.id)){requireRule(p.sanctuary,'The Sanctuary is unavailable.');requireRule(groupLegal(s,g)===(p.angel==='selaphiel'?'choir':'procession'),'Sanctuary must contain its named formation.');}
+ if(currentRules&&power?.kind!=='sanctuary'){
+  requireRule(!c.sanctuary||c.sanctuary.flat(2).every(id=>allowed.has(id)&&!old.some(g=>g.zone!==null&&g.zone!==p.id&&g.tiles.includes(id))),'Unknown soul in Sanctuary rearrangement.');
+  const error=sanctuaryError(old,c.groups,p.id,s.tiles,decree(s),p.angel==='selaphiel'?'choir':'procession',c.sanctuary);requireRule(!error,error??'Invalid Sanctuary rearrangement.');
+ }
  if(!c.groups.some(g=>g.zone===p.id))p.sanctuary=false;
  // Jokers that leave Heaven must use an explicit retrieval gift. Table rearrangement is free.
  for(const id of allOld.filter(id=>s.tiles[id].rank==='joker'))requireRule(allNew.includes(id)||retrieved.includes(id)||purgIn===id,'Replay a reclaimed joker during this action.');
@@ -76,7 +81,7 @@ function organize(s:State,p:Player,c:Extract<Command,{type:'organize'}>){
  s.heaven=JSON.parse(JSON.stringify(c.groups));for(const g of s.heaven){const faces=resolveJokers(g.tiles.map(id=>s.tiles[id]),decree(s),g.jokerFaces);requireRule(faces,'Declare a legal identity for each joker.');if(Object.keys(faces).length)g.jokerFaces=faces;}s.communion=null;handTransfers(s);endTurn(s,true);
 }
 export function applyEvent(previous:State|null,event:GameEvent):State{
- requireRule(event.version===1&&Number.isInteger(event.sequence)&&event.sequence===(previous?.revision??0)+1,'Unsupported schema or gap in the game log.');requireRule(typeof event.id==='string'&&event.id.length>0&&!(previous?.eventIds.includes(event.id)),'Duplicate event identifier.');
+ requireRule((event.version===1||event.version===2)&&Number.isInteger(event.sequence)&&event.sequence===(previous?.revision??0)+1,'Unsupported schema or gap in the game log.');requireRule(typeof event.id==='string'&&event.id.length>0&&!(previous?.eventIds.includes(event.id)),'Duplicate event identifier.');
  const c=event.command;let s:State;
  if(!previous){requireRule(c.type==='create'&&event.sequence===1,'A game starts with a create event.');requireRule(typeof c.seed==='string'&&c.seed.length>0&&c.seed.length<=200,'A replay seed is required.');s={version:1,revision:1,seed:c.seed,owner:event.actor,players:[player(event.actor,c.name)],tiles:souls(),phase:'lobby',round:0,starter:0,turn:0,turnNumber:0,bag:Object.keys(souls()),heaven:[],decrees:shuffle([1,2,3,4,5,6,7,8,9,10],c.seed+'/decrees'),judgment:shuffle([1,2,3,4,5],c.seed+'/judgment')[0],idle:0,changed:false,inspection:null,communion:null,dance:null,winner:null,lastResult:null,eventIds:[event.id]};if(c.seat!==undefined){requireRule(isTableSeat(c.seat),'Choose a free table position.');s.tabletop=true;s.players[0].seat=c.seat;if(c.chooseOnJoin){s.chooseOnJoin=true;s.players[0].options=shuffle(angelIds,s.seed+'/angels').slice(0,2);}}return s;}
  s=JSON.parse(JSON.stringify(previous));s.revision=event.sequence;const p=s.players.find(p=>p.id===event.actor);
@@ -94,7 +99,7 @@ export function applyEvent(previous:State|null,event:GameEvent):State{
    if(c.type==='continue'){requireRule(s.phase==='after-turn','Finish the current action first.');if(c.zeal){spend(p,'jegudiel');s.phase='play';s.turnNumber++;s.changed=false;}else nextTurn(s);}
    else if(c.type==='keep'){requireRule(s.phase==='inspect'&&s.inspection?.player===p.id&&s.inspection.tiles.includes(c.tile),'Choose one inspected soul.');p.hand.push(c.tile);s.bag=mix(s,[...s.bag,...s.inspection.tiles.filter(id=>id!==c.tile)],'return');s.inspection=null;endTurn(s,true);}
    else{requireRule(s.phase==='play','Complete the pending choice first.');
-    if(c.type==='organize')organize(s,p,c);
+    if(c.type==='organize')organize(s,p,c,event.version>=2);
     else if(c.type==='draw'){s.communion=null;if(!s.bag.length){requireRule(!c.foretell,'Foretelling requires souls in the bag.');endTurn(s,false);}else{if(c.foretell){requireRule(!p.purgatory,'Purgatory allows only rescue or ordinary drawing.');spend(p,'uriel');}const count=Math.min(s.bag.length,c.foretell?8:allowance(s,p.id));s.inspection={player:p.id,tiles:s.bag.splice(0,count)};s.phase='inspect';}}
     else if(c.type==='communion'){requireRule(!p.purgatory,'Rescue Purgatory or draw.');spend(p,'chamuel');requireRule(c.target!==p.id&&s.players.some(q=>q.id===c.target),'Choose another player.');s.communion={player:p.id,target:c.target};s.changed=true;}
     else if(c.type==='before'){requireRule(['calling','banish','judgment','dance'].includes(c.power),'Unknown gift.');requireRule(!p.purgatory,'Rescue Purgatory or draw.');
@@ -112,5 +117,5 @@ export function applyEvent(previous:State|null,event:GameEvent):State{
 }
 export function assertInventory(s:State){const all=[...s.bag,...ids(s.heaven),...s.players.flatMap(p=>[...p.hand,...(p.purgatory?[p.purgatory]:[])]),...(s.inspection?.tiles??[])];requireRule(all.length===106&&unique(all)&&all.every(id=>!!s.tiles[id]),'The game log does not conserve all 106 souls.');}
 export function replay(events:GameEvent[]):State{requireRule(events.length,'The game log is empty.');let s:State|null=null;for(const e of events)s=applyEvent(s,e);return s!;}
-export function commandEvent(s:State|null,actor:string,command:Command,id:string):GameEvent{return {version:1,sequence:(s?.revision??0)+1,id,actor,command};}
+export function commandEvent(s:State|null,actor:string,command:Command,id:string):GameEvent{return {version:2,sequence:(s?.revision??0)+1,id,actor,command};}
 export function tryCommand(s:State,actor:string,c:Command):string|null{try{applyEvent(s,commandEvent(s,actor,c,'validation'));return null;}catch(e){return e instanceof Error?e.message:String(e);}}

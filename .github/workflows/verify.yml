@@ -45,6 +45,7 @@ jobs:
             sleep 1
           done
           bun run review:bots
+          bun run review:sanctuary
       - name: Select production or retained PR path
         id: destination
         env:

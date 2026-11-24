@@ -1,0 +1,25 @@
+import {expect} from '@playwright/test';
+import {launchBrowser} from './browser';
+import {applyEvent,commandEvent,type State,type Command,type GameEvent} from '../src/lib/engine/engine';
+const origin=process.env.REVIEW_URL||'http://127.0.0.1:5198';let s:State|null=null;const events:GameEvent[]=[];const act=(actor:string,c:Command)=>{const e=commandEvent(s,actor,c,crypto.randomUUID());s=applyEvent(s,e);events.push(e);};
+act('tabletop-owner',{type:'create',name:'South',seed:'rotated-rack-sort',seat:'south'});for(const [id,seat] of [['north','north'],['east','east'],['west','west']] as const)act('tabletop-owner',{type:'seat',id,name:id,seat});act('tabletop-owner',{type:'start'});for(const p of s!.players)act(p.id,{type:'angel',angel:p.options[0]});
+const browser=await launchBrowser(),page=await browser.newPage({viewport:{width:1440,height:900}}),errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
+try{
+ await page.goto(`${origin}/tabletop?local=1`);await page.evaluate(events=>localStorage.setItem('hp-tabletop-local',JSON.stringify(events)),events);await page.reload();await expect(page.locator('.play-area')).toHaveAttribute('data-turning','false');
+ for(const seat of ['south','north','east','west']){
+  const port=page.locator(`[data-tabletop-seat="${seat}"]`);await port.locator('.screen-tab').click();
+  for(const mode of ['number','colour']){
+   const before=await port.locator('[data-rack-tile]').evaluateAll(nodes=>Object.fromEntries(nodes.map(el=>{const r=el.getBoundingClientRect();return [el.getAttribute('data-rack-tile')!,{x:r.x+r.width/2,y:r.y+r.height/2}];})));
+   await page.evaluate(seat=>{const frames:any[]=[];(window as any).__rackFrames=frames;const root=document.querySelector(`[data-tabletop-seat="${seat}"]`)!;const start=performance.now();function frame(){frames.push({time:performance.now()-start,positions:Object.fromEntries([...root.querySelectorAll('[data-rack-tile]')].map(el=>{const r=el.getBoundingClientRect();return [el.getAttribute('data-rack-tile')!,{x:r.x+r.width/2,y:r.y+r.height/2}];}))});if(performance.now()-start<700)requestAnimationFrame(frame);}requestAnimationFrame(frame);},seat);
+   await port.getByRole('button',{name:`Sort rack by ${mode}`,exact:true}).click();await expect.poll(()=>port.locator('[data-rack-tile]').evaluateAll(nodes=>nodes.map(n=>n.getAttribute('data-rack-tile')).join('|'))).not.toBe(Object.keys(before).join('|'));await expect.poll(()=>port.locator('[data-rack-tile]').evaluateAll(nodes=>nodes.some(n=>n.getAnimations().some(a=>a.playState==='running')))).toBe(true);await expect.poll(()=>port.locator('[data-rack-tile]').evaluateAll(nodes=>nodes.some(n=>n.getAnimations().some(a=>a.playState==='running')))).toBe(false);
+   const after=await port.locator('[data-rack-tile]').evaluateAll(nodes=>Object.fromEntries(nodes.map(el=>{const r=el.getBoundingClientRect();return [el.getAttribute('data-rack-tile')!,{x:r.x+r.width/2,y:r.y+r.height/2}];}))),frames=await page.evaluate(()=>(window as any).__rackFrames as {time:number;positions:Record<string,{x:number;y:number}>}[]);
+   let moving=0;for(const id of Object.keys(before)){const a=before[id],b=after[id];if(Math.hypot(a.x-b.x,a.y-b.y)>5)moving++;for(const frame of frames){const p=frame.positions[id];if(!p)continue;expect(p.x,`${seat} ${mode} ${id} scattered horizontally`).toBeGreaterThanOrEqual(Math.min(a.x,b.x)-3);expect(p.x).toBeLessThanOrEqual(Math.max(a.x,b.x)+3);expect(p.y,`${seat} ${mode} ${id} scattered vertically`).toBeGreaterThanOrEqual(Math.min(a.y,b.y)-3);expect(p.y).toBeLessThanOrEqual(Math.max(a.y,b.y)+3);}}
+   expect(moving).toBeGreaterThan(0);expect(frames.length).toBeGreaterThan(10);console.log(`PASS ${seat} ${mode}: ${moving} moving tiles follow bounded paths between their actual slots.`);
+  }
+ }
+ const north=page.locator('[data-tabletop-seat="north"]');
+ await north.getByRole('button',{name:'Sort rack by number',exact:true}).click();await expect.poll(()=>north.locator('[data-rack-tile]').evaluateAll(nodes=>nodes.some(n=>n.getAnimations().some(a=>a.playState==='running')))).toBe(true);
+ await page.evaluate(()=>{const root=document.querySelector('[data-tabletop-seat="north"] .rack')!,b=root.getBoundingClientRect(),start=performance.now(),violations:string[]=[];(window as any).__interruptViolations=violations;function frame(){for(const el of root.querySelectorAll('[data-rack-tile]')){const r=el.getBoundingClientRect();if(r.x+r.width/2<b.left-3||r.x+r.width/2>b.right+3||r.y+r.height/2<b.top-3||r.y+r.height/2>b.bottom+3)violations.push(el.getAttribute('data-rack-tile')!);}if(performance.now()-start<700)requestAnimationFrame(frame);}requestAnimationFrame(frame);});
+ await north.getByRole('button',{name:'Sort rack by colour',exact:true}).click();await expect.poll(()=>north.locator('[data-rack-tile]').evaluateAll(nodes=>nodes.some(n=>n.getAnimations().some(a=>a.playState==='running')))).toBe(false);expect(await page.evaluate(()=>(window as any).__interruptViolations)).toEqual([]);console.log('PASS north interrupted sort: tiles remain inside the rack while switching sort modes mid-animation.');
+ expect(errors).toEqual([]);
+}finally{await browser.close();}

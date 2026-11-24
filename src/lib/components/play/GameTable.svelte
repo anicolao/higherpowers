@@ -9,6 +9,7 @@
  import Rack from './Rack.svelte';
  import PlayerSeat from './PlayerSeat.svelte';
  import TabletopRing from './TabletopRing.svelte';
+ import {elementPose} from '$lib/tabletop/coordinates';
  import {seatPose,type TableSeat} from '$lib/tabletop/seats';
  import type {Player} from '$lib/engine/types';
  import SoulBag from './SoulBag.svelte';
@@ -30,9 +31,9 @@
  const me=$derived(gameState.players.find(p=>p.id===uid)!);
  const active=$derived(gameState.players[gameState.turn]);
  const myTurn=$derived(active?.id===uid&&gameState.phase==='play');
- let uncovered=$state<string[]>([]);
+ let uncovered=$state<string[]>([]),turning=$state(false);
  const privateVisible=$derived(!tabletop||uncovered.includes(uid));
- const editable=$derived(myTurn&&!busy&&privateVisible);
+ const editable=$derived(myTurn&&!busy&&privateVisible&&!turning);
  const zealAvailable=$derived(active?.id===uid&&gameState.phase==='after-turn'&&me.angel==='jegudiel'&&!me.used&&!busy&&privateVisible);
  let zealStart:Promise<void>|null=null,rackPreviewSequence=0;
  function startZeal(){if(zealStart)return zealStart;if(!zealAvailable)return Promise.resolve();zealStart=(async()=>{await action({type:'continue',zeal:true,turn:gameState.turnNumber});await tick();})().finally(()=>zealStart=null);return zealStart;}
@@ -43,6 +44,23 @@
  const committedKey=$derived(`${gameState.turnNumber}/${gameState.phase}/${tabletop?uid:''}/${JSON.stringify(gameState.heaven)}`);
  let previousKey='';let screenWidth=$state(1280),screenHeight=$state(900);let controlsHost=$state<HTMLElement|null>(null);
  const portrait=$derived(screenHeight>=screenWidth);const bottomStrip=$derived(portrait?Math.min(320,screenHeight*.38):Math.min(200,Math.max(150,screenHeight*.29)));const opponentScale=$derived(Math.min(1,(Math.min(240,Math.max(190,screenWidth*.2))-20)/195));
+ const edgeDepth=$derived(Math.min(160,Math.max(110,Math.min(screenWidth,screenHeight)*.17)));
+ const squareHeaven=$derived(tabletop&&gameState.players.some(p=>p.seat==='east'||p.seat==='west'));
+ const tableWidth=$derived(Math.max(80,screenWidth-(gameState.round>0&&!squareHeaven&&!portrait?24:2*edgeDepth))),tableHeight=$derived(Math.max(80,screenHeight-(gameState.round>0&&!squareHeaven&&portrait?24:2*edgeDepth)));
+ const heavenWidth=$derived(squareHeaven?Math.min(tableWidth,tableHeight):portrait?tableHeight:tableWidth);
+ const heavenHeight=$derived(squareHeaven?Math.min(tableWidth,tableHeight):portrait?tableWidth:tableHeight);
+ const facing=$derived((gameState.round>0?active:gameState.players.find(p=>p.id===gameState.owner))?.seat);
+ const targetAngle=$derived(tabletop&&facing?seatPose(facing,portrait).angle:0);
+ let tableAngle=$state(0),turnTimer:ReturnType<typeof setTimeout>|undefined,playArea:HTMLDivElement;let turnAnimation:Animation|undefined;
+ $effect(()=>{const target=targetAngle;untrack(()=>{
+  const start=playArea?elementPose(playArea).angle:tableAngle,delta=(((target-start+540)%360+360)%360)-180;if(Math.abs(delta)<.01)return;
+  clearTimeout(turnTimer);turnAnimation?.cancel();tableAngle=start+delta;turning=!window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(turning){
+   const frames=Array.from({length:25},(_,i)=>{const angle=start+delta*i/24,radians=angle*Math.PI/180,cos=Math.abs(Math.cos(radians)),sin=Math.abs(Math.sin(radians));const fit=Math.min(1,tableWidth/(cos*heavenWidth+sin*heavenHeight),tableHeight/(sin*heavenWidth+cos*heavenHeight));return {transform:`translate(-50%,-50%) rotate(${angle}deg) scale(${fit*(i>0&&i<24?.995:1)})`};});
+   turnAnimation=playArea?.animate(frames,{duration:650,easing:'cubic-bezier(.25,.65,.25,1)'});onAnimating?.(true);turnTimer=setTimeout(()=>{turning=false;onAnimating?.(motionBatches.size>0);},680);
+  }
+ });});
+
  $effect(()=>{const key=committedKey;if(key!==previousKey)untrack(()=>{draft=JSON.parse(JSON.stringify(gameState.heaven));opening=undefined;power=undefined;stage=undefined;communionTile=undefined;selected=[];giftTiles=[];giftOpen=false;zoneMode=false;message='';previousKey=key;});});
  const initial=$derived((remote?.groups??gameState.heaven).map(toView));
  const boardKey=$derived(`${committedKey}/${remote?`${remote.session}/${remote.sequence}`:'committed'}`);
@@ -92,42 +110,44 @@
 
  let flights=$state<Flight[]>([]),motionTiles=$state<string[]>([]);let priorScene:State|null=null,motionSequence=0;const motionBatches=new Map<number,{ids:string[];timer?:ReturnType<typeof setTimeout>}>();
  function refreshMotionTiles(){motionTiles=[...new Set([...motionBatches.values()].flatMap(batch=>batch.ids))];}
- type Box={x:number;y:number;width:number;height:number};
- function renderedTiles(includeFlights=false){const boxes=new Map<string,Box>();for(const selector of ['[data-tile-back]','[data-rack-tile]','[data-purgatory-tile]','[data-tile-id]',...(includeFlights?['[data-flight-id]']:[])])for(const node of document.querySelectorAll<HTMLElement>(selector)){const id=node.dataset.tileBack??node.dataset.rackTile??node.dataset.purgatoryTile??node.dataset.tileId??node.dataset.flightId;if(id){const b=node.getBoundingClientRect();boxes.set(id,{x:b.x,y:b.y,width:b.width,height:b.height});}}return boxes;}
+ type Box={x:number;y:number;width:number;height:number;angle?:number};
+ function renderedTiles(includeFlights=false){const boxes=new Map<string,Box>();for(const selector of ['[data-tile-back]','[data-rack-tile]','[data-purgatory-tile]','[data-tile-id]',...(includeFlights?['[data-flight-id]']:[])])for(const node of document.querySelectorAll<HTMLElement>(selector)){const id=node.dataset.tileBack??node.dataset.rackTile??node.dataset.purgatoryTile??node.dataset.tileId??node.dataset.flightId;if(id){const p=elementPose(node);boxes.set(id,{x:p.x,y:p.y,width:p.width*p.scale,height:p.height*p.scale,angle:p.angle});}}return boxes;}
  function bagBox():Box|null{const b=document.querySelector('[data-soul-bag]')?.getBoundingClientRect();return b?{x:b.x+b.width/2-22,y:b.y+b.height*.6-31,width:44,height:63}:null;}
  function tablePositions(s:State){return new Map(s.heaven.flatMap(g=>g.tiles.map((id,i)=>[id,{x:g.x+(g.slots?.[i]??i)*47,y:g.y}] as const)));}
  $effect.pre(()=>{const next=gameState;untrack(()=>{
   const before=priorScene;priorScene=JSON.parse(JSON.stringify(next));if(!before||next.revision<=before.revision||!animateMoves)return;
   const dealt=before.round!==next.round,computer=before.players[before.turn]?.bot,passed=before.phase==='dance'&&next.phase!=='dance',automaticKeep=before.phase==='inspect'&&before.inspection?.tiles.length===1&&next.phase!=='inspect';if(!tabletop&&!dealt&&!computer&&!passed&&!automaticKeep)return;
-  const transfers=tileTransfers(before,next).filter(t=>!dealt||t.to.kind==='hand'),oldPositions=tablePositions(before),newPositions=tablePositions(next);
+  const transfers=tileTransfers(before,next).filter(t=>(!dealt||t.to.kind==='hand')&&(!tabletop||t.to.kind!=='heaven'||!document.querySelector(`[data-tile-id="${t.id}"]`))),oldPositions=tablePositions(before),newPositions=tablePositions(next);
   if(tabletop&&!transfers.length&&JSON.stringify(before.heaven)===JSON.stringify(next.heaven))return;
-  const shifted=[...newPositions.keys()].filter(id=>oldPositions.has(id));
+  const rotated=tabletop&&before.players[before.turn]?.seat!==next.players[next.turn]?.seat;
+  const shifted=rotated?[]:[...newPositions.keys()].filter(id=>oldPositions.has(id));
   if(!transfers.length&&!shifted.length)return;
   if(window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
   const source=renderedTiles(true),bag=bagBox(),sequence=++motionSequence;motionBatches.set(sequence,{ids:[...new Set([...transfers.map(t=>t.id),...shifted])]});refreshMotionTiles();onAnimating?.(true);
   void tick().then(async()=>{
+   if(tabletop&&turning)await new Promise(resolve=>setTimeout(resolve,700));
    if(!motionBatches.has(sequence))return;
 
    const destination=renderedTiles(),toBag=bagBox()??bag;
    const staged=[...transfers,...shifted.map(id=>({id,from:{kind:'heaven'} as TilePlace,to:{kind:'heaven'} as TilePlace}))];
    const planned:Flight[]=staged.flatMap((move,i)=>{
-    const from=dealt?(bag??toBag):move.from.kind==='bag'?bag:source.get(move.id)??bag,to=move.to.kind==='bag'?toBag:destination.get(move.id);if(!from||!to)return [];if(!dealt&&Math.abs(from.x-to.x)+Math.abs(from.y-to.y)+Math.abs(from.width-to.width)<1)return [];
+    const from=dealt?(bag??toBag):move.from.kind==='bag'?bag:source.get(move.id)??bag,to=move.to.kind==='bag'?toBag:destination.get(move.id);if(!from||!to)return [];if(!dealt&&Math.abs(from.x-to.x)+Math.abs(from.y-to.y)+Math.abs(from.width-to.width)+Math.abs((from.angle??0)-(to.angle??0))<1)return [];
     return [{key:`${sequence}-${i}-${move.id}`,tile:next.tiles[move.id],back:move.to.kind==='bag'||tabletop&&move.to.kind==='hand'||move.to.kind==='hand'&&move.to.owner!==uid,from,to,delay:dealt?i*12:move.from.kind==='heaven'?0:i*55}];
    });
    const replacing=new Set(planned.map(f=>f.tile.id));for(const old of flights){if(replacing.has(old.tile.id))continue;const to=destination.get(old.tile.id),from=source.get(old.tile.id);if(to&&from&&Math.abs(old.to.x-to.x)+Math.abs(old.to.y-to.y)+Math.abs(old.to.width-to.width)>1){planned.push({...old,key:`${sequence}-continued-${old.tile.id}`,from,to,delay:0});replacing.add(old.tile.id);}}
    for(const [id,batch]of motionBatches)if(id!==sequence)batch.ids=batch.ids.filter(id=>!replacing.has(id));motionBatches.get(sequence)!.ids=planned.map(f=>f.tile.id);flights=[...flights.filter(f=>!replacing.has(f.tile.id)),...planned];refreshMotionTiles();
-   if(!planned.length){motionBatches.delete(sequence);refreshMotionTiles();onAnimating?.(motionBatches.size>0);return;}
-   motionBatches.get(sequence)!.timer=setTimeout(()=>{if(!motionBatches.has(sequence))return;motionBatches.delete(sequence);flights=flights.filter(f=>!f.key.startsWith(`${sequence}-`));refreshMotionTiles();for(const player of next.players.filter(p=>p.favor!==(before.players.find(old=>old.id===p.id)?.favor??0)))for(const node of document.querySelectorAll(player.id===uid?'.own-favor .favor-coin':`[data-player-seat="${player.id}"] .favor-coin`))node.animate([{transform:'scale(1)'},{transform:'scale(1.1)'},{transform:'scale(1)'}],{duration:380});onAnimating?.(motionBatches.size>0);},640+Math.max(...planned.map(m=>m.delay)));
-  }).catch(()=>{motionBatches.delete(sequence);flights=flights.filter(f=>!f.key.startsWith(`${sequence}-`));refreshMotionTiles();onAnimating?.(motionBatches.size>0);});
+   if(!planned.length){motionBatches.delete(sequence);refreshMotionTiles();onAnimating?.(motionBatches.size>0||turning);return;}
+   motionBatches.get(sequence)!.timer=setTimeout(()=>{if(!motionBatches.has(sequence))return;motionBatches.delete(sequence);flights=flights.filter(f=>!f.key.startsWith(`${sequence}-`));refreshMotionTiles();for(const player of next.players.filter(p=>p.favor!==(before.players.find(old=>old.id===p.id)?.favor??0)))for(const node of document.querySelectorAll(player.id===uid?'.own-favor .favor-coin':`[data-player-seat="${player.id}"] .favor-coin`))node.animate([{transform:'scale(1)'},{transform:'scale(1.1)'},{transform:'scale(1)'}],{duration:380});onAnimating?.(motionBatches.size>0||turning);},640+Math.max(...planned.map(m=>m.delay)));
+  }).catch(()=>{motionBatches.delete(sequence);flights=flights.filter(f=>!f.key.startsWith(`${sequence}-`));refreshMotionTiles();onAnimating?.(motionBatches.size>0||turning);});
  });});
- onDestroy(()=>{for(const batch of motionBatches.values())clearTimeout(batch.timer);motionBatches.clear();onAnimating?.(false);});
+ onDestroy(()=>{clearTimeout(turnTimer);turnAnimation?.cancel();for(const batch of motionBatches.values())clearTimeout(batch.timer);motionBatches.clear();onAnimating?.(false);});
 
  const opponents=$derived.by(()=>{const seat=gameState.players.findIndex(p=>p.id===uid);return Array.from({length:gameState.players.length-1},(_,i)=>gameState.players[(seat+i+1)%gameState.players.length]);});
  const targeting=$derived(giftOpen&&['chamuel','michael'].includes(me.angel!)||gameState.phase==='judgment'&&gameState.judgment===2&&!me.ready);
- const canFinish=$derived(myTurn&&!organizing.error&&!busy);
+ const canFinish=$derived(editable&&!organizing.error);
  const cue=$derived.by(()=>{if(message)return message;if(zealAvailable)return 'Play again to use Zeal, or end your turn to save it.';if(gameState.phase==='judgment'&&!me.ready)return gameState.judgment===2?'Choose another Angel.':'Set aside up to five souls, then touch the Judgment card.';if(gameState.phase==='dance'&&!gameState.dance?.choices[uid])return `Choose ${gameState.dance?.count} souls to pass to the right.`;if(zoneMode)return 'Touch a formation to shelter or release it.';if(!giftOpen)return '';if(['zadkiel','raphael','jophiel'].includes(me.angel!))return `Touch ${me.angel==='jophiel'?'two unprotected souls':'an unprotected soul'} in Heaven.`;if(['selaphiel','barachiel'].includes(me.angel!))return 'Touch a complete formation to shelter it.';if(me.angel==='chamuel')return 'Choose another Angel to look at their rack.';if(me.angel==='michael')return 'Choose a rank on your rack, then another Angel.';if(me.angel==='raguel')return 'Choose souls on your rack, then return them to the bag.';return '';});
  $effect(()=>{if(message){const timer=setTimeout(()=>message='',5500);return()=>clearTimeout(timer);}});
- async function finish(){if(busy||active?.id!==uid||!privateVisible)return;if(gameState.phase==='after-turn'){await action({type:'continue',turn:gameState.turnNumber});return;}if(organizing.error){message=organizing.error;return;}await action(organizing.command);}
+ async function finish(){if(busy||active?.id!==uid||!privateVisible||turning)return;if(gameState.phase==='after-turn'){await action({type:'continue',turn:gameState.turnNumber});return;}if(organizing.error){message=organizing.error;return;}await action(organizing.command);}
  async function drawFromBag(){if(zealAvailable||zealStart)await startZeal();if(!myTurn||busy)return;if(giftOpen&&me.angel==='raguel'){if(!selected.length){message='Choose the souls to return first.';return;}await useBefore();return;}await action({type:'draw',turn:gameState.turnNumber});}
  function selectRack(id:string){if(gameState.phase==='judgment'&&gameState.judgment===3&&gameState.tiles[id].rank==='joker'){message='Scales takes numbered souls.';return;}if(giftOpen&&me.angel==='michael'){const r=gameState.tiles[id].rank;if(r==='joker'){message='Choose a numbered soul.';return;}rank=r;selected=me.hand.filter(t=>gameState.tiles[t].rank===r);return;}toggle(id);}
  async function activateAngel(){if(busy)return;message='';if(gameState.phase==='dance'&&!gameState.dance?.choices[uid]){await passDance();return;}if(gameState.phase==='after-turn'&&active.id===uid&&me.angel==='jegudiel'){await startZeal();return;}if(myTurn&&me.sanctuary&&me.used){zoneMode=!zoneMode;giftOpen=false;return;}if(!myTurn||me.used||me.purgatory){focusedCard=angel??null;return;}if(power){message='This gift is already in your arrangement.';return;}if(me.angel==='uriel'){await action({type:'draw',foretell:true,turn:gameState.turnNumber});return;}giftOpen=!giftOpen;zoneMode=false;giftTiles=[];}
@@ -151,8 +171,9 @@
  {:else}<Rack size={32} rotation={angle} tiles={player.hand.map(id=>gameState.tiles[id])} committed={player.scales} onReorder={tiles=>void sendAs?.(player.id,{type:'rack',tiles})} onBlockedDrop={()=>{message='Wait for your turn to play into Heaven.';}}/>{/if}
 {/snippet}
 <svelte:window bind:innerWidth={screenWidth} bind:innerHeight={screenHeight} onkeydown={e=>{if(e.key==='Escape'){focusedCard=null;giftOpen=false;zoneMode=false;}}}/>
-<div class="game-table" style={`--bottom-strip:${bottomStrip}px;--opponent-scale:${opponentScale};--table-depth:${Math.min(160,Math.max(110,Math.min(screenWidth,screenHeight)*.17))}px;--seat-angle:${me.seat?seatPose(me.seat,portrait).angle:0}deg`} class:portrait class:tabletop class:in-round={gameState.round>0} data-fullscreen-table>
+<div class="game-table" style={`--bottom-strip:${bottomStrip}px;--opponent-scale:${opponentScale};--table-depth:${edgeDepth}px;--heaven-width:${heavenWidth}px;--heaven-height:${heavenHeight}px;--table-angle:${tableAngle}deg;--seat-angle:${me.seat?seatPose(me.seat,portrait).angle:0}deg`} class:portrait class:tabletop class:in-round={gameState.round>0} data-fullscreen-table>
  {#if tabletop}<TabletopRing state={gameState} {uid} {busy} onJoin={(seat,name,bot)=>onJoin?.(seat,name,bot)} onFocus={onFocus} onPrivacy={ids=>{uncovered=ids;if(!ids.includes(uid)){giftOpen=false;zoneMode=false;selected=[];}}} onAngel={(id,angel)=>void sendAs?.(id,{type:'angel',angel})} onCard={id=>{if(gameState.phase==='angels')return;if(id===uid&&privateVisible)void activateAngel();else void opponentPicked(id);}} station={tabletopStation}/>{/if}
+ <div class="play-area" bind:this={playArea} class:tabletop-play-area={tabletop} data-turning={turning} data-square={squareHeaven} data-angle={targetAngle}>
  {#if gameState.round>0}
   <SharedHeaven bind:this={board} game insetX={8} insetY={8} reserveBottom={8} {controlsHost} initialGroups={initial} boardKey={`${boardKey}/${boardReset}`} readOnly={!editable} canTouch={allowed} magnetKind={g=>{const k=formation(g.tiles,currentDecree,g.jokerFaces);return k==='poker'?'other':k;}} orderGroup={g=>g.zone&&g.zone!==uid?g:arrangeDraftGroup(g,currentDecree)} normalizeGroup={g=>g.zone&&g.zone!==uid?g:normalizeDraftGroup(g,currentDecree)} onChange={changed} onSuggestion={suggestion} hand={privateVisible?playableRack:[]} inspect={tiles=>inspectFormation(tiles,currentDecree)} zoneLabel={zone=>gameState.players.find(p=>p.id===zone)?.name??''} onFinish={myTurn?finish:undefined} finishAllowed={canFinish} finishReason={organizing.error??''} onTilePick={pickHeaven} pickedTiles={giftTiles} {motionTiles} returnable={communionTile?[communionTile]:[]}/>
  {/if}
@@ -167,6 +188,8 @@
   {#if gameState.phase==='after-turn'&&active.id===uid}<button class="end-turn-seal ivory-token" aria-label="End turn" title="Pass on Zeal and end your turn" onclick={()=>action({type:'continue',turn:gameState.turnNumber})}><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m8 16 6 6L26 9"/></svg></button>{/if}
  {/if}
  </div></aside>
+ {#if tabletop&&gameState.round>0}<div class="tabletop-bag"><SoulBag count={gameState.bag.length} active={(myTurn||zealAvailable)&&privateVisible&&!turning} label="Draw a soul" onpick={drawFromBag}/></div><div class="tabletop-log"><GameLog {events}/></div>{/if}
+ </div>
  {#if !tabletop}<div class="bottom-strip" aria-label="Your cards and rack">
  {#if gameState.phase!=='lobby'&&gameState.phase!=='angels'}
   <div class="soul-bag-place"><SoulBag count={gameState.bag.length} active={myTurn||zealAvailable} label={giftOpen&&me.angel==='raguel'?`Return ${selected.length} souls and draw ${selected.length*2}`:`Draw · inspect ${allowance(gameState,uid)}`} onpick={drawFromBag}/></div>
@@ -188,7 +211,7 @@
   {#if !tabletop&&gameState.communion?.player===uid}<div class="communion-rack" aria-label="The opponent’s entire hand. Choose a soul or tap it again to return it.">{#each gameState.players.find(p=>p.id===gameState.communion!.target)!.hand as id}<button class="tile-object" class:taken={communionTile===id} data-communion-tile={id} title={communionTile===id?'Return this soul':'Choose this soul for Communion'} aria-label={`Choose ${gameState.tiles[id].color} ${gameState.tiles[id].rank} for Communion`} onclick={()=>selectCommunion(id)}><SoulTile rank={gameState.tiles[id].rank} color={gameState.tiles[id].color} size={46}/></button>{/each}</div>{/if}
   {#if gameState.phase==='dance'&&!gameState.dance?.choices[uid]}<button class="pass-offering ivory-token" aria-label="Pass selected souls to the right" title="Pass selected souls to the right" onclick={passDance}><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 16h22m-9-8 9 8-9 8"/></svg></button>{/if}
  {/if}
- {#if tabletop&&gameState.round>0}<div class="tabletop-bag"><SoulBag count={gameState.bag.length} active={(myTurn||zealAvailable)&&privateVisible} label="Draw a soul" onpick={drawFromBag}/></div><div class="tabletop-log"><GameLog {events}/></div>{/if}
+
  {#if cue}<p class="table-cue" role="status">{cue}</p>{/if}
  {#if gameState.phase==='round-end'||gameState.phase==='ended'}<section class="score-ledger" aria-label="Round scores"><h1>{gameState.players.find(p=>p.id===gameState.winner)?.name}</h1><p class="ledger-subtitle">{gameState.phase==='ended'?'The Grand Order · final reckoning':`Round ${gameState.round}`}</p><table><thead><tr><th></th>{#each [1,2,3]as n}<th>{n}</th>{/each}<th>∑</th></tr></thead><tbody>{#each [...gameState.players].sort((a,b)=>total(b)-total(a))as p}<tr><th>{p.name}</th>{#each [0,1,2]as n}<td>{p.scores[n]??'·'}</td>{/each}<td>{total(p)}</td></tr>{/each}</tbody></table>{#if gameState.phase==='ended'}<p class="ledger-winner">{gameState.players.filter(p=>total(p)===Math.max(...gameState.players.map(total))).map(p=>p.name).join(' & ')}<br/><small>God’s Favorite</small></p>{:else if uid===gameState.owner||tabletop}<button class="paper-card next-deal" disabled={busy} aria-label={`Deal round ${gameState.round+1}`} title={`Deal round ${gameState.round+1}`} onclick={()=>action({type:'next-round'})}><GameCard card={decrees[0]} back/></button>{/if}</section>{/if}
 </div>
@@ -289,25 +312,27 @@
  .setup-table{inset:20px 25px calc(var(--bottom-strip) + 10px) calc(var(--rail-width) + 25px);display:flex;flex-direction:column;justify-content:start;gap:16px;overflow:auto;padding:8px}.lobby-invitation{width:min(480px,100%)}.lobby-count{margin:8px 0 0;color:#f4e5bf;font:14px/1.3 sans-serif;text-align:center}.lobby-art-actions{display:flex;align-items:center;justify-content:center;gap:20px}.lobby-art-actions .deal-pile{width:110px}.lobby-art-actions .empty-seat{width:90px}.portrait .setup-table{inset:calc(var(--top-rail) + 8px) 10px 12px;z-index:170;background:#284a3c}.portrait .table-utilities{left:56px;bottom:8px}.portrait .table-utilities :global(.table-access){gap:4px}.portrait .table-utilities :global(.visible-table-code){font-size:11px;padding:4px}.portrait .table-utilities :global(.table-menu){width:23px;height:23px}
  .seat-caption{display:block;margin-top:8px;color:#f3e4bb;font:14px/1.3 'Atkinson Hyperlegible',sans-serif;white-space:nowrap}.lobby-art-actions .empty-seat{opacity:1}.lobby-art-actions .add-seat{bottom:26px}
 
- .tabletop :global(.heaven-layout),.tabletop.portrait :global(.heaven-layout){inset:var(--table-depth);left:var(--table-depth);top:var(--table-depth);border:1px solid #ccb47b33;border-radius:15px;overflow:clip}
+ .play-area{display:contents}
+ .tabletop-play-area{display:block;position:absolute;left:50%;top:50%;width:var(--heaven-width);height:var(--heaven-height);transform:translate(-50%,-50%) rotate(var(--table-angle));transform-origin:center;isolation:isolate}
+ .tabletop :global(.heaven-layout),.tabletop.portrait :global(.heaven-layout){inset:0;left:0;top:0;border:1px solid #ccb47b33;border-radius:15px;overflow:clip}
  .tabletop :global(.play-viewport){width:100%;height:100%}
- .tabletop .status-rail,.tabletop.portrait .status-rail{left:calc(var(--table-depth) + 8px);top:calc(var(--table-depth) + 8px);right:auto;bottom:auto;width:86px;height:auto;padding:0;border:0;background:none;overflow:visible;z-index:170;pointer-events:none}
+ .tabletop .status-rail,.tabletop.portrait .status-rail{left:8px;top:8px;right:auto;bottom:auto;width:86px;height:auto;padding:0;border:0;background:none;overflow:visible;z-index:170;pointer-events:none}
  .tabletop .rail-content,.tabletop.portrait .rail-content{display:flex;flex-direction:column;gap:8px;zoom:1;height:auto;pointer-events:none}
  .tabletop .rail-content>*,.tabletop .status-controls :global(button){pointer-events:auto}
  .tabletop .status-controls,.tabletop.portrait .status-controls{display:flex;flex-wrap:wrap;gap:4px;justify-content:center}
  .tabletop .status-controls :global(.legality),.tabletop.portrait .status-controls :global(.legality){width:52px;height:45px}
  .tabletop .status-controls :global(.transpose-control),.tabletop .status-controls :global(.tidy-control){width:25px;height:25px}
  .tabletop .table-tools,.tabletop.portrait .table-tools{position:static;align-self:center;flex-direction:row}
- .tabletop .round-card,.tabletop.portrait .round-card{width:70px;align-self:center;transform:rotate(var(--seat-angle));transition:transform .4s}
+ .tabletop .round-card,.tabletop.portrait .round-card{width:70px;align-self:center;transform:none}
  .tabletop .special-areas,.tabletop.portrait .special-areas{position:static;max-width:none;display:flex;flex-direction:column}
  .tabletop .purgatory-object{width:70px}
  .tabletop .setup-table{inset:var(--table-depth);pointer-events:none;flex-direction:column;gap:20px}
  .tabletop .setup-table button{pointer-events:auto}
  .tabletop .setup-table .lobby-invitation{display:none}
  .tabletop .deal-pile{width:100px;transform:rotate(calc(var(--seat-angle) + 7deg))}
- .tabletop-bag{position:absolute;right:calc(var(--table-depth) + 8px);bottom:calc(var(--table-depth) + 8px);z-index:170;transform:rotate(var(--seat-angle));transition:transform .4s}
+ .tabletop-bag{position:absolute;right:8px;bottom:8px;z-index:170}
  .tabletop-bag :global(.soul-bag){width:65px}
- .tabletop-log{position:absolute;right:calc(var(--table-depth) + 8px);top:calc(var(--table-depth) + 8px);width:120px;z-index:165;opacity:.65}
+ .tabletop-log{position:absolute;right:8px;top:8px;width:120px;z-index:165;opacity:.65}
  .tabletop-log :global(.game-log){position:static;width:100%;height:65px;max-height:65px;font-size:10px}
  .tabletop .number-offering{bottom:calc(var(--table-depth) + 12px);left:50%;max-width:50vw;transform:translateX(-50%) rotate(var(--seat-angle))}
  .tabletop .score-ledger{transform:translate(-50%,-50%) rotate(var(--seat-angle));max-width:calc(100vmin - 30px)}

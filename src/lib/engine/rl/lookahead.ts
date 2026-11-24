@@ -9,7 +9,7 @@ export function estimateGift(o:Observation,c:Command,samples=4):Estimate|null{
  const shuffle=(ids:string[])=>{const a=[...ids];for(let i=a.length-1;i>0;i--){const j=Math.floor(random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
  const value=(hand:string[],borrowed?:string):Estimate=>{
   const plan=greedyPlan(o,hand,o.heaven),placed=new Set(plan.groups.flatMap(g=>g.tiles)),remaining=hand.filter(id=>!placed.has(id));
-  if(borrowed&&(!placed.has(borrowed)||!o.me.hand.some(id=>placed.has(id))))return {delivered:0,penalty:0,finish:0,connections:0,hand:o.me.hand};
+  if(borrowed&&(!o.me.opened&&!!plan.opening?.includes(borrowed)||!placed.has(borrowed)||!o.me.hand.some(id=>placed.has(id))))return {delivered:0,penalty:0,finish:0,connections:0,hand:o.me.hand};
   return {delivered:o.me.hand.length-remaining.length,penalty:o.me.hand.reduce((n,id)=>n+tileValue(o,id),0)-remaining.reduce((n,id)=>n+tileValue(o,id),0),finish:remaining.length===0?1:0,connections:0,hand:remaining};
  };
  const outcomes:Estimate[]=[];

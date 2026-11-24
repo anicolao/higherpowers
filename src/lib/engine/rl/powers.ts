@@ -1,8 +1,8 @@
 import {formation} from '../formations';
 import type {Command,Group} from '../types';
 import type {Observation} from './observation';
-import {greedyPlan,placedGroup,tileValue,type Plan} from './planner';
-export function powerChoices(o:Observation,plans:Plan[]):Command[]{
+import {greedyPlan,rearrangePlan,placedGroup,tileValue,type Plan} from './planner';
+export function powerChoices(o:Observation,plans:Plan[],depth=2):Command[]{
  const p=o.me,turn=o.turn,commands:Command[]=[];if(p.used||p.purgatory)return commands;
  const own=(plan:Plan):Extract<Command,{type:'organize'}>=>({type:'organize',...plan,turn});
  if(p.angel==='michael')for(const rank of [...new Set(p.hand.map(id=>o.tiles[id].rank))].filter(r=>r!=='joker'))for(const target of o.rivals)commands.push({type:'before',power:'banish',rank:Number(rank),target:target.id,turn});
@@ -32,12 +32,21 @@ export function powerChoices(o:Observation,plans:Plan[]):Command[]{
  }
  if(p.angel==='jophiel'&&p.opened){
   const removable:{tile:string;group:Group}[]=[];
-  for(const group of o.heaven.filter(g=>g.zone===null))for(const tile of group.tiles)if(formation(group.tiles.filter(id=>id!==tile).map(id=>o.tiles[id]),o.decree))removable.push({tile,group});
-  removable.sort((a,b)=>tileValue(o,a.tile)-tileValue(o,b.tile));
-  for(let a=0;a<Math.min(6,removable.length);a++)for(let b=a+1;b<Math.min(6,removable.length);b++){
-   const tiles=[removable[a].tile,removable[b].tile],groups=o.heaven.map(g=>g.zone===null?{...g,tiles:g.tiles.filter(id=>!tiles.includes(id)),slots:undefined,jokerFaces:undefined}:g);
-   if(groups.some(g=>!formation(g.tiles.map(id=>o.tiles[id]),o.decree,g.jokerFaces)))continue;
-   const plan=greedyPlan(o,p.hand,groups);if(plan.groups.flatMap(g=>g.tiles).filter(id=>p.hand.includes(id)).length>=2)commands.push({...own(plan),power:{kind:'transfigure',tiles}});
+  for(const group of o.heaven.filter(g=>g.zone===null))for(const tile of group.tiles)removable.push({tile,group});
+  const pairs:{tiles:string[];groups:Group[];priority:number}[]=[];
+  const ordinary=plans.reduce<Plan>((best,p)=>p.groups.flatMap(g=>g.tiles).filter(id=>o.me.hand.includes(id)).length>best.groups.flatMap(g=>g.tiles).filter(id=>o.me.hand.includes(id)).length?p:best,{groups:o.heaven});
+  const retained=p.hand.filter(id=>!ordinary.groups.some(g=>g.tiles.includes(id)));
+  const helpful=(id:string)=>retained.reduce((n,other)=>{const a=o.tiles[id],b=o.tiles[other];return n+(a.rank==='joker'||b.rank==='joker'?4:a.rank===b.rank?2:a.color===b.color&&Math.abs(Number(a.rank)-Number(b.rank))<=2?1:0);},0);
+  for(let a=0;a<removable.length;a++)for(let b=a+1;b<removable.length;b++){
+   const tiles=[removable[a].tile,removable[b].tile],changed=new Set([removable[a].group.id,removable[b].group.id]);if(o.heaven.some(g=>changed.has(g.id)&&g.tiles.length>tiles.filter(id=>g.tiles.includes(id)).length&&!formation(g.tiles.filter(id=>!tiles.includes(id)).map(id=>o.tiles[id]),o.decree)))continue;
+   const groups=o.heaven.map(g=>changed.has(g.id)?{...g,tiles:g.tiles.filter(id=>!tiles.includes(id)),slots:undefined,jokerFaces:undefined}:g).filter(g=>g.tiles.length);
+   const creditMatch=tiles.reduce((sum,id)=>sum+p.scales.filter(k=>o.tiles[k].rank===o.tiles[id].rank&&o.tiles[k].color===o.tiles[id].color).reduce((n,k)=>n+tileValue(o,k),0),0);
+   const priority=creditMatch+tiles.reduce((n,id)=>n+helpful(id)-tileValue(o,id)/13,0);
+   pairs.push({tiles,groups,priority});
+  }
+  for(const pair of pairs.sort((a,b)=>b.priority-a.priority).slice(0,16)){
+   const altered={...o,heaven:pair.groups},base=greedyPlan(o,p.hand,pair.groups),plan=rearrangePlan(altered,base,depth);
+   if(plan.groups.flatMap(g=>g.tiles).filter(id=>p.hand.includes(id)).length>=2)commands.push({...own(plan),power:{kind:'transfigure',tiles:pair.tiles}});
   }
  }
  return commands;

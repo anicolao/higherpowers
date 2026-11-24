@@ -66,6 +66,17 @@ try{
   await page.evaluate(events=>localStorage.setItem('hp-tabletop-local',JSON.stringify(events)),saved);await page.reload();await expect(page.locator('.play-area')).toHaveAttribute('data-turning','false');
   await page.getByRole('button',{name:'Reveal Mover’s rack',exact:true}).click();
   const privateRack=page.locator('[data-private-seat="tabletop-owner"]');
+  const tools=await privateRack.locator('.rack-tools').boundingBox(),rackBox=await privateRack.locator('.rack').boundingBox(),portBox=await privateRack.locator('xpath=ancestor::section[1]').boundingBox();
+  if(seat==='south')expect(tools!.y).toBeGreaterThanOrEqual(rackBox!.y+rackBox!.height-1);
+  if(seat==='north')expect(tools!.y+tools!.height).toBeLessThanOrEqual(rackBox!.y+1);
+  if(seat==='east')expect(tools!.x).toBeGreaterThanOrEqual(rackBox!.x+rackBox!.width-1);
+  if(seat==='west')expect(tools!.x+tools!.width).toBeLessThanOrEqual(rackBox!.x+1);
+  expect(tools!.x).toBeGreaterThanOrEqual(portBox!.x-1);expect(tools!.y).toBeGreaterThanOrEqual(portBox!.y-1);expect(tools!.x+tools!.width).toBeLessThanOrEqual(portBox!.x+portBox!.width+1);expect(tools!.y+tools!.height).toBeLessThanOrEqual(portBox!.y+portBox!.height+1);
+  await page.getByRole('button',{name:'Tabletop menu',exact:true}).click();const menu=page.getByRole('dialog',{name:'Tabletop menu',exact:true});await expect(menu).toBeVisible();
+  const menuBox=await menu.boundingBox();expect(menuBox!.x).toBeGreaterThanOrEqual(0);expect(menuBox!.y).toBeGreaterThanOrEqual(0);expect(menuBox!.x+menuBox!.width).toBeLessThanOrEqual(1800);expect(menuBox!.y+menuBox!.height).toBeLessThanOrEqual(1100);
+  for(const item of await menu.locator('button,a').all())expect(await item.evaluate(el=>{const b=el.getBoundingClientRect();return el.contains(document.elementFromPoint(b.x+b.width/2,b.y+b.height/2));})).toBe(true);
+  await page.screenshot({path:`tmp/qa/tabletop/09-${seat}-menu.png`});await page.getByRole('button',{name:'Close tabletop menu',exact:true}).click();await expect(menu).toHaveCount(0);
+
   for(const id of opening)await privateRack.locator(`[data-rack-tile="${id}"]`).click();
   const first=await privateRack.locator(`[data-rack-tile="${opening[0]}"]`).boundingBox(),area=await page.locator('.play-viewport').boundingBox();
   if(seat==='east'){
@@ -112,5 +123,5 @@ try{
  await page.getByRole('button',{name:'Reveal Mover’s rack',exact:true}).click();
  await page.locator('[data-private-seat="tabletop-owner"] .tabletop-inspection button').first().click();
  await page.evaluate(()=>window.dispatchEvent(new Event('blur')));await expect(page.locator('[data-private-seat]')).toHaveCount(0);
- expect(errors).toEqual([]);console.log('PASS: eight walk-up seats, five-player cap, clockwise setup, screened Angel choices/racks, rotating full-width/square Heaven, tap-to-place openings and pointer-correct table drags from all four edges (including touch), automatic single draws, private two-choice inspection across reload, blur cover, portrait fit.');
+ expect(errors).toEqual([]);console.log('PASS: eight walk-up seats, five-player cap, clockwise setup, screened Angel choices/racks, rotating full-width/square Heaven, unclipped rotated menus, sort controls below the rack, tap-to-place openings and pointer-correct table drags from all four edges (including touch), automatic single draws, private two-choice inspection across reload, blur cover, portrait fit.');
 }finally{await writeFile('tmp/qa/tabletop/errors.json',JSON.stringify(errors));await browser.close();}

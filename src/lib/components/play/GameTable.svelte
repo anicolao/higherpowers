@@ -340,5 +340,5 @@
  .tabletop .table-cue{bottom:calc(var(--table-depth) + 8px);left:50%;max-width:40vw;font-size:14px}
  .tabletop-inspection{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;padding:8px;background:#aa8b4e88;border:1px solid #d8bc7e;border-radius:7px;max-height:100px;overflow:auto}
  .communion-private{max-height:70px;margin-top:5px}.communion-private .taken{opacity:.25}
- .station-choice{position:absolute;right:90px;top:-25px;bottom:auto;min-height:24px;padding:3px 9px;background:#efe0b5;color:#644d28;border:1px solid #c4a463;border-radius:12px;font-size:11px}
+ .station-choice{position:absolute;left:0;right:auto;top:auto;bottom:1px;min-height:24px;padding:3px 9px;background:#efe0b5;color:#644d28;border:1px solid #c4a463;border-radius:12px;font-size:11px}
 </style>

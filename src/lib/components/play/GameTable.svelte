@@ -158,18 +158,20 @@
  async function chooseNumber(n:number){if(me.angel==='haniel'){count=n;await useBefore();}else{rank=n;await useBefore();}}
  function selectCommunion(id:string){if(communionTile===id){if(board.removeTile(id))communionTile=undefined;return;}if(communionTile&&!board.removeTile(communionTile))return;const b=document.querySelector('.heaven-board')!.getBoundingClientRect();if(board.placeTile(gameState.tiles[id],b.left+b.width*.45,b.top+b.height*.48)){communionTile=id;}}
 </script>
-{#snippet tabletopStation(player:Player,angle:number)}
- {#if player.id===uid}
-  {#if gameState.phase==='inspect'&&gameState.inspection?.player===uid}
-   <div class="tabletop-inspection" aria-label="Choose one inspected soul to keep">{#each gameState.inspection.tiles as id}<button class="tile-object" disabled={busy} aria-label={`Keep ${gameState.tiles[id].color} ${gameState.tiles[id].rank}`} onclick={()=>action({type:'keep',tile:id,turn:gameState.turnNumber})}><SoulTile rank={gameState.tiles[id].rank} color={gameState.tiles[id].color} size={32}/></button>{/each}</div>
-  {:else}
-   <Rack size={32} rotation={angle} tapToPlace tiles={rackTiles} hidden={motionTiles} canPlay={editable||zealAvailable} committed={me.scales} {selected} onSelect={selectRack} onDropMany={addMany} onDrag={previewRack} onBlockedDrop={blockedDrop} onReorder={reorder}/>
-   {#if gameState.phase==='judgment'&&!me.ready&&gameState.judgment===3}<button class="station-choice" disabled={busy} onclick={roundCardPicked}>Commit Scales</button>{/if}
-   {#if gameState.phase==='dance'&&!gameState.dance?.choices[uid]}<button class="station-choice" disabled={busy} onclick={passDance}>Pass {gameState.dance?.count} souls →</button>{/if}
-  {/if}
-  {#if gameState.communion?.player===uid}<div class="tabletop-inspection communion-private" aria-label="Communion: choose a soul from the opponent’s hand">{#each gameState.players.find(p=>p.id===gameState.communion!.target)!.hand as id}<button class="tile-object" disabled={busy} class:taken={communionTile===id} aria-label={`Choose ${gameState.tiles[id].color} ${gameState.tiles[id].rank} with Communion`} onclick={()=>selectCommunion(id)}><SoulTile rank={gameState.tiles[id].rank} color={gameState.tiles[id].color} size={25}/></button>{/each}</div>{/if}
- {:else}<Rack size={32} rotation={angle} tapToPlace hidden={motionTiles} tiles={player.hand.map(id=>gameState.tiles[id])} committed={player.scales} onReorder={tiles=>void sendAs?.(player.id,{type:'rack',tiles})} onBlockedDrop={()=>{message='Wait for your turn to play into Heaven.';}}/>{/if}
+{#snippet bagChoices()}
+ <div class="tabletop-inspection" aria-label="Choose one inspected soul to keep">{#each gameState.inspection?.tiles??[] as id}<button class="tile-object" disabled={busy} aria-label={`Keep ${gameState.tiles[id].color} ${gameState.tiles[id].rank}`} onclick={()=>action({type:'keep',tile:id,turn:gameState.turnNumber})}><SoulTile rank={gameState.tiles[id].rank} color={gameState.tiles[id].color} size={21}/></button>{/each}</div>
 {/snippet}
+{#snippet tabletopStation(player:Player,angle:number)}
+ {@const own=player.id===uid}
+ {@const inspection=own&&gameState.phase==='inspect'&&gameState.inspection?.player===uid}
+ <Rack size={32} fitHeight={inspection?86:105} footer={inspection?bagChoices:undefined} rotation={angle} tapToPlace tiles={own?rackTiles:player.hand.map(id=>gameState.tiles[id])} hidden={motionTiles} canPlay={own&&(editable||zealAvailable)} committed={player.scales} selected={own?selected:[]} onSelect={own?selectRack:undefined} onDropMany={own?addMany:undefined} onDrag={own?previewRack:undefined} onBlockedDrop={own?blockedDrop:()=>{message='Wait for your turn to play into Heaven.';}} onReorder={own?reorder:tiles=>void sendAs?.(player.id,{type:'rack',tiles})}/>
+ {#if own}
+  {#if gameState.phase==='judgment'&&!me.ready&&gameState.judgment===3}<button class="station-choice" disabled={busy} onclick={roundCardPicked}>Commit Scales</button>{/if}
+  {#if gameState.phase==='dance'&&!gameState.dance?.choices[uid]}<button class="station-choice" disabled={busy} onclick={passDance}>Pass {gameState.dance?.count} souls →</button>{/if}
+  {#if gameState.communion?.player===uid}<div class="tabletop-inspection communion-private" aria-label="Communion: choose a soul from the opponent’s hand">{#each gameState.players.find(p=>p.id===gameState.communion!.target)!.hand as id}<button class="tile-object" disabled={busy} class:taken={communionTile===id} aria-label={`Choose ${gameState.tiles[id].color} ${gameState.tiles[id].rank} with Communion`} onclick={()=>selectCommunion(id)}><SoulTile rank={gameState.tiles[id].rank} color={gameState.tiles[id].color} size={25}/></button>{/each}</div>{/if}
+ {/if}
+{/snippet}
+
 <svelte:window bind:innerWidth={screenWidth} bind:innerHeight={screenHeight} onkeydown={e=>{if(e.key==='Escape'){focusedCard=null;giftOpen=false;zoneMode=false;}}}/>
 <div class="game-table" style={`--bottom-strip:${bottomStrip}px;--opponent-scale:${opponentScale};--table-depth:${edgeDepth}px;--heaven-width:${heavenWidth}px;--heaven-height:${heavenHeight}px;--table-angle:${tableAngle}deg;--seat-angle:${me.seat?seatPose(me.seat,portrait).angle:0}deg`} class:portrait class:tabletop class:in-round={gameState.round>0} data-fullscreen-table>
  {#if tabletop}<TabletopRing state={gameState} {uid} {busy} onJoin={(seat,name,bot)=>onJoin?.(seat,name,bot)} onFocus={onFocus} hidden={motionTiles} onPrivacy={ids=>{uncovered=ids;if(!ids.includes(uid)){giftOpen=false;zoneMode=false;selected=[];}}} onAngel={(id,angel)=>void sendAs?.(id,{type:'angel',angel})} onCard={id=>{if(gameState.phase==='angels')return;if(id===uid&&privateVisible)void activateAngel();else void opponentPicked(id);}} station={tabletopStation}/>{/if}
@@ -341,6 +343,7 @@
  .tabletop .score-ledger{transform:translate(-50%,-50%) rotate(var(--seat-angle));max-width:calc(100vmin - 30px)}
  .tabletop .table-cue{bottom:calc(var(--table-depth) + 8px);left:50%;max-width:40vw;font-size:14px}
  .tabletop-inspection{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;padding:8px;background:#aa8b4e88;border:1px solid #d8bc7e;border-radius:7px;max-height:100px;overflow:auto}
+ .tabletop-inspection:not(.communion-private){flex-wrap:nowrap;gap:3px;padding:4px 3px;max-height:none;overflow:visible}
  .communion-private{max-height:70px;margin-top:5px}.communion-private .taken{opacity:.25}
  .station-choice{position:absolute;left:0;right:auto;top:auto;bottom:1px;min-height:24px;padding:3px 9px;background:#efe0b5;color:#644d28;border:1px solid #c4a463;border-radius:12px;font-size:11px}
 </style>

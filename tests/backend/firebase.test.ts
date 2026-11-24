@@ -3,13 +3,15 @@ import {readFileSync} from 'node:fs';
 import {initializeTestEnvironment,assertFails,assertSucceeds,type RulesTestEnvironment} from '@firebase/rules-unit-testing';
 import {doc,runTransaction,getDoc,collection,getDocs,serverTimestamp,setDoc,deleteDoc} from 'firebase/firestore';
 import {ref,set,get} from 'firebase/database';
+import {encodeEvent,decodeEvent} from '../../src/lib/backend/event-codec';
+import {sanctuaryFixture} from '../../scripts/fixtures/sanctuary-review';
 import {applyEvent,commandEvent,replay,type State,type Command} from '../../src/lib/engine/engine';
 const enabled=!!process.env.FIRESTORE_EMULATOR_HOST;let env:RulesTestEnvironment;
 (enabled?describe:describe.skip)('Firebase durable events and live drafts',()=>{
  beforeAll(async()=>{env=await initializeTestEnvironment({projectId:'demo-higher-powers',firestore:{host:'127.0.0.1',port:18301,rules:readFileSync('firestore.rules','utf8')},database:{host:'127.0.0.1',port:19001,rules:readFileSync('database.rules.json','utf8')}});});
  afterAll(async()=>{await env.cleanup();});
  const meta=(s:State)=>({version:1,owner:s.owner,members:s.players.map(p=>p.id),bots:s.players.filter(p=>p.bot).map(p=>p.id),phase:s.phase,revision:s.revision,...(s.tabletop?{locals:s.players.filter(p=>p.local).map(p=>p.id)}:{})});
- async function write(id:string,auth:string,s:State|null,actor:string,c:Command){const db=env.authenticatedContext(auth).firestore(),event=commandEvent(s,actor,c,crypto.randomUUID()),next=applyEvent(s,event);await runTransaction(db,async tx=>{const room=doc(db,'games',id);await tx.get(room);tx.set(room,meta(next));tx.set(doc(room,'events',String(event.sequence)),{...event,createdAt:serverTimestamp()});});return next;}
+ async function write(id:string,auth:string,s:State|null,actor:string,c:Command){const db=env.authenticatedContext(auth).firestore(),event=commandEvent(s,actor,c,crypto.randomUUID()),next=applyEvent(s,event);await runTransaction(db,async tx=>{const room=doc(db,'games',id);await tx.get(room);tx.set(room,meta(next));tx.set(doc(room,'events',String(event.sequence)),{...encodeEvent(event),createdAt:serverTimestamp()});});return next;}
  test('membership, actor control, immutable log, atomic revision, and competing joins',async()=>{
   const id=crypto.randomUUID();let s=await write(id,'host',null,'host',{type:'create',name:'Host',seed:'cloud'});
   await assertFails(getDocs(collection(env.authenticatedContext('outsider').firestore(),'games',id,'events')));
@@ -29,7 +31,7 @@ const enabled=!!process.env.FIRESTORE_EMULATOR_HOST;let env:RulesTestEnvironment
   s=await write(id,'screen-host',s,north.id,{type:'angel',angel:north.options[0]});
   expect(s.players.find(p=>p.id===north.id)?.angel).toBe(north.options[0]);
   const db=env.authenticatedContext('screen-guest').firestore(),event=commandEvent(s,'screen-guest',{type:'angel',angel:s.players.find(p=>p.id==='screen-guest')!.options[0]},crypto.randomUUID());
-  await assertFails(runTransaction(db,async tx=>{await tx.get(doc(db,'games',id));tx.set(doc(db,'games',id),{...meta(applyEvent(s,event)),locals:['screen-north','screen-host']});tx.set(doc(db,'games',id,'events',String(event.sequence)),{...event,createdAt:serverTimestamp()});}));
+  await assertFails(runTransaction(db,async tx=>{await tx.get(doc(db,'games',id));tx.set(doc(db,'games',id),{...meta(applyEvent(s,event)),locals:['screen-north','screen-host']});tx.set(doc(db,'games',id,'events',String(event.sequence)),{...encodeEvent(event),createdAt:serverTimestamp()});}));
   s=await write(id,'screen-guest',s,'screen-guest',event.command);s=await write(id,'screen-host',s,'screen-host',{type:'angel',angel:s.players.find(p=>p.id==='screen-host')!.options[0]});s=await write(id,'screen-host',s,'screen-host',{type:'start'});expect(s.phase).toBe('play');
  });
  test('five-letter aliases preserve old tables and cannot be hijacked',async()=>{
@@ -46,7 +48,7 @@ const enabled=!!process.env.FIRESTORE_EMULATOR_HOST;let env:RulesTestEnvironment
   for(const difficulty of ['easy','standard','hard'] as const)s=await write(id,'rl-host',s,'rl-host',{type:'bot',id:`rl-${difficulty}`,name:difficulty,difficulty});
   const db=env.authenticatedContext('rl-host').firestore(),events=await getDocs(collection(db,'games',id,'events'));
   expect(events.docs.every(d=>d.data().version===2)).toBe(true);
-  expect(replay(events.docs.map(d=>d.data()).sort((a,b)=>a.sequence-b.sequence) as any).players.slice(1).map(p=>p.difficulty)).toEqual(['easy','standard','hard']);
+  expect(replay(events.docs.map(d=>decodeEvent(d.data())).sort((a,b)=>a.sequence-b.sequence)).players.slice(1).map(p=>p.difficulty)).toEqual(['easy','standard','hard']);
   const event=commandEvent(s,'rl-host',{type:'bot',id:'bad-level',name:'Bad',difficulty:'easy'},crypto.randomUUID()),next=applyEvent(s,event);
   await assertFails(runTransaction(db,async tx=>{const room=doc(db,'games',id);await tx.get(room);tx.set(room,meta(next));tx.set(doc(room,'events',String(event.sequence)),{...event,command:{...event.command,difficulty:'expert'},createdAt:serverTimestamp()});}));
   const start=commandEvent(s,'rl-host',{type:'start'},crypto.randomUUID()),begun=applyEvent(s,start);await assertFails(runTransaction(db,async tx=>{const room=doc(db,'games',id);await tx.get(room);tx.set(room,meta(begun));tx.set(doc(room,'events',String(start.sequence)),{...start,command:{...start.command,difficulty:'easy'},createdAt:serverTimestamp()});}));
@@ -57,5 +59,17 @@ const enabled=!!process.env.FIRESTORE_EMULATOR_HOST;let env:RulesTestEnvironment
   const draft={version:1,revision:8,turn:1,actor:'live-alice',session:'s',sequence:1,sentAt:Date.now(),dragging:true,groups:[{id:'g',tiles:['black-a-1'],x:23,y:44}]};
   await assertSucceeds(set(ref(alice,`tables/${id}/draft`),draft));expect((await get(ref(host,`tables/${id}/draft`))).val().groups[0].x).toBe(23);
   await assertFails(get(ref(outsider,`tables/${id}/draft`)));await assertFails(set(ref(outsider,`tables/${id}/draft`),{...draft,actor:'outsider'}));await assertFails(set(ref(alice,`tables/${id}/control`),{owner:'live-alice'}));await assertFails(set(ref(alice,`tables/${id}/draft`),{...draft,actor:'live-host'}));await assertFails(set(ref(alice,`tables/${id}/draft`),{...draft,sentAt:1}));
+ });
+ test('Sanctuary extension and split persist through Firestore and replay',async()=>{
+  const id=crypto.randomUUID(),uid='sanctuary-host',fixture=sanctuaryFixture(uid);let s:State|null=null;
+  for(const event of fixture.events)s=await write(id,uid,s,event.actor,event.command);
+  const tiles=fixture.tiles,groups=[{id:'left',x:180,y:120,zone:uid,tiles:tiles.slice(0,3)},{id:'right',x:321,y:120,zone:uid,tiles:tiles.slice(3)}],command:Command={type:'organize',groups,turn:s!.turnNumber,sanctuary:[[tiles],[tiles.slice(0,3),tiles.slice(3)]]};
+  const db=env.authenticatedContext(uid).firestore(),event=commandEvent(s,uid,command,crypto.randomUUID());
+  // Reproduce the exact SDK failure that practice-only checks missed.
+  let failure:any;try{await setDoc(doc(db,'games',id,'events',String(event.sequence)),{...event,createdAt:serverTimestamp()});}catch(error){failure=error;}
+  expect(failure?.code).toBe('invalid-argument');expect(failure?.message).toMatch(/nested arrays/i);
+  const next=await write(id,uid,s,uid,command),snapshot=await getDocs(collection(db,'games',id,'events')),events=snapshot.docs.map(d=>decodeEvent(d.data())).sort((a,b)=>a.sequence-b.sequence);
+  expect(replay(events)).toEqual(next);expect(next.heaven.filter(g=>g.zone===uid)).toHaveLength(2);
+  const stored=snapshot.docs.find(d=>d.data().sequence===next.revision)!.data();expect(stored.command.sanctuary[0].groups[0].tiles).toEqual(tiles);
  });
 });

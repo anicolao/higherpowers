@@ -4,131 +4,406 @@
   "algorithm": "episodic cross-entropy reinforcement learning",
   "weights": [
     0,
-    8.236559591147753,
-    0.553172578518684,
-    1.0166426272804459,
-    2.2200140109512576,
-    -0.5096757152264371,
+    7.873509139079869,
+    0.08505192950542334,
+    2.414692443071554,
+    1.368421411480672,
+    -0.3077148656102804,
     30,
-    -1.7498793695553136,
-    -0.7465942391172843,
-    -3.0202197391534993,
-    -3.9849122811230995,
-    0.23048213520508765,
-    3.9573683234963135,
-    5.089610670978959,
-    3.0672692632808696,
-    0.11466237247159605,
-    1.4099369082981759,
-    0.706262636040134,
-    -5.997431778840396,
-    1,
-    2,
-    4,
-    2.676649030245071,
-    2,
-    4,
-    0,
-    -2.294528583740516,
-    0,
-    3.051634604197
+    -2.443462295157462,
+    -1.670388005176451,
+    -2.7457912292128173,
+    -5.111466106252074,
+    1.449965725302619,
+    4.517604586919265,
+    4.255756931622994,
+    3.9487107936459402,
+    0.8609736735094019,
+    1.662378127537067,
+    1.3053183760366154,
+    -6.311312127487018,
+    6,
+    6,
+    4.436173095832331,
+    4.670643468797062,
+    6,
+    4.745724399134028,
+    -1.0401531235125063,
+    -3.114440082039435,
+    0.703991341621154,
+    3.0770733993622366
   ],
   "powers": true,
   "planning": 2,
   "training": {
-    "namespace": "hp-rl-training-standard-v3",
+    "namespace": "hp-rl-training-standard-sanctuary-v2",
+    "playerCount": 2,
     "warmStart": {
-      "path": "tmp/rl/standard-powers-v1.json",
-      "sha256": "6385ae7f8fce27a0e328c9525423f11f94a299f1ff217acfdb9a22dfd6aeab67",
+      "path": "models/standard.json",
+      "sha256": "24ca887f8566bd2755541debbf18288a5967e1c2a91f23d192446702e0fee3ab",
       "training": {
-        "algorithm": "coordinate policy search using complete-game episodic returns",
-        "namespace": "hp-rl-training-powers-standard-v1",
-        "episodes": 3072,
-        "parent": {
-          "path": "tmp/rl/standard-powers-parent-v1.json",
-          "sha256": "94780d01ed17d7c55f0ae541e73ad6013b0e2e31032529e80e713a9a0fea8b54",
+        "namespace": "hp-rl-training-standard-v3",
+        "warmStart": {
+          "path": "tmp/rl/standard-powers-v1.json",
+          "sha256": "6385ae7f8fce27a0e328c9525423f11f94a299f1ff217acfdb9a22dfd6aeab67",
           "training": {
-            "namespace": "hp-rl-training-standard-v2",
-            "warmStart": {
-              "path": "tmp/rl/standard-v1.json",
-              "sha256": "1c2849deadf908fd824bf8260d66d494373a4937f7cf3486674ee71cc1ccef1f",
+            "algorithm": "coordinate policy search using complete-game episodic returns",
+            "namespace": "hp-rl-training-powers-standard-v1",
+            "episodes": 3072,
+            "parent": {
+              "path": "tmp/rl/standard-powers-parent-v1.json",
+              "sha256": "94780d01ed17d7c55f0ae541e73ad6013b0e2e31032529e80e713a9a0fea8b54",
               "training": {
-                "namespace": "hp-rl-training-standard-v1",
+                "namespace": "hp-rl-training-standard-v2",
                 "warmStart": {
-                  "path": "models/easy.json",
-                  "sha256": "f5efd014ddb1969b5f56485f87d6f3b7200e2d2aec8095cb5d978097116ebd90",
+                  "path": "tmp/rl/standard-v1.json",
+                  "sha256": "1c2849deadf908fd824bf8260d66d494373a4937f7cf3486674ee71cc1ccef1f",
                   "training": {
-                    "namespace": "hp-rl-training-easy-v3",
-                    "sourceRoot": "tmp/rl/sources/hp-rl-training-easy-v3-1795512290956",
+                    "namespace": "hp-rl-training-standard-v1",
+                    "warmStart": {
+                      "path": "models/easy.json",
+                      "sha256": "f5efd014ddb1969b5f56485f87d6f3b7200e2d2aec8095cb5d978097116ebd90",
+                      "training": {
+                        "namespace": "hp-rl-training-easy-v3",
+                        "sourceRoot": "tmp/rl/sources/hp-rl-training-easy-v3-1795512290956",
+                        "seed": 613299,
+                        "generation": 2,
+                        "episodes": 1152,
+                        "opponent": "heuristic",
+                        "development": {
+                          "games": 96,
+                          "wins": 94,
+                          "ties": 0,
+                          "winRate": 0.9791666666666666,
+                          "wilson95": [
+                            0.9271914417038553,
+                            0.9942681502898628
+                          ],
+                          "meanMargin": 270.6770833333333,
+                          "meanSteps": 455.1458333333333,
+                          "powers": {
+                            "uriel": 24
+                          }
+                        }
+                      }
+                    },
+                    "sourceRoot": "tmp/rl/sources/hp-rl-training-standard-v1-1795512529620",
                     "seed": 613299,
-                    "generation": 2,
-                    "episodes": 1152,
-                    "opponent": "heuristic",
+                    "generation": 6,
+                    "episodes": 3456,
+                    "opponent": "models/easy.json",
                     "development": {
                       "games": 96,
-                      "wins": 94,
+                      "wins": 80,
                       "ties": 0,
-                      "winRate": 0.9791666666666666,
+                      "winRate": 0.8333333333333334,
                       "wilson95": [
-                        0.9271914417038553,
-                        0.9942681502898628
+                        0.7462882947885029,
+                        0.8947270735549532
                       ],
-                      "meanMargin": 270.6770833333333,
-                      "meanSteps": 455.1458333333333,
+                      "meanMargin": 141.29166666666666,
+                      "meanSteps": 264.1354166666667,
                       "powers": {
-                        "uriel": 24
+                        "zadkiel": 22,
+                        "chamuel": 19,
+                        "raphael": 16,
+                        "haniel": 19,
+                        "jophiel": 15,
+                        "selaphiel": 24,
+                        "gabriel": 22,
+                        "uriel": 17,
+                        "barachiel": 19,
+                        "michael": 20,
+                        "jegudiel": 24
                       }
                     }
                   }
                 },
-                "sourceRoot": "tmp/rl/sources/hp-rl-training-standard-v1-1795512529620",
+                "sourceRoot": "tmp/rl/sources/hp-rl-training-standard-v2-1795512965604",
                 "seed": 613299,
                 "generation": 6,
-                "episodes": 3456,
+                "episodes": 9216,
                 "opponent": "models/easy.json",
                 "development": {
                   "games": 96,
-                  "wins": 80,
+                  "wins": 86,
                   "ties": 0,
-                  "winRate": 0.8333333333333334,
+                  "winRate": 0.8958333333333334,
                   "wilson95": [
-                    0.7462882947885029,
-                    0.8947270735549532
+                    0.8187766618632337,
+                    0.9424290880446204
                   ],
-                  "meanMargin": 141.29166666666666,
-                  "meanSteps": 264.1354166666667,
+                  "meanMargin": 175.98958333333334,
+                  "meanSteps": 269.9270833333333,
                   "powers": {
-                    "zadkiel": 22,
-                    "chamuel": 19,
+                    "zadkiel": 20,
+                    "raguel": 19,
+                    "chamuel": 23,
                     "raphael": 16,
-                    "haniel": 19,
-                    "jophiel": 15,
+                    "haniel": 23,
+                    "jophiel": 16,
                     "selaphiel": 24,
-                    "gabriel": 22,
+                    "gabriel": 24,
                     "uriel": 17,
-                    "barachiel": 19,
-                    "michael": 20,
-                    "jegudiel": 24
+                    "michael": 22
                   }
                 }
               }
             },
-            "sourceRoot": "tmp/rl/sources/hp-rl-training-standard-v2-1795512965604",
-            "seed": 613299,
-            "generation": 6,
-            "episodes": 9216,
             "opponent": "models/easy.json",
+            "heads": [
+              {
+                "angel": "zadkiel",
+                "value": 0,
+                "fitness": 0.9018130133492205,
+                "summary": {
+                  "games": 32,
+                  "wins": 26,
+                  "ties": 0,
+                  "winRate": 0.8125,
+                  "wilson95": [
+                    0.6469050424507756,
+                    0.9111057606383722
+                  ],
+                  "meanMargin": 143.71875,
+                  "meanSteps": 274.625,
+                  "powers": {
+                    "zadkiel": 80
+                  }
+                }
+              },
+              {
+                "angel": "raphael",
+                "value": -6,
+                "fitness": 1.0680498352394903,
+                "summary": {
+                  "games": 32,
+                  "wins": 31,
+                  "ties": 0,
+                  "winRate": 0.96875,
+                  "wilson95": [
+                    0.8425539219962727,
+                    0.9944622826374491
+                  ],
+                  "meanMargin": 282.5625,
+                  "meanSteps": 215.9375,
+                  "powers": {
+                    "raphael": 72
+                  }
+                }
+              },
+              {
+                "angel": "selaphiel",
+                "value": 2,
+                "fitness": 1.0026194903445378,
+                "summary": {
+                  "games": 32,
+                  "wins": 29,
+                  "ties": 0,
+                  "winRate": 0.90625,
+                  "wilson95": [
+                    0.7578150066422117,
+                    0.9675990373736805
+                  ],
+                  "meanMargin": 199.53125,
+                  "meanSteps": 338.21875,
+                  "powers": {
+                    "selaphiel": 92
+                  }
+                }
+              },
+              {
+                "angel": "barachiel",
+                "value": 2,
+                "fitness": 1.0674475024935024,
+                "summary": {
+                  "games": 32,
+                  "wins": 31,
+                  "ties": 0,
+                  "winRate": 0.96875,
+                  "wilson95": [
+                    0.8425539219962727,
+                    0.9944622826374491
+                  ],
+                  "meanMargin": 251.375,
+                  "meanSteps": 328.65625,
+                  "powers": {
+                    "barachiel": 96
+                  }
+                }
+              },
+              {
+                "angel": "chamuel",
+                "value": 1,
+                "fitness": 0.9983980178634779,
+                "summary": {
+                  "games": 32,
+                  "wins": 29,
+                  "ties": 0,
+                  "winRate": 0.90625,
+                  "wilson95": [
+                    0.7578150066422117,
+                    0.9675990373736805
+                  ],
+                  "meanMargin": 159.875,
+                  "meanSteps": 273.40625,
+                  "powers": {
+                    "chamuel": 92
+                  }
+                }
+              },
+              {
+                "angel": "jophiel",
+                "value": 2,
+                "fitness": 0.7334409452579078,
+                "summary": {
+                  "games": 32,
+                  "wins": 22,
+                  "ties": 0,
+                  "winRate": 0.6875,
+                  "wilson95": [
+                    0.5143300030196761,
+                    0.8204764788338126
+                  ],
+                  "meanMargin": 49.65625,
+                  "meanSteps": 289.9375,
+                  "powers": {
+                    "jophiel": 77
+                  }
+                }
+              },
+              {
+                "angel": "uriel",
+                "value": -1,
+                "fitness": 0.9680887539427447,
+                "summary": {
+                  "games": 32,
+                  "wins": 28,
+                  "ties": 0,
+                  "winRate": 0.875,
+                  "wilson95": [
+                    0.7193135021517204,
+                    0.9502994615552569
+                  ],
+                  "meanMargin": 166.5,
+                  "meanSteps": 297.71875,
+                  "powers": {
+                    "uriel": 55
+                  }
+                }
+              },
+              {
+                "angel": "jegudiel",
+                "value": 2,
+                "fitness": 0.8373387816964778,
+                "summary": {
+                  "games": 32,
+                  "wins": 24,
+                  "ties": 0,
+                  "winRate": 0.75,
+                  "wilson95": [
+                    0.5789310822975338,
+                    0.8674775601737845
+                  ],
+                  "meanMargin": 134.71875,
+                  "meanSteps": 262.875,
+                  "powers": {
+                    "jegudiel": 96
+                  }
+                }
+              },
+              {
+                "angel": "raguel",
+                "value": -3,
+                "fitness": 1.0001259803997768,
+                "summary": {
+                  "games": 32,
+                  "wins": 29,
+                  "ties": 0,
+                  "winRate": 0.90625,
+                  "wilson95": [
+                    0.7578150066422117,
+                    0.9675990373736805
+                  ],
+                  "meanMargin": 172.75,
+                  "meanSteps": 227.84375,
+                  "powers": {
+                    "raguel": 87
+                  }
+                }
+              },
+              {
+                "angel": "haniel",
+                "value": -3,
+                "fitness": 0.8096776116992628,
+                "summary": {
+                  "games": 32,
+                  "wins": 24,
+                  "ties": 0,
+                  "winRate": 0.75,
+                  "wilson95": [
+                    0.5789310822975338,
+                    0.8674775601737845
+                  ],
+                  "meanMargin": 68.8125,
+                  "meanSteps": 291.34375,
+                  "powers": {
+                    "haniel": 96
+                  }
+                }
+              },
+              {
+                "angel": "gabriel",
+                "value": 1,
+                "fitness": 1.0333071518363746,
+                "summary": {
+                  "games": 32,
+                  "wins": 30,
+                  "ties": 0,
+                  "winRate": 0.9375,
+                  "wilson95": [
+                    0.7985253275199642,
+                    0.9826897968048427
+                  ],
+                  "meanMargin": 192.1875,
+                  "meanSteps": 269.1875,
+                  "powers": {
+                    "gabriel": 96
+                  }
+                }
+              },
+              {
+                "angel": "michael",
+                "value": 4,
+                "fitness": 0.9919317601110895,
+                "summary": {
+                  "games": 32,
+                  "wins": 29,
+                  "ties": 0,
+                  "winRate": 0.90625,
+                  "wilson95": [
+                    0.7578150066422117,
+                    0.9675990373736805
+                  ],
+                  "meanMargin": 128.125,
+                  "meanSteps": 248.625,
+                  "powers": {
+                    "michael": 96
+                  }
+                }
+              }
+            ],
             "development": {
               "games": 96,
-              "wins": 86,
+              "wins": 88,
               "ties": 0,
-              "winRate": 0.8958333333333334,
+              "winRate": 0.9166666666666666,
               "wilson95": [
-                0.8187766618632337,
-                0.9424290880446204
+                0.8440993218899774,
+                0.9571698885393427
               ],
-              "meanMargin": 175.98958333333334,
-              "meanSteps": 269.9270833333333,
+              "meanMargin": 182.10416666666666,
+              "meanSteps": 270.3020833333333,
               "powers": {
                 "zadkiel": 20,
                 "raguel": 19,
@@ -138,255 +413,19 @@
                 "jophiel": 16,
                 "selaphiel": 24,
                 "gabriel": 24,
-                "uriel": 17,
-                "michael": 22
+                "uriel": 9,
+                "barachiel": 24,
+                "michael": 24,
+                "jegudiel": 24
               }
             }
           }
         },
+        "sourceRoot": "tmp/rl/sources/hp-rl-training-standard-v3-1795513853103",
+        "seed": 613299,
+        "generation": 2,
+        "episodes": 3072,
         "opponent": "models/easy.json",
-        "heads": [
-          {
-            "angel": "zadkiel",
-            "value": 0,
-            "fitness": 0.9018130133492205,
-            "summary": {
-              "games": 32,
-              "wins": 26,
-              "ties": 0,
-              "winRate": 0.8125,
-              "wilson95": [
-                0.6469050424507756,
-                0.9111057606383722
-              ],
-              "meanMargin": 143.71875,
-              "meanSteps": 274.625,
-              "powers": {
-                "zadkiel": 80
-              }
-            }
-          },
-          {
-            "angel": "raphael",
-            "value": -6,
-            "fitness": 1.0680498352394903,
-            "summary": {
-              "games": 32,
-              "wins": 31,
-              "ties": 0,
-              "winRate": 0.96875,
-              "wilson95": [
-                0.8425539219962727,
-                0.9944622826374491
-              ],
-              "meanMargin": 282.5625,
-              "meanSteps": 215.9375,
-              "powers": {
-                "raphael": 72
-              }
-            }
-          },
-          {
-            "angel": "selaphiel",
-            "value": 2,
-            "fitness": 1.0026194903445378,
-            "summary": {
-              "games": 32,
-              "wins": 29,
-              "ties": 0,
-              "winRate": 0.90625,
-              "wilson95": [
-                0.7578150066422117,
-                0.9675990373736805
-              ],
-              "meanMargin": 199.53125,
-              "meanSteps": 338.21875,
-              "powers": {
-                "selaphiel": 92
-              }
-            }
-          },
-          {
-            "angel": "barachiel",
-            "value": 2,
-            "fitness": 1.0674475024935024,
-            "summary": {
-              "games": 32,
-              "wins": 31,
-              "ties": 0,
-              "winRate": 0.96875,
-              "wilson95": [
-                0.8425539219962727,
-                0.9944622826374491
-              ],
-              "meanMargin": 251.375,
-              "meanSteps": 328.65625,
-              "powers": {
-                "barachiel": 96
-              }
-            }
-          },
-          {
-            "angel": "chamuel",
-            "value": 1,
-            "fitness": 0.9983980178634779,
-            "summary": {
-              "games": 32,
-              "wins": 29,
-              "ties": 0,
-              "winRate": 0.90625,
-              "wilson95": [
-                0.7578150066422117,
-                0.9675990373736805
-              ],
-              "meanMargin": 159.875,
-              "meanSteps": 273.40625,
-              "powers": {
-                "chamuel": 92
-              }
-            }
-          },
-          {
-            "angel": "jophiel",
-            "value": 2,
-            "fitness": 0.7334409452579078,
-            "summary": {
-              "games": 32,
-              "wins": 22,
-              "ties": 0,
-              "winRate": 0.6875,
-              "wilson95": [
-                0.5143300030196761,
-                0.8204764788338126
-              ],
-              "meanMargin": 49.65625,
-              "meanSteps": 289.9375,
-              "powers": {
-                "jophiel": 77
-              }
-            }
-          },
-          {
-            "angel": "uriel",
-            "value": -1,
-            "fitness": 0.9680887539427447,
-            "summary": {
-              "games": 32,
-              "wins": 28,
-              "ties": 0,
-              "winRate": 0.875,
-              "wilson95": [
-                0.7193135021517204,
-                0.9502994615552569
-              ],
-              "meanMargin": 166.5,
-              "meanSteps": 297.71875,
-              "powers": {
-                "uriel": 55
-              }
-            }
-          },
-          {
-            "angel": "jegudiel",
-            "value": 2,
-            "fitness": 0.8373387816964778,
-            "summary": {
-              "games": 32,
-              "wins": 24,
-              "ties": 0,
-              "winRate": 0.75,
-              "wilson95": [
-                0.5789310822975338,
-                0.8674775601737845
-              ],
-              "meanMargin": 134.71875,
-              "meanSteps": 262.875,
-              "powers": {
-                "jegudiel": 96
-              }
-            }
-          },
-          {
-            "angel": "raguel",
-            "value": -3,
-            "fitness": 1.0001259803997768,
-            "summary": {
-              "games": 32,
-              "wins": 29,
-              "ties": 0,
-              "winRate": 0.90625,
-              "wilson95": [
-                0.7578150066422117,
-                0.9675990373736805
-              ],
-              "meanMargin": 172.75,
-              "meanSteps": 227.84375,
-              "powers": {
-                "raguel": 87
-              }
-            }
-          },
-          {
-            "angel": "haniel",
-            "value": -3,
-            "fitness": 0.8096776116992628,
-            "summary": {
-              "games": 32,
-              "wins": 24,
-              "ties": 0,
-              "winRate": 0.75,
-              "wilson95": [
-                0.5789310822975338,
-                0.8674775601737845
-              ],
-              "meanMargin": 68.8125,
-              "meanSteps": 291.34375,
-              "powers": {
-                "haniel": 96
-              }
-            }
-          },
-          {
-            "angel": "gabriel",
-            "value": 1,
-            "fitness": 1.0333071518363746,
-            "summary": {
-              "games": 32,
-              "wins": 30,
-              "ties": 0,
-              "winRate": 0.9375,
-              "wilson95": [
-                0.7985253275199642,
-                0.9826897968048427
-              ],
-              "meanMargin": 192.1875,
-              "meanSteps": 269.1875,
-              "powers": {
-                "gabriel": 96
-              }
-            }
-          },
-          {
-            "angel": "michael",
-            "value": 4,
-            "fitness": 0.9919317601110895,
-            "summary": {
-              "games": 32,
-              "wins": 29,
-              "ties": 0,
-              "winRate": 0.90625,
-              "wilson95": [
-                0.7578150066422117,
-                0.9675990373736805
-              ],
-              "meanMargin": 128.125,
-              "meanSteps": 248.625,
-              "powers": {
-                "michael": 96
-              }
-            }
-          }
-        ],
         "development": {
           "games": 96,
           "wins": 88,
@@ -396,75 +435,485 @@
             0.8440993218899774,
             0.9571698885393427
           ],
-          "meanMargin": 182.10416666666666,
-          "meanSteps": 270.3020833333333,
+          "meanMargin": 180.42708333333334,
+          "meanSteps": 280.03125,
           "powers": {
-            "zadkiel": 20,
-            "raguel": 19,
+            "zadkiel": 19,
+            "raguel": 18,
             "chamuel": 23,
-            "raphael": 16,
+            "raphael": 15,
             "haniel": 23,
-            "jophiel": 16,
             "selaphiel": 24,
             "gabriel": 24,
-            "uriel": 9,
-            "barachiel": 24,
-            "michael": 24,
-            "jegudiel": 24
+            "barachiel": 22,
+            "michael": 22,
+            "jophiel": 3
           }
+        },
+        "headSelection": {
+          "namespace": "hp-rl-development-standard-v1",
+          "parent": "tmp/rl/standard-powers-parent-v2.json",
+          "heads": "tmp/rl/standard-powers-v2.json",
+          "selected": [
+            {
+              "angel": "zadkiel",
+              "source": "tmp/rl/standard-powers-parent-v2.json",
+              "parent": {
+                "games": 8,
+                "wins": 8,
+                "ties": 0,
+                "winRate": 1,
+                "wilson95": [
+                  0.6755843804891231,
+                  1
+                ],
+                "meanMargin": 225.875,
+                "meanSteps": 230,
+                "powers": {
+                  "zadkiel": 12
+                }
+              },
+              "heads": {
+                "games": 8,
+                "wins": 7,
+                "ties": 0,
+                "winRate": 0.875,
+                "wilson95": [
+                  0.5291051942301385,
+                  0.9775830911367039
+                ],
+                "meanMargin": 189.5,
+                "meanSteps": 220.25,
+                "powers": {
+                  "zadkiel": 9
+                }
+              }
+            },
+            {
+              "angel": "raphael",
+              "source": "tmp/rl/standard-powers-parent-v2.json",
+              "parent": {
+                "games": 8,
+                "wins": 7,
+                "ties": 0,
+                "winRate": 0.875,
+                "wilson95": [
+                  0.5291051942301385,
+                  0.9775830911367039
+                ],
+                "meanMargin": 316.875,
+                "meanSteps": 163.25,
+                "powers": {
+                  "raphael": 17
+                }
+              },
+              "heads": {
+                "games": 8,
+                "wins": 7,
+                "ties": 0,
+                "winRate": 0.875,
+                "wilson95": [
+                  0.5291051942301385,
+                  0.9775830911367039
+                ],
+                "meanMargin": 316.875,
+                "meanSteps": 163.25,
+                "powers": {
+                  "raphael": 17
+                }
+              }
+            },
+            {
+              "angel": "selaphiel",
+              "source": "tmp/rl/standard-powers-v2.json",
+              "parent": {
+                "games": 8,
+                "wins": 8,
+                "ties": 0,
+                "winRate": 1,
+                "wilson95": [
+                  0.6755843804891231,
+                  1
+                ],
+                "meanMargin": 286.375,
+                "meanSteps": 267,
+                "powers": {
+                  "selaphiel": 24
+                }
+              },
+              "heads": {
+                "games": 8,
+                "wins": 8,
+                "ties": 0,
+                "winRate": 1,
+                "wilson95": [
+                  0.6755843804891231,
+                  1
+                ],
+                "meanMargin": 378.375,
+                "meanSteps": 326.25,
+                "powers": {
+                  "selaphiel": 19
+                }
+              }
+            },
+            {
+              "angel": "barachiel",
+              "source": "tmp/rl/standard-powers-v2.json",
+              "parent": {
+                "games": 8,
+                "wins": 8,
+                "ties": 0,
+                "winRate": 1,
+                "wilson95": [
+                  0.6755843804891231,
+                  1
+                ],
+                "meanMargin": 266.125,
+                "meanSteps": 328.25,
+                "powers": {
+                  "barachiel": 20
+                }
+              },
+              "heads": {
+                "games": 8,
+                "wins": 8,
+                "ties": 0,
+                "winRate": 1,
+                "wilson95": [
+                  0.6755843804891231,
+                  1
+                ],
+                "meanMargin": 303.25,
+                "meanSteps": 358.625,
+                "powers": {
+                  "barachiel": 20
+                }
+              }
+            },
+            {
+              "angel": "chamuel",
+              "source": "tmp/rl/standard-powers-v2.json",
+              "parent": {
+                "games": 8,
+                "wins": 8,
+                "ties": 0,
+                "winRate": 1,
+                "wilson95": [
+                  0.6755843804891231,
+                  1
+                ],
+                "meanMargin": 184.625,
+                "meanSteps": 267.625,
+                "powers": {
+                  "chamuel": 20
+                }
+              },
+              "heads": {
+                "games": 8,
+                "wins": 8,
+                "ties": 0,
+                "winRate": 1,
+                "wilson95": [
+                  0.6755843804891231,
+                  1
+                ],
+                "meanMargin": 208.625,
+                "meanSteps": 237.125,
+                "powers": {
+                  "chamuel": 21
+                }
+              }
+            },
+            {
+              "angel": "jophiel",
+              "source": "tmp/rl/standard-powers-parent-v2.json",
+              "parent": {
+                "games": 8,
+                "wins": 8,
+                "ties": 0,
+                "winRate": 1,
+                "wilson95": [
+                  0.6755843804891231,
+                  1
+                ],
+                "meanMargin": 240.375,
+                "meanSteps": 215.375,
+                "powers": {
+                  "jophiel": 11
+                }
+              },
+              "heads": {
+                "games": 8,
+                "wins": 6,
+                "ties": 0,
+                "winRate": 0.75,
+                "wilson95": [
+                  0.40926987910258916,
+                  0.9285223111419724
+                ],
+                "meanMargin": 146.5,
+                "meanSteps": 201.25,
+                "powers": {
+                  "jophiel": 11
+                }
+              }
+            },
+            {
+              "angel": "uriel",
+              "source": "tmp/rl/standard-powers-v2.json",
+              "parent": {
+                "games": 8,
+                "wins": 7,
+                "ties": 0,
+                "winRate": 0.875,
+                "wilson95": [
+                  0.5291051942301385,
+                  0.9775830911367039
+                ],
+                "meanMargin": 136.125,
+                "meanSteps": 291.375,
+                "powers": {}
+              },
+              "heads": {
+                "games": 8,
+                "wins": 7,
+                "ties": 0,
+                "winRate": 0.875,
+                "wilson95": [
+                  0.5291051942301385,
+                  0.9775830911367039
+                ],
+                "meanMargin": 192.75,
+                "meanSteps": 251,
+                "powers": {
+                  "uriel": 15
+                }
+              }
+            },
+            {
+              "angel": "jegudiel",
+              "source": "tmp/rl/standard-powers-v2.json",
+              "parent": {
+                "games": 8,
+                "wins": 6,
+                "ties": 0,
+                "winRate": 0.75,
+                "wilson95": [
+                  0.40926987910258916,
+                  0.9285223111419724
+                ],
+                "meanMargin": 90.5,
+                "meanSteps": 335.75,
+                "powers": {}
+              },
+              "heads": {
+                "games": 8,
+                "wins": 8,
+                "ties": 0,
+                "winRate": 1,
+                "wilson95": [
+                  0.6755843804891231,
+                  1
+                ],
+                "meanMargin": 194.375,
+                "meanSteps": 252.75,
+                "powers": {
+                  "jegudiel": 24
+                }
+              }
+            },
+            {
+              "angel": "raguel",
+              "source": "tmp/rl/standard-powers-v2.json",
+              "parent": {
+                "games": 8,
+                "wins": 7,
+                "ties": 0,
+                "winRate": 0.875,
+                "wilson95": [
+                  0.5291051942301385,
+                  0.9775830911367039
+                ],
+                "meanMargin": 103,
+                "meanSteps": 226.875,
+                "powers": {
+                  "raguel": 21
+                }
+              },
+              "heads": {
+                "games": 8,
+                "wins": 7,
+                "ties": 0,
+                "winRate": 0.875,
+                "wilson95": [
+                  0.5291051942301385,
+                  0.9775830911367039
+                ],
+                "meanMargin": 109.875,
+                "meanSteps": 217.375,
+                "powers": {
+                  "raguel": 21
+                }
+              }
+            },
+            {
+              "angel": "haniel",
+              "source": "tmp/rl/standard-powers-parent-v2.json",
+              "parent": {
+                "games": 8,
+                "wins": 6,
+                "ties": 1,
+                "winRate": 0.75,
+                "wilson95": [
+                  0.40926987910258916,
+                  0.9285223111419724
+                ],
+                "meanMargin": 129.75,
+                "meanSteps": 286.75,
+                "powers": {
+                  "haniel": 23
+                }
+              },
+              "heads": {
+                "games": 8,
+                "wins": 6,
+                "ties": 1,
+                "winRate": 0.75,
+                "wilson95": [
+                  0.40926987910258916,
+                  0.9285223111419724
+                ],
+                "meanMargin": 129.75,
+                "meanSteps": 286.75,
+                "powers": {
+                  "haniel": 23
+                }
+              }
+            },
+            {
+              "angel": "gabriel",
+              "source": "tmp/rl/standard-powers-v2.json",
+              "parent": {
+                "games": 8,
+                "wins": 7,
+                "ties": 0,
+                "winRate": 0.875,
+                "wilson95": [
+                  0.5291051942301385,
+                  0.9775830911367039
+                ],
+                "meanMargin": 159.25,
+                "meanSteps": 287.125,
+                "powers": {
+                  "gabriel": 22
+                }
+              },
+              "heads": {
+                "games": 8,
+                "wins": 8,
+                "ties": 0,
+                "winRate": 1,
+                "wilson95": [
+                  0.6755843804891231,
+                  1
+                ],
+                "meanMargin": 175.25,
+                "meanSteps": 292.625,
+                "powers": {
+                  "gabriel": 24
+                }
+              }
+            },
+            {
+              "angel": "michael",
+              "source": "tmp/rl/standard-powers-parent-v2.json",
+              "parent": {
+                "games": 8,
+                "wins": 7,
+                "ties": 0,
+                "winRate": 0.875,
+                "wilson95": [
+                  0.5291051942301385,
+                  0.9775830911367039
+                ],
+                "meanMargin": 226.875,
+                "meanSteps": 241.875,
+                "powers": {
+                  "michael": 23
+                }
+              },
+              "heads": {
+                "games": 8,
+                "wins": 7,
+                "ties": 0,
+                "winRate": 0.875,
+                "wilson95": [
+                  0.5291051942301385,
+                  0.9775830911367039
+                ],
+                "meanMargin": 224.625,
+                "meanSteps": 232.875,
+                "powers": {
+                  "michael": 24
+                }
+              }
+            }
+          ]
         }
       }
     },
-    "sourceRoot": "tmp/rl/sources/hp-rl-training-standard-v3-1795513853103",
+    "sourceRoot": "tmp/rl/sources/hp-rl-training-standard-sanctuary-v2-1795530694538",
     "seed": 613299,
-    "generation": 2,
-    "episodes": 3072,
-    "opponent": "models/easy.json",
+    "generation": 3,
+    "selectedGeneration": 1,
+    "episodes": 576,
+    "opponent": "tmp/rl/easy-sanctuary-v2.json",
     "development": {
       "games": 96,
       "wins": 88,
-      "ties": 0,
+      "ties": 1,
       "winRate": 0.9166666666666666,
       "wilson95": [
         0.8440993218899774,
         0.9571698885393427
       ],
-      "meanMargin": 180.42708333333334,
-      "meanSteps": 280.03125,
+      "meanMargin": 141.25,
+      "meanSteps": 406.9791666666667,
       "powers": {
-        "zadkiel": 19,
-        "raguel": 18,
-        "chamuel": 23,
-        "raphael": 15,
-        "haniel": 23,
-        "selaphiel": 24,
-        "gabriel": 24,
-        "barachiel": 22,
-        "michael": 22,
-        "jophiel": 3
+        "zadkiel": 18,
+        "raphael": 18,
+        "jegudiel": 24,
+        "raguel": 23,
+        "barachiel": 24,
+        "haniel": 24,
+        "chamuel": 24,
+        "gabriel": 21,
+        "jophiel": 18,
+        "michael": 23
       }
     },
     "headSelection": {
-      "namespace": "hp-rl-development-standard-v1",
-      "parent": "tmp/rl/standard-powers-parent-v2.json",
-      "heads": "tmp/rl/standard-powers-v2.json",
+      "namespace": "hp-rl-development-standard-p2-v1",
+      "parent": "tmp/rl/standard-sanctuary-v2.json",
+      "heads": "tmp/rl/standard-powers-sanctuary-v2.json",
       "selected": [
         {
           "angel": "zadkiel",
-          "source": "tmp/rl/standard-powers-parent-v2.json",
+          "source": "tmp/rl/standard-sanctuary-v2.json",
           "parent": {
             "games": 8,
-            "wins": 8,
+            "wins": 7,
             "ties": 0,
-            "winRate": 1,
+            "winRate": 0.875,
             "wilson95": [
-              0.6755843804891231,
-              1
+              0.5291051942301385,
+              0.9775830911367039
             ],
-            "meanMargin": 225.875,
-            "meanSteps": 230,
+            "meanMargin": 135.25,
+            "meanSteps": 423.5,
             "powers": {
-              "zadkiel": 12
+              "zadkiel": 18
             }
           },
           "heads": {
@@ -476,50 +925,50 @@
               0.5291051942301385,
               0.9775830911367039
             ],
-            "meanMargin": 189.5,
-            "meanSteps": 220.25,
+            "meanMargin": 135.25,
+            "meanSteps": 423.5,
             "powers": {
-              "zadkiel": 9
+              "zadkiel": 18
             }
           }
         },
         {
           "angel": "raphael",
-          "source": "tmp/rl/standard-powers-parent-v2.json",
+          "source": "tmp/rl/standard-sanctuary-v2.json",
           "parent": {
             "games": 8,
-            "wins": 7,
+            "wins": 8,
             "ties": 0,
-            "winRate": 0.875,
+            "winRate": 1,
             "wilson95": [
-              0.5291051942301385,
-              0.9775830911367039
+              0.6755843804891231,
+              1
             ],
-            "meanMargin": 316.875,
-            "meanSteps": 163.25,
+            "meanMargin": 170.625,
+            "meanSteps": 272.25,
             "powers": {
-              "raphael": 17
+              "raphael": 18
             }
           },
           "heads": {
             "games": 8,
-            "wins": 7,
+            "wins": 8,
             "ties": 0,
-            "winRate": 0.875,
+            "winRate": 1,
             "wilson95": [
-              0.5291051942301385,
-              0.9775830911367039
+              0.6755843804891231,
+              1
             ],
-            "meanMargin": 316.875,
-            "meanSteps": 163.25,
+            "meanMargin": 170.625,
+            "meanSteps": 272.25,
             "powers": {
-              "raphael": 17
+              "raphael": 18
             }
           }
         },
         {
           "angel": "selaphiel",
-          "source": "tmp/rl/standard-powers-v2.json",
+          "source": "tmp/rl/standard-powers-sanctuary-v2.json",
           "parent": {
             "games": 8,
             "wins": 8,
@@ -529,44 +978,42 @@
               0.6755843804891231,
               1
             ],
-            "meanMargin": 286.375,
-            "meanSteps": 267,
-            "powers": {
-              "selaphiel": 24
-            }
+            "meanMargin": 116.75,
+            "meanSteps": 470.75,
+            "powers": {}
           },
           "heads": {
             "games": 8,
-            "wins": 8,
+            "wins": 7,
             "ties": 0,
-            "winRate": 1,
+            "winRate": 0.875,
             "wilson95": [
-              0.6755843804891231,
-              1
+              0.5291051942301385,
+              0.9775830911367039
             ],
-            "meanMargin": 378.375,
-            "meanSteps": 326.25,
+            "meanMargin": 202.75,
+            "meanSteps": 451.5,
             "powers": {
-              "selaphiel": 19
+              "selaphiel": 24
             }
           }
         },
         {
           "angel": "barachiel",
-          "source": "tmp/rl/standard-powers-v2.json",
+          "source": "tmp/rl/standard-powers-sanctuary-v2.json",
           "parent": {
             "games": 8,
-            "wins": 8,
+            "wins": 5,
             "ties": 0,
-            "winRate": 1,
+            "winRate": 0.625,
             "wilson95": [
-              0.6755843804891231,
-              1
+              0.3057378545838018,
+              0.863158240538479
             ],
-            "meanMargin": 266.125,
-            "meanSteps": 328.25,
+            "meanMargin": 77.75,
+            "meanSteps": 469,
             "powers": {
-              "barachiel": 20
+              "barachiel": 24
             }
           },
           "heads": {
@@ -578,16 +1025,16 @@
               0.6755843804891231,
               1
             ],
-            "meanMargin": 303.25,
-            "meanSteps": 358.625,
+            "meanMargin": 114.625,
+            "meanSteps": 457.5,
             "powers": {
-              "barachiel": 20
+              "barachiel": 24
             }
           }
         },
         {
           "angel": "chamuel",
-          "source": "tmp/rl/standard-powers-v2.json",
+          "source": "tmp/rl/standard-sanctuary-v2.json",
           "parent": {
             "games": 8,
             "wins": 8,
@@ -597,10 +1044,10 @@
               0.6755843804891231,
               1
             ],
-            "meanMargin": 184.625,
-            "meanSteps": 267.625,
+            "meanMargin": 134.75,
+            "meanSteps": 446.125,
             "powers": {
-              "chamuel": 20
+              "chamuel": 24
             }
           },
           "heads": {
@@ -612,16 +1059,16 @@
               0.6755843804891231,
               1
             ],
-            "meanMargin": 208.625,
-            "meanSteps": 237.125,
+            "meanMargin": 134.75,
+            "meanSteps": 446.125,
             "powers": {
-              "chamuel": 21
+              "chamuel": 24
             }
           }
         },
         {
           "angel": "jophiel",
-          "source": "tmp/rl/standard-powers-parent-v2.json",
+          "source": "tmp/rl/standard-sanctuary-v2.json",
           "parent": {
             "games": 8,
             "wins": 8,
@@ -631,42 +1078,42 @@
               0.6755843804891231,
               1
             ],
-            "meanMargin": 240.375,
-            "meanSteps": 215.375,
+            "meanMargin": 151.375,
+            "meanSteps": 418.375,
             "powers": {
-              "jophiel": 11
+              "jophiel": 18
             }
           },
           "heads": {
             "games": 8,
-            "wins": 6,
+            "wins": 8,
             "ties": 0,
-            "winRate": 0.75,
+            "winRate": 1,
             "wilson95": [
-              0.40926987910258916,
-              0.9285223111419724
+              0.6755843804891231,
+              1
             ],
-            "meanMargin": 146.5,
-            "meanSteps": 201.25,
+            "meanMargin": 119.5,
+            "meanSteps": 447,
             "powers": {
-              "jophiel": 11
+              "jophiel": 20
             }
           }
         },
         {
           "angel": "uriel",
-          "source": "tmp/rl/standard-powers-v2.json",
+          "source": "tmp/rl/standard-powers-sanctuary-v2.json",
           "parent": {
             "games": 8,
-            "wins": 7,
+            "wins": 8,
             "ties": 0,
-            "winRate": 0.875,
+            "winRate": 1,
             "wilson95": [
-              0.5291051942301385,
-              0.9775830911367039
+              0.6755843804891231,
+              1
             ],
-            "meanMargin": 136.125,
-            "meanSteps": 291.375,
+            "meanMargin": 136,
+            "meanSteps": 449.75,
             "powers": {}
           },
           "heads": {
@@ -678,28 +1125,30 @@
               0.5291051942301385,
               0.9775830911367039
             ],
-            "meanMargin": 192.75,
-            "meanSteps": 251,
+            "meanMargin": 151.25,
+            "meanSteps": 405.25,
             "powers": {
-              "uriel": 15
+              "uriel": 24
             }
           }
         },
         {
           "angel": "jegudiel",
-          "source": "tmp/rl/standard-powers-v2.json",
+          "source": "tmp/rl/standard-sanctuary-v2.json",
           "parent": {
             "games": 8,
-            "wins": 6,
+            "wins": 8,
             "ties": 0,
-            "winRate": 0.75,
+            "winRate": 1,
             "wilson95": [
-              0.40926987910258916,
-              0.9285223111419724
+              0.6755843804891231,
+              1
             ],
-            "meanMargin": 90.5,
-            "meanSteps": 335.75,
-            "powers": {}
+            "meanMargin": 214.5,
+            "meanSteps": 384,
+            "powers": {
+              "jegudiel": 24
+            }
           },
           "heads": {
             "games": 8,
@@ -710,8 +1159,8 @@
               0.6755843804891231,
               1
             ],
-            "meanMargin": 194.375,
-            "meanSteps": 252.75,
+            "meanMargin": 214.5,
+            "meanSteps": 384,
             "powers": {
               "jegudiel": 24
             }
@@ -719,88 +1168,20 @@
         },
         {
           "angel": "raguel",
-          "source": "tmp/rl/standard-powers-v2.json",
+          "source": "tmp/rl/standard-sanctuary-v2.json",
           "parent": {
             "games": 8,
-            "wins": 7,
+            "wins": 8,
             "ties": 0,
-            "winRate": 0.875,
+            "winRate": 1,
             "wilson95": [
-              0.5291051942301385,
-              0.9775830911367039
+              0.6755843804891231,
+              1
             ],
-            "meanMargin": 103,
-            "meanSteps": 226.875,
+            "meanMargin": 148.25,
+            "meanSteps": 362.125,
             "powers": {
-              "raguel": 21
-            }
-          },
-          "heads": {
-            "games": 8,
-            "wins": 7,
-            "ties": 0,
-            "winRate": 0.875,
-            "wilson95": [
-              0.5291051942301385,
-              0.9775830911367039
-            ],
-            "meanMargin": 109.875,
-            "meanSteps": 217.375,
-            "powers": {
-              "raguel": 21
-            }
-          }
-        },
-        {
-          "angel": "haniel",
-          "source": "tmp/rl/standard-powers-parent-v2.json",
-          "parent": {
-            "games": 8,
-            "wins": 6,
-            "ties": 1,
-            "winRate": 0.75,
-            "wilson95": [
-              0.40926987910258916,
-              0.9285223111419724
-            ],
-            "meanMargin": 129.75,
-            "meanSteps": 286.75,
-            "powers": {
-              "haniel": 23
-            }
-          },
-          "heads": {
-            "games": 8,
-            "wins": 6,
-            "ties": 1,
-            "winRate": 0.75,
-            "wilson95": [
-              0.40926987910258916,
-              0.9285223111419724
-            ],
-            "meanMargin": 129.75,
-            "meanSteps": 286.75,
-            "powers": {
-              "haniel": 23
-            }
-          }
-        },
-        {
-          "angel": "gabriel",
-          "source": "tmp/rl/standard-powers-v2.json",
-          "parent": {
-            "games": 8,
-            "wins": 7,
-            "ties": 0,
-            "winRate": 0.875,
-            "wilson95": [
-              0.5291051942301385,
-              0.9775830911367039
-            ],
-            "meanMargin": 159.25,
-            "meanSteps": 287.125,
-            "powers": {
-              "gabriel": 22
+              "raguel": 23
             }
           },
           "heads": {
@@ -812,16 +1193,16 @@
               0.6755843804891231,
               1
             ],
-            "meanMargin": 175.25,
-            "meanSteps": 292.625,
+            "meanMargin": 148.25,
+            "meanSteps": 362.125,
             "powers": {
-              "gabriel": 24
+              "raguel": 23
             }
           }
         },
         {
-          "angel": "michael",
-          "source": "tmp/rl/standard-powers-parent-v2.json",
+          "angel": "haniel",
+          "source": "tmp/rl/standard-sanctuary-v2.json",
           "parent": {
             "games": 8,
             "wins": 7,
@@ -831,10 +1212,10 @@
               0.5291051942301385,
               0.9775830911367039
             ],
-            "meanMargin": 226.875,
-            "meanSteps": 241.875,
+            "meanMargin": 154.625,
+            "meanSteps": 398.5,
             "powers": {
-              "michael": 23
+              "haniel": 24
             }
           },
           "heads": {
@@ -846,10 +1227,78 @@
               0.5291051942301385,
               0.9775830911367039
             ],
-            "meanMargin": 224.625,
-            "meanSteps": 232.875,
+            "meanMargin": 154.625,
+            "meanSteps": 398.5,
             "powers": {
-              "michael": 24
+              "haniel": 24
+            }
+          }
+        },
+        {
+          "angel": "gabriel",
+          "source": "tmp/rl/standard-sanctuary-v2.json",
+          "parent": {
+            "games": 8,
+            "wins": 6,
+            "ties": 0,
+            "winRate": 0.75,
+            "wilson95": [
+              0.40926987910258916,
+              0.9285223111419724
+            ],
+            "meanMargin": 111.875,
+            "meanSteps": 410.25,
+            "powers": {
+              "gabriel": 21
+            }
+          },
+          "heads": {
+            "games": 8,
+            "wins": 6,
+            "ties": 0,
+            "winRate": 0.75,
+            "wilson95": [
+              0.40926987910258916,
+              0.9285223111419724
+            ],
+            "meanMargin": 111.875,
+            "meanSteps": 410.25,
+            "powers": {
+              "gabriel": 21
+            }
+          }
+        },
+        {
+          "angel": "michael",
+          "source": "tmp/rl/standard-sanctuary-v2.json",
+          "parent": {
+            "games": 8,
+            "wins": 7,
+            "ties": 1,
+            "winRate": 0.875,
+            "wilson95": [
+              0.5291051942301385,
+              0.9775830911367039
+            ],
+            "meanMargin": 143.25,
+            "meanSteps": 379.125,
+            "powers": {
+              "michael": 23
+            }
+          },
+          "heads": {
+            "games": 8,
+            "wins": 7,
+            "ties": 1,
+            "winRate": 0.875,
+            "wilson95": [
+              0.5291051942301385,
+              0.9775830911367039
+            ],
+            "meanMargin": 143.25,
+            "meanSteps": 379.125,
+            "powers": {
+              "michael": 23
             }
           }
         }

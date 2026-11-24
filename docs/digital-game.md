@@ -145,6 +145,10 @@ formations cannot be imported. Organize commands may carry turn-local Sanctuary
 arrangements to witness an extension followed by a split. There are no permanent
 original-tile tags. Version-1 events retain their previous validation during
 replay, so a historical mass-protection move does not break an existing game.
+Firestore stores Sanctuary frames as arrays of objects containing formation
+objects and tile arrays; it rejects arrays directly nested inside other arrays.
+The repository encodes on write and decodes on both transcript and live event
+reads. The engine and downloaded replay files retain their original array format.
 
 Use **Save replay** to download the versioned transcript. **Open a saved replay**
 on the welcome page validates it, reconstructs it, and lets you step through events

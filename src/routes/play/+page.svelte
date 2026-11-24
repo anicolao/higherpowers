@@ -43,6 +43,7 @@
     if(!launch.mode&&params.get('practice')==='1'&&localStorage.getItem('hp-practice')){
      events=JSON.parse(localStorage.getItem('hp-practice')!);const restored=replay(events);practice=true;uid=restored.owner;tableId='practice';receive(restored);return;
     }
+    if(!launch.table)return;
     uid=(await firebase()).uid;if(disposed)return;
     if(launch.mode){
      localStorage.setItem('hp-name',name);

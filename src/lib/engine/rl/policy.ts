@@ -2,7 +2,7 @@ import {formation} from '../formations';
 import {angelIds,tryCommand,type State,type Command,type Group} from '../engine';
 import {observe,type Observation} from './observation';
 import {melds} from './melds';
-import {greedyPlan,rearrangePlan,placedGroup,tileValue,type Plan} from './planner';
+import {greedyPlan,rearrangePlan,placedGroup,tileValue,affinity,type Plan} from './planner';
 import {powerChoices} from './powers';
 import {estimateGift} from './lookahead';
 export const featureNames=['bias','delivered','penaltyShed','connections','meldPotential','favor','finish','draw','jokerHeld','lowRack','power','purgatory','giftTarget','inspection','credit','zeal','shelter'] as const;
@@ -29,7 +29,7 @@ export function choices(o:Observation,model:Model):Choice[]{
  const add=(c:Command)=>candidates.push(c);
  if((o.phase==='angels'||o.phase==='lobby')&&!p.angel){for(const angel of p.options)add({type:'angel',angel});}
  else if(o.phase==='judgment'&&!p.ready){if(o.judgment===2)for(const q of o.rivals)add({type:'judgment-choice',target:q.id});else{const likely=[...p.hand].filter(id=>o.tiles[id].rank!=='joker').sort((a,b)=>rank(o,b)-rank(o,a));for(let n=0;n<=Math.min(5,likely.length);n++)add({type:'judgment-choice',tiles:likely.slice(0,n)});}}
- else if(o.phase==='dance'&&o.danceCount){const orders=[[...p.hand].sort((a,b)=>rank(o,b)-rank(o,a)),[...p.hand].sort((a,b)=>rank(o,a)-rank(o,b))];for(const ts of orders)add({type:'dance-choice',tiles:ts.slice(0,o.danceCount),turn});}
+ else if(o.phase==='dance'&&o.danceCount){const orders=[[...p.hand].sort((a,b)=>rank(o,b)-rank(o,a)),[...p.hand].sort((a,b)=>rank(o,a)-rank(o,b))];if(model.powers)orders.push([...p.hand].sort((a,b)=>affinity(o,p.hand,a)-affinity(o,p.hand,b)||rank(o,b)-rank(o,a)));for(const ts of orders)add({type:'dance-choice',tiles:ts.slice(0,o.danceCount),turn});}
  else if(!o.active)return [];
  else if(o.phase==='after-turn'){add({type:'continue',turn});if(model.powers&&p.angel==='jegudiel'&&!p.used)add({type:'continue',zeal:true,turn});}
  else if(o.phase==='inspect'){for(const tile of o.inspection)add({type:'keep',tile,turn});}
@@ -37,12 +37,12 @@ export function choices(o:Observation,model:Model):Choice[]{
   const hand=[...p.hand,...(p.purgatory?[p.purgatory]:[])],plans:Plan[]=[];
   for(let mode=0;mode<(model.planning===1?1:3);mode++){
    let plan=greedyPlan(o,hand,o.heaven,mode);
-   if(!p.purgatory&&plan.groups.flatMap(g=>g.tiles).filter(id=>p.hand.includes(id)).length<p.hand.length&&(p.hand.length<7||!plan.groups.some(g=>g.tiles.some(id=>p.hand.includes(id)))))plan=rearrangePlan(o,plan,model.planning,mode);
+   if(!p.purgatory&&plan.groups.flatMap(g=>g.tiles).filter(id=>p.hand.includes(id)).length<p.hand.length&&(p.hand.length<7||!plan.groups.some(g=>g.tiles.some(id=>p.hand.includes(id)))||model.planning>1&&p.hand.length-plan.groups.flatMap(g=>g.tiles).filter(id=>p.hand.includes(id)).length<7))plan=rearrangePlan(o,plan,model.planning,mode);
    const containsPurgatory=!p.purgatory||plan.groups.some(g=>g.tiles.includes(p.purgatory!)&&formation(g.tiles.map(id=>o.tiles[id]),o.decree,g.jokerFaces)==='procession');
    if(containsPurgatory){plans.push(plan);add({type:'organize',...plan,turn});if(model.powers&&p.sanctuary){const kind=p.angel==='selaphiel'?'choir':'procession';add({type:'organize',...plan,groups:plan.groups.map(g=>(g.zone===null||g.zone===p.id)&&formation(g.tiles.map(id=>o.tiles[id]),o.decree,g.jokerFaces)===kind?{...g,zone:p.id}:g),turn});}}
   }
-  if(o.communion.length)for(const tile of o.communion){const plan=greedyPlan(o,[...p.hand,tile],o.heaven);if(plan.groups.some(g=>g.tiles.includes(tile)))add({type:'organize',...plan,communionTile:tile,turn});}
-  if(model.powers)candidates.push(...powerChoices(o,plans));
+  if(o.communion.length&&(p.opened||plans.some(p=>p.opening)))for(const tile of o.communion){const borrowed={...o,me:{...p,hand:[...p.hand,tile]}};let plan=greedyPlan(borrowed,borrowed.me.hand,o.heaven);if(!p.opened&&plan.opening?.includes(tile)){const opened=plans.find(p=>p.opening)!;const used=new Set(opened.groups.flatMap(g=>g.tiles));plan={...greedyPlan({...borrowed,me:{...borrowed.me,opened:true}},borrowed.me.hand.filter(id=>!used.has(id)),opened.groups),opening:opened.opening};}plan=rearrangePlan(borrowed,plan,model.planning);if(plan.groups.some(g=>g.tiles.includes(tile)))add({type:'organize',...plan,communionTile:tile,turn});}
+  if(model.powers)candidates.push(...powerChoices(o,plans,model.planning));
   add({type:'draw',turn});if(p.angel==='uriel'&&!p.used&&o.bagCount&&!p.purgatory)add({type:'draw',foretell:true,turn});
  }
 

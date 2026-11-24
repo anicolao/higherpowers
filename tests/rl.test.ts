@@ -50,3 +50,20 @@ test('Transfiguration values net rack reduction rather than gross deliveries',()
  const s=fixture('jophiel'),options=choices(observe(s,'a'),model),candidate=options.find(c=>c.command.type==='organize'&&c.command.power?.kind==='transfigure'&&!tryCommand(s,'a',c.command))!;
  expect(candidate).toBeDefined();const next=applyEvent(s,commandEvent(s,'a',candidate.command,'net-transfiguration'));expect(candidate.features[1]).toBe(s.players[0].hand.length-next.players[0].hand.length);expect(candidate.features[1]).toBe(1);
 });
+
+test('Transfiguration can retrieve two adjacent end tiles, or a complete two-tile formation',()=>{
+ let s=fixture('jophiel');s.heaven=[{id:'long-run',x:10,y:10,zone:null,tiles:['red-a-1','red-a-2','red-a-3','red-a-4','red-a-5']}];s.players[0].hand=['black-a-1','black-a-2','black-a-3','green-a-8'];rebalance(s);
+ let options=choices(observe(s,'a'),model);expect(options.some(c=>c.command.type==='organize'&&c.command.power?.kind==='transfigure'&&['red-a-1','red-a-2'].every(id=>c.command.type==='organize'&&c.command.power?.kind==='transfigure'&&c.command.power.tiles.includes(id))&&!tryCommand(s,'a',c.command))).toBe(true);
+ s.decrees=[10,0];s.heaven=[{id:'mirror-pair',x:10,y:10,zone:null,tiles:['red-a-1','red-a-13']}];s.players[0].hand=['black-a-1','black-a-13','green-a-8'];rebalance(s);options=choices(observe(s,'a'),model);
+ expect(options.some(c=>c.command.type==='organize'&&c.command.power?.kind==='transfigure'&&c.command.power.tiles.includes('red-a-13')&&!c.command.groups.some(g=>g.id==='mirror-pair')&&!tryCommand(s,'a',c.command))).toBe(true);
+});
+
+test('Communion cannot borrow the tile required for an unopened rack’s first meld',()=>{
+ const s=fixture('chamuel');s.players[0].opened=false;s.players[0].hand=['black-a-2','red-a-2','green-a-10'];s.players[1].hand=['blue-a-2','green-b-13'];rebalance(s);
+ const candidate=choices(observe(s,'a'),model).find(c=>c.command.type==='communion')!;expect(candidate.features[1]).toBe(0);
+ const activated=applyEvent(s,commandEvent(s,'a',{type:'communion',target:'b',turn:s.turnNumber},'unopened-communion'));expect(choices(observe(activated,'a'),model).some(c=>c.command.type==='organize'&&c.command.communionTile&&!tryCommand(activated,'a',c.command))).toBe(false);
+});
+
+test('learned planning is deterministic and leaves the canonical state untouched',()=>{
+ const s=fixture('raguel'),before=structuredClone(s),first=learnedCommand(s,'a',model);expect(learnedCommand(s,'a',model)).toEqual(first);expect(s).toEqual(before);
+});

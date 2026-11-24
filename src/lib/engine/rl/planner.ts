@@ -10,7 +10,7 @@ export function placedGroup(o:Observation,tiles:string[],groups:Group[],serial=0
  const at=nearestSpace({width:tiles.length*47-3,height:63},occupied,{x:18,y:18},1000);
  return {id:`rl-${o.revision}-${groups.length}-${serial}`,x:at.x,y:at.y,tiles:[...tiles],zone:null};
 }
-function affinity(o:Observation,hand:string[],id:string){const a=o.tiles[id];return hand.reduce((n,k)=>{const b=o.tiles[k];return n+(id!==k&&(a.rank==='joker'||b.rank==='joker'||a.rank===b.rank&&(a.color!==b.color||o.decree===2)||a.color===b.color&&Math.abs(Number(a.rank)-Number(b.rank))<=2)?1:0);},0);}
+export function affinity(o:Observation,hand:string[],id:string){const a=o.tiles[id];return hand.reduce((n,k)=>{const b=o.tiles[k];return n+(id!==k&&(a.rank==='joker'||b.rank==='joker'||a.rank===b.rank&&(a.color!==b.color||o.decree===2)||a.color===b.color&&Math.abs(Number(a.rank)-Number(b.rank))<=2)?1:0);},0);}
 /** Compound Organize: several melds and extensions are one action, not several turns. */
 export function greedyPlan(o:Observation,hand:string[],start:Group[],mode=0):Plan{
  let remaining=[...hand],groups=start.map(g=>({...g,tiles:[...g.tiles]})),opening:string[]|undefined,opened=o.me.opened;

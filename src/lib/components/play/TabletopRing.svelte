@@ -9,7 +9,7 @@
  import SoulTile from '../digital/SoulTile.svelte';
  import ScoreSlip from './ScoreSlip.svelte';
  import {total} from '$lib/engine/engine';
- let {state:gameState=null,uid='',busy=false,onJoin,onAngel,onCard,onFocus,onPrivacy,station}:{state?:State|null;uid?:string;busy?:boolean;onJoin:(seat:TableSeat,name:string,bot:boolean)=>void;onAngel?:(id:string,angel:NonNullable<Player['angel']>)=>void;onCard?:(id:string)=>void;onFocus?:(id:string)=>void;onPrivacy?:(open:string[])=>void;station?:Snippet<[Player,number]>}=$props();
+ let {state:gameState=null,uid='',busy=false,hidden=[],onJoin,onAngel,onCard,onFocus,onPrivacy,station}:{state?:State|null;uid?:string;busy?:boolean;hidden?:string[];onJoin:(seat:TableSeat,name:string,bot:boolean)=>void;onAngel?:(id:string,angel:NonNullable<Player['angel']>)=>void;onCard?:(id:string)=>void;onFocus?:(id:string)=>void;onPrivacy?:(open:string[])=>void;station?:Snippet<[Player,number]>}=$props();
  let width=$state(1600),height=$state(1000),choosing=$state(''),open=$state<string[]>([]),round=-1;
  const portrait=$derived(height>width),short=$derived(Math.min(width,height)),long=$derived(Math.max(width,height));
  const depth=$derived(Math.min(160,Math.max(110,short*.17))),span=$derived(Math.min(500,(long-2*depth)/3-12));
@@ -19,6 +19,7 @@
   else{x=seat.startsWith('south')?depth/2:seat.startsWith('north')?width-depth/2:width/2;y=seat==='east'?height-depth/2:seat==='west'?depth/2:depth+((seatPose(seat).x-25)/25+.5)*(height-2*depth)/3;}
   return {x,y,angle:pose.angle};
  }
+ function backLeft(player:Player,index:number){const step=Math.min(20,260/Math.max(1,player.hand.length-1));return `calc(50% + ${index*step-((player.hand.length-1)*step+18)/2}px)`;}
  function cover(){open=[];onPrivacy?.([]);}
  function reveal(id:string){open=open.includes(id)?open.filter(p=>p!==id):[...open,id];onPrivacy?.([...open]);if(open.includes(id))onFocus?.(id);}
  $effect(()=>{const r=gameState?.round??0;if(r!==round)untrack(()=>{round=r;cover();});});
@@ -42,14 +43,14 @@
    </div>
    <div class="seat-rack-area">
    {#if gameState?.phase==='lobby'}<div class="seated-message">{#if gameState.chooseOnJoin&&!p.angel&&!p.bot}<button class="resume-choice" onclick={()=>choosing=p.id}>Choose your Angel</button>{:else}{p.angel?'Ready for the deal':p.bot?'Computer ready':'Ready for the deal'}{/if}</div>
-   {:else if p.bot||(!p.local&&p.id!==gameState?.owner)}<div class="covered-tiles" aria-label={`${p.name}’s covered rack`}>{#each p.hand.slice(0,14) as id}<span data-tile-back={id}><SoulTile back size={18}/></span>{/each}</div>
+   {:else if p.bot||(!p.local&&p.id!==gameState?.owner)}<div class="covered-tiles" aria-label={`${p.name}’s covered rack`}>{#each p.hand as id,i}<span data-tile-back={id} style:left={backLeft(p,i)} style:visibility={hidden.includes(id)?'hidden':'visible'}><SoulTile back size={18}/></span>{/each}</div>
    {:else}
     {#if open.includes(p.id)}
      <div class="private-seat" data-private-seat={p.id}>
       {#if gameState?.phase==='angels'&&!p.angel}<div class="seat-choices" aria-label={`Choose ${p.name}’s Angel`}>{#each p.options as angel}<button aria-label={`Choose ${angels.find(a=>a.id===angel)?.name} for ${p.name}`} disabled={busy} onclick={()=>onAngel?.(p.id,angel)}><GameCard card={angels.find(a=>a.id===angel)!}/></button>{/each}</div>
       {:else if station}{@render station(p,pose.angle)}{/if}
      </div>
-    {:else}<div class="privacy-cover"><div class="covered-tiles">{#each p.hand.slice(0,14) as id}<span data-tile-back={id}><SoulTile back size={18}/></span>{/each}</div><span>Place a physical screen here before revealing.</span></div>{/if}
+    {:else}<div class="privacy-cover"><div class="covered-tiles">{#each p.hand as id,i}<span data-tile-back={id} style:left={backLeft(p,i)} style:visibility={hidden.includes(id)?'hidden':'visible'}><SoulTile back size={18}/></span>{/each}</div><span>Place a physical screen here before revealing.</span></div>{/if}
    {/if}
    </div>
   {:else if !gameState||gameState.phase==='lobby'}
@@ -80,7 +81,8 @@
  .seat-rack-area{display:flex;align-items:center;justify-content:center;min-width:0;min-height:0;position:relative}
  .privacy-cover{width:100%;box-sizing:border-box;border:1px solid #d5b97044;border-radius:7px;padding:8px;background:repeating-linear-gradient(90deg,#ab8a4733 0 1px,transparent 1px 18px),linear-gradient(#2c4735,#193227)}
  .privacy-cover>span{display:block;text-align:center;font-size:11px;line-height:1.3;color:#e4d6b5}
- .covered-tiles{display:flex;justify-content:center;gap:2px;overflow:hidden;height:40px;padding:7px 0;max-width:100%}
+ .covered-tiles{position:relative;display:flex;justify-content:center;gap:2px;overflow:hidden;height:40px;padding:7px 0;max-width:100%}
+ .covered-tiles>span{position:absolute;top:7px;width:18px}
  .private-seat{position:relative;width:100%;min-width:0}
  .private-seat :global(.rack){padding:7px 8px;gap:3px;min-height:0;max-height:105px;overflow:auto}
  .private-seat :global(.rack-assembly){display:flex;flex-direction:column}

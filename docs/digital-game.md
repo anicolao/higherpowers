@@ -110,7 +110,9 @@ Each local rack and private choice is rendered in its seat's orientation after
 an explicit reveal behind a physical screen. Cover state exists only in the
 shared browser's UI; reload, window blur, tab hiding, and new rounds cover all
 seats. Private bag and Communion choices remain in the screened rack area, and
-flights into racks show tile backs. A remote personal-screen member's hand stays
+flights into racks show tile backs. Rack destinations remain hidden until the
+flight lands; only then does Heaven rotate to hand over the next turn. Covered
+racks retain a destination for every soul, including hands larger than fourteen. A remote personal-screen member's hand stays
 covered on the shared table. `/tabletop?local=1` keeps a separate event log in
 local storage for offline play; it can be exported and replayed in `/play`.
 

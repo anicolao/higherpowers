@@ -48,6 +48,7 @@
     "rl:promote": "bun scripts/rl/promote.ts",
     "review:bots": "bun scripts/review-trained-bots.ts",
     "review:sanctuary": "bun scripts/review-sanctuary.ts",
+    "review:visibility": "bun scripts/review-visibility.ts",
     "rl:verify": "bun scripts/rl/verify.ts"
   },
   "dependencies": {

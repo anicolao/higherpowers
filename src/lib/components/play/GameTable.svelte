@@ -59,7 +59,7 @@
  let tableAngle=$state(0),turnTimer:ReturnType<typeof setTimeout>|undefined,playArea:HTMLDivElement;let turnAnimation:Animation|undefined;
  $effect(()=>{const target=targetAngle;if(tabletop&&motionPending)return;untrack(()=>{
   const start=playArea?elementPose(playArea).angle:tableAngle,delta=(((target-start+540)%360+360)%360)-180;if(Math.abs(delta)<.01)return;
-  clearTimeout(turnTimer);turnAnimation?.cancel();tableAngle=start+delta;turning=!window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  clearTimeout(turnTimer);turnAnimation?.cancel();tableAngle=start+delta;turning=!document.hidden&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   if(turning){
    const frames=Array.from({length:25},(_,i)=>{const angle=start+delta*i/24,radians=angle*Math.PI/180,cos=Math.abs(Math.cos(radians)),sin=Math.abs(Math.sin(radians));const fit=Math.min(1,tableWidth/(cos*heavenWidth+sin*heavenHeight),tableHeight/(sin*heavenWidth+cos*heavenHeight));return {transform:`translate(-50%,-50%) rotate(${angle}deg) scale(${fit*(i>0&&i<24?.995:1)})`};});
    turnAnimation=playArea?.animate(frames,{duration:650,easing:'cubic-bezier(.25,.65,.25,1)'});onAnimating?.(true);turnTimer=setTimeout(()=>{turning=false;onAnimating?.(motionBatches.size>0);},680);
@@ -127,8 +127,24 @@
  }
  async function useBefore(){const returned=[...selected];cancelDraft();const map:Record<string,'judgment'|'dance'|'calling'|'banish'>={raguel:'judgment',haniel:'dance',gabriel:'calling',michael:'banish'};await action({type:'before',power:map[me.angel!],rank:Number(rank),target,tiles:returned,count:Number(count),turn:gameState.turnNumber});}
 
- let flights=$state<Flight[]>([]),motionTiles=$state<string[]>([]);let priorScene:State|null=null,motionSequence=0;const motionBatches=new Map<number,{ids:string[];timer?:ReturnType<typeof setTimeout>}>();
+ let flights=$state<Flight[]>([]),motionTiles=$state<string[]>([]);let priorScene:State|null=null,motionSequence=0;const motionBatches=new Map<number,{ids:string[];timer?:ReturnType<typeof setTimeout>;favor?:string[]}>();
  function refreshMotionTiles(){motionPending=motionBatches.size>0;motionTiles=[...new Set([...motionBatches.values()].flatMap(batch=>batch.ids))];}
+ let motionDisposed=false;
+ function pulseFavor(players:string[]=[]){
+  for(const id of players)for(const node of document.querySelectorAll(!tabletop&&id===uid?'.own-favor .favor-coin':`[data-player-seat="${id}"] .favor-coin`))node.animate([{transform:'scale(1)'},{transform:'scale(1.1)'},{transform:'scale(1)'}],{duration:380});
+ }
+ function finishFlight(key:string){
+  if(motionDisposed)return;
+  const flight=flights.find(f=>f.key===key);if(!flight)return;
+  flights=flights.filter(f=>f.key!==key);
+  const sequence=Number(key.split('-')[0]),batch=motionBatches.get(sequence);
+  if(batch){batch.ids=batch.ids.filter(id=>id!==flight.tile.id);if(!batch.ids.length){clearTimeout(batch.timer);motionBatches.delete(sequence);pulseFavor(batch.favor);}}
+  refreshMotionTiles();onAnimating?.(motionBatches.size>0||turning);
+ }
+ function clearMotions(){
+  for(const batch of motionBatches.values())clearTimeout(batch.timer);
+  motionBatches.clear();flights=[];clearTimeout(turnTimer);turnAnimation?.cancel();turning=false;refreshMotionTiles();onAnimating?.(false);
+ }
  type Box={x:number;y:number;width:number;height:number;angle?:number};
  function renderedTiles(includeFlights=false){const boxes=new Map<string,Box>();for(const selector of ['[data-tile-back]','[data-rack-tile]','[data-purgatory-tile]','[data-tile-id]',...(includeFlights?['[data-flight-id]']:[])])for(const node of document.querySelectorAll<HTMLElement>(selector)){const id=node.dataset.tileBack??node.dataset.rackTile??node.dataset.purgatoryTile??node.dataset.tileId??node.dataset.flightId;if(id){const p=elementPose(node);boxes.set(id,{x:p.x,y:p.y,width:p.width*p.scale,height:p.height*p.scale,angle:p.angle});}}return boxes;}
  function bagBox():Box|null{const b=document.querySelector('[data-soul-bag]')?.getBoundingClientRect();return b?{x:b.x+b.width/2-22,y:b.y+b.height*.6-31,width:44,height:63}:null;}
@@ -141,8 +157,8 @@
   const rotated=tabletop&&before.players[before.turn]?.seat!==next.players[next.turn]?.seat;
   const shifted=rotated?[]:[...newPositions.keys()].filter(id=>oldPositions.has(id));
   if(!transfers.length&&!shifted.length)return;
-  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
-  const source=renderedTiles(true),bag=bagBox(),sequence=++motionSequence;motionBatches.set(sequence,{ids:[...new Set([...transfers.map(t=>t.id),...shifted])]});refreshMotionTiles();onAnimating?.(true);
+  if(document.hidden||window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  const source=renderedTiles(true),bag=bagBox(),sequence=++motionSequence;motionBatches.set(sequence,{ids:[...new Set([...transfers.map(t=>t.id),...shifted])],favor:next.players.filter(p=>p.favor!==(before.players.find(old=>old.id===p.id)?.favor??0)).map(p=>p.id)});refreshMotionTiles();onAnimating?.(true);
   void tick().then(async()=>{
    if(!motionBatches.has(sequence))return;
 
@@ -153,12 +169,12 @@
     return [{key:`${sequence}-${i}-${move.id}`,tile:next.tiles[move.id],back:move.to.kind==='bag'||tabletop&&move.to.kind==='hand'||move.to.kind==='hand'&&move.to.owner!==uid,from,to,delay:dealt?i*12:move.from.kind==='heaven'?0:i*55}];
    });
    const replacing=new Set(planned.map(f=>f.tile.id));for(const old of flights){if(replacing.has(old.tile.id))continue;const to=destination.get(old.tile.id),from=source.get(old.tile.id);if(to&&from&&Math.abs(old.to.x-to.x)+Math.abs(old.to.y-to.y)+Math.abs(old.to.width-to.width)>1){planned.push({...old,key:`${sequence}-continued-${old.tile.id}`,from,to,delay:0});replacing.add(old.tile.id);}}
-   for(const [id,batch]of motionBatches)if(id!==sequence)batch.ids=batch.ids.filter(id=>!replacing.has(id));motionBatches.get(sequence)!.ids=planned.map(f=>f.tile.id);flights=[...flights.filter(f=>!replacing.has(f.tile.id)),...planned];refreshMotionTiles();
+   for(const [id,batch]of motionBatches)if(id!==sequence){batch.ids=batch.ids.filter(id=>!replacing.has(id));if(!batch.ids.length){clearTimeout(batch.timer);motionBatches.delete(id);}}motionBatches.get(sequence)!.ids=planned.map(f=>f.tile.id);flights=[...flights.filter(f=>!replacing.has(f.tile.id)),...planned];refreshMotionTiles();
    if(!planned.length){motionBatches.delete(sequence);refreshMotionTiles();onAnimating?.(motionBatches.size>0||turning);return;}
-   motionBatches.get(sequence)!.timer=setTimeout(()=>{if(!motionBatches.has(sequence))return;motionBatches.delete(sequence);flights=flights.filter(f=>!f.key.startsWith(`${sequence}-`));refreshMotionTiles();for(const player of next.players.filter(p=>p.favor!==(before.players.find(old=>old.id===p.id)?.favor??0)))for(const node of document.querySelectorAll(player.id===uid?'.own-favor .favor-coin':`[data-player-seat="${player.id}"] .favor-coin`))node.animate([{transform:'scale(1)'},{transform:'scale(1.1)'},{transform:'scale(1)'}],{duration:380});onAnimating?.(motionBatches.size>0||turning);},640+Math.max(...planned.map(m=>m.delay)));
+   motionBatches.get(sequence)!.timer=setTimeout(()=>{const batch=motionBatches.get(sequence);if(!batch)return;motionBatches.delete(sequence);flights=flights.filter(f=>!f.key.startsWith(`${sequence}-`));refreshMotionTiles();pulseFavor(batch.favor);onAnimating?.(motionBatches.size>0||turning);},640+Math.max(...planned.map(m=>m.delay)));
   }).catch(()=>{motionBatches.delete(sequence);flights=flights.filter(f=>!f.key.startsWith(`${sequence}-`));refreshMotionTiles();onAnimating?.(motionBatches.size>0||turning);});
  });});
- onDestroy(()=>{clearTimeout(turnTimer);turnAnimation?.cancel();for(const batch of motionBatches.values())clearTimeout(batch.timer);motionBatches.clear();onAnimating?.(false);});
+ onDestroy(()=>{motionDisposed=true;clearTimeout(turnTimer);turnAnimation?.cancel();for(const batch of motionBatches.values())clearTimeout(batch.timer);motionBatches.clear();onAnimating?.(false);});
 
  const opponents=$derived.by(()=>{const seat=gameState.players.findIndex(p=>p.id===uid);return Array.from({length:gameState.players.length-1},(_,i)=>gameState.players[(seat+i+1)%gameState.players.length]);});
  const targeting=$derived(giftOpen&&['chamuel','michael'].includes(me.angel!)||gameState.phase==='judgment'&&gameState.judgment===2&&!me.ready);
@@ -191,6 +207,7 @@
 {/snippet}
 
 <svelte:window bind:innerWidth={screenWidth} bind:innerHeight={screenHeight} onkeydown={e=>{if(e.key==='Escape'){focusedCard=null;giftOpen=false;zoneMode=false;}}}/>
+<svelte:document onvisibilitychange={()=>{if(document.hidden)clearMotions();}}/>
 <div class="game-table" style={`--bottom-strip:${bottomStrip}px;--opponent-scale:${opponentScale};--table-depth:${edgeDepth}px;--heaven-width:${heavenWidth}px;--heaven-height:${heavenHeight}px;--table-angle:${tableAngle}deg;--seat-angle:${me.seat?seatPose(me.seat,portrait).angle:0}deg`} class:portrait class:tabletop class:in-round={gameState.round>0} data-fullscreen-table>
  {#if tabletop}<TabletopRing state={gameState} {uid} {busy} onJoin={(seat,name,bot)=>onJoin?.(seat,name,bot)} onFocus={onFocus} hidden={motionTiles} onPrivacy={ids=>{uncovered=ids;if(!ids.includes(uid)){giftOpen=false;zoneMode=false;selected=[];}}} onAngel={(id,angel)=>void sendAs?.(id,{type:'angel',angel})} onCard={id=>{if(gameState.phase==='angels')return;if(id===uid&&privateVisible)void activateAngel();else void opponentPicked(id);}} station={tabletopStation}/>{/if}
  <div class="play-area" bind:this={playArea} class:tabletop-play-area={tabletop} data-turning={turning} data-transferring={motionPending} data-square={squareHeaven} data-angle={targetAngle}>
@@ -214,10 +231,10 @@
  {#if gameState.phase!=='lobby'&&gameState.phase!=='angels'}
   <div class="soul-bag-place"><SoulBag count={gameState.bag.length} active={myTurn||zealAvailable} label={giftOpen&&me.angel==='raguel'?`Return ${selected.length} souls and draw ${selected.length*2}`:`Draw · inspect ${allowance(gameState,uid)}`} onpick={drawFromBag}/></div>
  <div class="own-station" aria-label="Your Angel and status">
-  {#if angel}<div class="own-angel" class:spent={me.used} class:unopened={!me.opened} class:invoked={giftOpen||zoneMode} class:active={active?.id===uid}><button class="paper-card" aria-label={`Use ${giftName}`} title={me.sanctuary&&me.used?'Arrange your Sanctuary':`${angel.name} · ${giftName}${me.used?' · spent':''}`} onclick={activateAngel} oncontextmenu={e=>{e.preventDefault();focusedCard=angel!;}}><GameCard card={angel}/></button></div>{/if}
+  {#if angel}<div class="own-angel" class:spent={me.used} class:unopened={!me.opened} class:invoked={giftOpen||zoneMode} class:active={active?.id===uid}><button class="paper-card" aria-label={`Use ${giftName}`} title={me.sanctuary&&me.used?'Arrange your Sanctuary':`${angel.name} · ${giftName}${me.used?' · spent':''}`} onclick={activateAngel} oncontextmenu={e=>{e.preventDefault();focusedCard=angel!;}}><GameCard card={angel} inPlay/></button></div>{/if}
   <div class="own-favor" title={`${me.favor} Divine Favor · inspect ${allowance(gameState,uid)} souls`}><DivineFavor value={me.favor}/><div class="own-score"><ScoreSlip value={total(me)+(me.scores.length<gameState.round?me.credit:0)}/></div></div>
  </div>
-  <div class="your-hand" class:active={myTurn} aria-label="Your rack"><Rack tiles={rackTiles} hidden={motionTiles} canPlay={editable||zealAvailable} committed={me.scales} {selected} onSelect={selectRack} onDropMany={addMany} onDrag={previewRack} onBlockedDrop={blockedDrop} onReorder={reorder}/></div>
+  <div class="your-hand" class:active={myTurn} aria-label="Your rack"><Rack tiles={rackTiles} fitHeight={Math.max(44,bottomStrip-(portrait?150:65))} hidden={motionTiles} canPlay={editable||zealAvailable} committed={me.scales} {selected} onSelect={selectRack} onDropMany={addMany} onDrag={previewRack} onBlockedDrop={blockedDrop} onReorder={reorder}/></div>
  {/if}
  <GameLog {events}/>
  </div>{/if}
@@ -235,7 +252,7 @@
  {#if cue}<p class="table-cue" role="status">{cue}</p>{/if}
  {#if gameState.phase==='round-end'||gameState.phase==='ended'}<section class="score-ledger" aria-label="Round scores"><h1>{gameState.players.find(p=>p.id===gameState.winner)?.name}</h1><p class="ledger-subtitle">{gameState.phase==='ended'?'The Grand Order · final reckoning':`Round ${gameState.round}`}</p><table><thead><tr><th></th>{#each [1,2,3]as n}<th>{n}</th>{/each}<th>∑</th></tr></thead><tbody>{#each [...gameState.players].sort((a,b)=>total(b)-total(a))as p}<tr><th>{p.name}</th>{#each [0,1,2]as n}<td>{p.scores[n]??'·'}</td>{/each}<td>{total(p)}</td></tr>{/each}</tbody></table>{#if gameState.phase==='ended'}<p class="ledger-winner">{gameState.players.filter(p=>total(p)===Math.max(...gameState.players.map(total))).map(p=>p.name).join(' & ')}<br/><small>God’s Favorite</small></p>{:else if uid===gameState.owner||tabletop}<button class="paper-card next-deal" disabled={busy} aria-label={`Deal round ${gameState.round+1}`} title={`Deal round ${gameState.round+1}`} onclick={()=>action({type:'next-round'})}><GameCard card={decrees[0]} back/></button>{/if}</section>{/if}
 </div>
-<TableMotions {flights}/>
+<TableMotions {flights} onFinish={finishFlight}/>
 {#if focusedCard}<div class="card-inspection" role="dialog" aria-modal="true" aria-label={focusedCard.name}><button class="paper-card inspected-card" style:transform={tabletop?`rotate(${me.seat?seatPose(me.seat,portrait).angle:0}deg)`:undefined} aria-label="Return to Heaven" title="Return to Heaven" onclick={()=>focusedCard=null}><GameCard card={focusedCard}/></button></div>{/if}
 
 <style>

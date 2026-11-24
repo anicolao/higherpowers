@@ -36,7 +36,7 @@
  <section class="tabletop-port" data-tabletop-seat={seat} data-player-seat={p?.id} data-angle={pose.angle} class:occupied={!!p} class:joinable={!p&&(!gameState||gameState.phase==='lobby')} class:turn={!!p&&gameState?.players[gameState.turn]?.id===p.id&&gameState?.round>0} style={`left:${pose.x}px;top:${pose.y}px;width:480px;height:144px;transform:translate(-50%,-50%) rotate(${pose.angle}deg) scale(${scale})`} aria-label={p?`${p.name} at ${seat}`:`Join at ${seat}`}>
   {#if p}
    <div class="seat-public">
-    <button class="seat-angel" class:spent={p.used} aria-label={`${p.name}’s Angel`} onclick={()=>onCard?.(p.id)}><GameCard card={angels.find(a=>a.id===p.angel)??angels[0]} back={!p.angel||(gameState?.phase==='angels'&&!gameState.players.every(p=>p.angel))}/></button>
+    <button class="seat-angel" class:spent={p.used} aria-label={`${p.name}’s Angel`} onclick={()=>onCard?.(p.id)}><GameCard card={angels.find(a=>a.id===p.angel)??angels[0]} inPlay back={!p.angel||(gameState?.phase==='angels'&&!gameState.players.every(p=>p.angel))}/></button>
     <div class="seat-status"><span class="tabletop-name" title={p.name}>{p.name}</span><DivineFavor value={p.favor}/><div class="seat-score"><ScoreSlip value={total(p)+(p.scores.length<(gameState?.round??0)?p.credit:0)}/></div>
      {#if gameState?.phase!=='lobby'&&!p.bot&&(p.local||p.id===gameState?.owner)}<button class="screen-tab" aria-label={`${open.includes(p.id)?'Cover':'Reveal'} ${p.name}’s rack`} aria-expanded={open.includes(p.id)} onclick={()=>reveal(p.id)}>{open.includes(p.id)?'◒ Cover rack':'◓ Reveal rack'}</button>{/if}
     </div>
@@ -81,7 +81,7 @@
  .seat-rack-area{display:flex;align-items:center;justify-content:center;min-width:0;min-height:0;position:relative}
  .privacy-cover{width:100%;box-sizing:border-box;border:1px solid #d5b97044;border-radius:7px;padding:8px;background:repeating-linear-gradient(90deg,#ab8a4733 0 1px,transparent 1px 18px),linear-gradient(#2c4735,#193227)}
  .privacy-cover>span{display:block;text-align:center;font-size:11px;line-height:1.3;color:#e4d6b5}
- .covered-tiles{position:relative;display:flex;justify-content:center;gap:2px;overflow:hidden;height:40px;padding:7px 0;max-width:100%}
+ .covered-tiles{position:relative;width:100%;min-width:0;flex:1;display:flex;justify-content:center;gap:2px;overflow:hidden;height:40px;padding:7px 0;max-width:100%}
  .covered-tiles>span{position:absolute;top:7px;width:18px}
  .private-seat{position:relative;width:100%;min-width:0}
  .private-seat :global(.rack){padding:7px 8px;gap:3px;min-height:0;max-height:105px;overflow:visible}

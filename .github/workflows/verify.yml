@@ -31,6 +31,10 @@ jobs:
           java-version: '21'
       - name: Test Firebase access rules and live drafts
         run: bun run test:backend
+      - name: Install Chromium for launch integration checks
+        run: bunx playwright install --with-deps chromium
+      - name: Test Game Room and tabletop entry with independent browsers
+        run: bun run test:launch
       - name: Select production or retained PR path
         id: destination
         env:

@@ -6,6 +6,6 @@ export function parseTableCode(input:string):string{
  if(value.includes('?')||value.includes('://')){try{value=new URL(value,'https://higherpowers.invalid').searchParams.get('table')??'';}catch{value='';}}
  if(/^[a-f0-9]{12}$/i.test(value))return value.toLowerCase();
  const code=value.replace(/[\s-]/g,'').toUpperCase();
- if(/^[A-Z]{5}$/.test(code)||code.length===6&&[...code].every(c=>legacyAlphabet.includes(c)))return code;
+ if(/^[A-Z]{5}$/.test(code)||/^[A-Z0-9]{8}$/.test(code)||code.length===6&&[...code].every(c=>legacyAlphabet.includes(c)))return code;
  throw new Error('Enter the five-letter table code or paste an invite link.');
 }

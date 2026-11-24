@@ -2,14 +2,16 @@
  import {onMount,tick} from 'svelte';
  import {base} from '$app/paths';
  import TableInvite from '$lib/components/play/TableInvite.svelte';
+ import {readLaunch} from '$lib/backend/launch';
  import {parseTableCode} from '$lib/backend/codes';
  import GameTable from '$lib/components/play/GameTable.svelte';
  import {firebase} from '$lib/backend/firebase';
- import {resolveTableCode,shareTableCode,createGame,joinGame,canResumeGame,watchGame,readGame,append,liveChannel,type LiveChannel} from '$lib/backend/repository';
+ import {resolveTableCode,shareTableCode,createGame,joinGame,canResumeGame,watchGame,readGame,append,liveChannel,waitForGame,type LiveChannel} from '$lib/backend/repository';
  import {botCommand} from '$lib/engine/bot';
  import {applyEvent,commandEvent,replay,type State,type Command,type GameEvent,type Group} from '$lib/engine/engine';
  import type {LiveDraft} from '$lib/backend/live';
  let uid=$state(''),gameState=$state<State|null>(null),tableId=$state(''),shareCode=$state(''),name=$state(''),code=$state(''),invited=$state(false),error=$state(''),liveStatus=$state(''),busy=$state(false),connecting=$state(true),practice=$state(false),liveDraft=$state<LiveDraft|null>(null),origin=$state(''),menuOpen=$state(false),replayMode=$state(false),cursor=$state(0),replayCount=$state(0),timeline=$state<GameEvent[]>([]),animationBusy=$state(false);
+ let waitingForHost=$state(false),stopWaiting:(()=>void)|undefined;
  let latestDraft:{groups:Group[];turn:number;purgatory:string|null}|null=null;let heartbeat:ReturnType<typeof setInterval>|undefined;let expiry:ReturnType<typeof setInterval>|undefined;let off:(()=>void)|undefined,channel:LiveChannel|undefined,botTimer:ReturnType<typeof setTimeout>|undefined,disposed=false,events:GameEvent[]=[];
  function receive(next:State,transcript?:GameEvent[]){if(disposed||replayMode)return;if(transcript&&(!gameState||next.revision>=gameState.revision))timeline=transcript;else if(practice)timeline=[...events];if(gameState&&gameState.revision>=next.revision)return;gameState=next;if(!practice)void channel?.authorize(next).catch(e=>liveStatus=e.message);scheduleBot();}
  async function connect(id:string){lastAutoKeep='';off?.();channel?.close();gameState=null;id=await resolveTableCode(id);shareCode=await shareTableCode(id);tableId=id;history.replaceState(null,'',`${base}/play?table=${shareCode}`);localStorage.setItem('hp-table',id);off=await watchGame(id,receive,e=>error=e.message);channel=await liveChannel(id,d=>{liveDraft=d;},e=>{liveStatus=`Live table: ${e.message}`;},()=>liveStatus='');const s=await readGame(id);receive(s);await channel.authorize(s);}
@@ -30,7 +32,37 @@
  async function exportReplay(){const {db}=practice||replayMode?{db:null}:await firebase();const {getDocs,collection,query,orderBy}=await import('firebase/firestore');const log=practice||replayMode?events:(await getDocs(query(collection(db!,'games',tableId,'events'),orderBy('sequence')))).docs.map(d=>{const {createdAt,...e}=d.data();return e;});const url=URL.createObjectURL(new Blob([JSON.stringify({game:'higher-powers',version:1,events:log},null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download=`higher-powers-${tableId}.json`;a.click();URL.revokeObjectURL(url);}
  function stepReplay(value:number){cursor=value;timeline=events.slice(0,value);gameState=replay(timeline);if(!gameState.players.some(p=>p.id===uid))uid=gameState.owner;}
  async function openReplay(file:File){if(file.size>25000000)throw new Error('That replay is too large.');const data=JSON.parse(await file.text());if(data.game!=='higher-powers'||data.version!==1||!Array.isArray(data.events))throw new Error('Choose a Higher Powers replay file.');const restored=replay(data.events);off?.();channel?.close();clearTimeout(botTimer);replayMode=true;practice=false;events=data.events;timeline=[...events];replayCount=events.length;cursor=events.length;uid=restored.owner;gameState=restored;tableId='replay';}
- onMount(()=>{heartbeat=setInterval(()=>{if(gameState&&latestDraft?.turn===gameState.turnNumber&&gameState.phase==='play'&&gameState.players[gameState.turn].id===uid)publish(latestDraft.groups,false,latestDraft.purgatory);},10000);expiry=setInterval(()=>{if(liveDraft&&Date.now()-liveDraft.sentAt>45000)liveDraft=null;},2000);origin=location.origin;name=localStorage.getItem('hp-name')??'';const params=new URL(location.href).searchParams,rawId=params.get('table');let id:string|null=null;if(rawId){try{id=parseTableCode(rawId);}catch(e){error=(e as Error).message;}}if(params.get('practice')==='1'&&localStorage.getItem('hp-practice')){try{events=JSON.parse(localStorage.getItem('hp-practice')!);const restored=replay(events);practice=true;uid=restored.owner;tableId='practice';receive(restored);}catch{error='The saved practice game could not be replayed.';}}code=id??rawId??'';invited=!!rawId;if(!id)connecting=false;void(async()=>{if(practice||replayMode)return;try{const client=await firebase();if(!practice&&!replayMode)uid=client.uid;if(id&&await canResumeGame(id))await connect(id);}catch(e){if(!practice&&!replayMode)error=e instanceof Error?e.message:String(e);}finally{connecting=false;}})();return()=>{disposed=true;off?.();channel?.close();clearTimeout(botTimer);clearInterval(expiry);clearInterval(heartbeat);};});
+ onMount(()=>{
+  heartbeat=setInterval(()=>{if(gameState&&latestDraft?.turn===gameState.turnNumber&&gameState.phase==='play'&&gameState.players[gameState.turn].id===uid)publish(latestDraft.groups,false,latestDraft.purgatory);},10000);
+  expiry=setInterval(()=>{if(liveDraft&&Date.now()-liveDraft.sentAt>45000)liveDraft=null;},2000);
+  origin=location.origin;name=localStorage.getItem('hp-name')??'';
+  void(async()=>{
+   try{
+    const launch=readLaunch(location.search),params=new URLSearchParams(location.search);
+    name=launch.name||name;code=launch.table;invited=!!launch.table;
+    if(!launch.mode&&params.get('practice')==='1'&&localStorage.getItem('hp-practice')){
+     events=JSON.parse(localStorage.getItem('hp-practice')!);const restored=replay(events);practice=true;uid=restored.owner;tableId='practice';receive(restored);return;
+    }
+    uid=(await firebase()).uid;if(disposed)return;
+    if(launch.mode){
+     localStorage.setItem('hp-name',name);
+     if(launch.mode==='create'){
+      await createGame(name,undefined,false,launch.table);if(!disposed)await connect(launch.table);
+     }else{
+      waitingForHost=true;
+      stopWaiting=await waitForGame(launch.table,()=>{
+       if(disposed||!waitingForHost)return;waitingForHost=false;stopWaiting?.();
+       void(async()=>{try{await joinGame(launch.table,name);if(!disposed)await connect(launch.table);}catch(e){if(!disposed)error=(e as Error).message;}finally{connecting=false;}})();
+      },e=>{waitingForHost=false;connecting=false;error=e.message;});
+      if(disposed||!waitingForHost)stopWaiting();
+      return;
+     }
+    }else if(launch.table&&await canResumeGame(launch.table)&&!disposed)await connect(launch.table);
+   }catch(e){if(!disposed)error=e instanceof Error?e.message:String(e);}
+   finally{if(!waitingForHost)connecting=false;}
+  })();
+  return()=>{disposed=true;stopWaiting?.();off?.();channel?.close();clearTimeout(botTimer);clearInterval(expiry);clearInterval(heartbeat);};
+ });
 </script>
 <svelte:head><title>Play Higher Powers</title><meta name="description" content="Play Higher Powers together at a live shared table."/></svelte:head>
 {#snippet invitation()}<TableInvite code={shareCode} url={inviteUrl}/>{/snippet}
@@ -40,7 +72,7 @@
  {#if !gameState&&!connecting}<div class="play-header"><a href={`${base}/`}>Higher <em>Powers</em></a><a href={`${base}/rules.html`} target="_blank" rel="noreferrer">Rules ↗</a></div>{/if}
  {#if error}<div class="error" role="alert">{error}<button onclick={()=>error=''} aria-label="Dismiss error">×</button></div>{/if}
  {#if liveStatus}<p class="live-warning" role="status">{liveStatus} <button onclick={()=>void run(()=>connect(tableId))}>Reconnect</button></p>{/if}
- {#if connecting}<p>Opening the gates…</p>
+ {#if connecting}<p role="status">{waitingForHost?'Waiting for your host to open the table…':'Opening the gates…'}</p>
  {:else if !gameState}<section class="welcome"><p class="eyebrow">THE GRAND ORDER · 2–5 PLAYERS</p><h1>{invited?'Join your friends':'Heaven is yours to rearrange.'}</h1><p>{invited?'Enter your name, then join the table below.':'Bring friends to a live table, or try your Angel’s gift with two computer players.'}</p><label>Your name<input maxlength="40" bind:value={name} placeholder="An ambitious angel" oninput={()=>localStorage.setItem('hp-name',name)}/></label>{#if !invited}<div class="lobby-actions"><button class="primary" disabled={busy||!name.trim()} onclick={()=>void run(makeTable)}>Create a table</button><button disabled={busy} onclick={startPractice}>Practice with computers</button></div>{/if}<div class="join"><label>Table code or invite link<input bind:value={code} placeholder="ABCDE or an invite link" autocapitalize="characters" autocomplete="off" spellcheck="false"/></label><button disabled={busy||!code||!name.trim()} onclick={()=>void run(joinTable)}>Join table</button></div><label class="replay-upload">Open a saved replay<input type="file" accept=".json,application/json" onchange={e=>{const file=e.currentTarget.files?.[0];if(file)void run(()=>openReplay(file));}}/></label><a href={`${base}/gallery?collection=digital`}>Explore the components</a><a href={`${base}/tabletop`}>Play around one shared touchscreen</a></section>
  {:else if gameState.players.some(p=>p.id===uid)}{#if replayMode}<section class="replay-controls"><button disabled={cursor<=1} onclick={()=>stepReplay(cursor-1)}>←</button><label>Event {cursor} of {replayCount}<input type="range" min="1" max={replayCount} value={cursor} oninput={e=>stepReplay(Number(e.currentTarget.value))}/></label><button disabled={cursor>=replayCount} onclick={()=>stepReplay(cursor+1)}>→</button><select aria-label="Replay viewpoint" bind:value={uid}>{#each gameState.players as p}<option value={p.id}>{p.name}</option>{/each}</select></section>{/if}<GameTable invitation={!practice&&!replayMode?invitation:undefined} utilities={tableMenu} state={gameState} {uid} busy={busy||replayMode} events={timeline} animateMoves={!replayMode} onAnimating={animationChanged} send={human} {liveDraft} {publish} {tableId}/>{/if}
 </main>

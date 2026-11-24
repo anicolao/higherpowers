@@ -84,10 +84,11 @@
  .covered-tiles{position:relative;display:flex;justify-content:center;gap:2px;overflow:hidden;height:40px;padding:7px 0;max-width:100%}
  .covered-tiles>span{position:absolute;top:7px;width:18px}
  .private-seat{position:relative;width:100%;min-width:0}
- .private-seat :global(.rack){padding:7px 8px;gap:3px;min-height:0;max-height:105px;overflow:auto}
+ .private-seat :global(.rack){padding:7px 8px;gap:3px;min-height:0;max-height:105px;overflow:visible}
  .private-seat :global(.rack-assembly){display:flex;flex-direction:column}
  .private-seat :global(.rack){order:0}
- .private-seat :global(.rack-tools){position:static;order:1;align-self:flex-end;margin:3px 4px 0 0;top:auto;right:auto}
+ .private-seat :global(.rack-footer){order:1;display:flex;align-items:center;justify-content:flex-end;gap:6px;margin-top:3px}
+ .private-seat :global(.rack-tools){position:static;flex:none;align-self:center;margin:0 4px 0 0;top:auto;right:auto}
  .private-seat :global(.rack-sort){height:24px;border-radius:4px}
  .seat-choices{display:flex;justify-content:center;gap:12px}.seat-choices button{width:68px;min-height:0;border:0;background:none;padding:0}.seated-message{text-align:center;margin:0;font:20px 'Cormorant Garamond',serif;color:#dbc99b}.join-position{display:grid;justify-items:center;margin:20px auto 0;background:none;border:0;color:#dac58d;padding:0 20px;min-height:0;font:20px 'Cormorant Garamond',serif}.join-halo{display:grid;place-items:center;width:56px;height:56px;border:1px solid #ddc48a77;border-radius:50%;font:40px Georgia;box-shadow:0 0 24px #efdca011,inset 0 0 20px #efdca011}.join-position:disabled{opacity:.3}.join-position:hover .join-halo{box-shadow:0 0 18px #efda9855}.add-computer-seat{display:block;margin:8px auto;padding:2px 10px;background:none;border:0;color:#c1b17e;min-height:24px;font-size:11px}
  .resume-choice{background:#e8d7a7;color:#594522;border:1px solid #bda164;border-radius:6px;padding:8px 12px}

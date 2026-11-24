@@ -13,17 +13,11 @@ try{
  await page.goto(`${origin}/tabletop?local=1`);
  await expect(page.locator('[data-tabletop-seat]')).toHaveCount(8);
  await page.screenshot({path:'tmp/qa/tabletop/01-walkup.png'});
- async function join(seat:string,name:string){const port=page.locator(`[data-tabletop-seat="${seat}"]`);await port.getByRole('button',{name:`Join ${seat}`,exact:true}).click();await port.getByRole('textbox').fill(name);await port.getByRole('button',{name:'Sit here',exact:true}).click();await expect(port).toHaveClass(/occupied/);}
- await join('north-west','North');await join('south-east','South');await join('east','East');await join('west','West');await join('south','Middle');
+ async function join(seat:string){const port=page.locator(`[data-tabletop-seat="${seat}"]`);await port.getByRole('button',{name:`Join ${seat}`,exact:true}).click();const choice=page.getByRole('dialog',{name:'Choose your Angel',exact:true});await expect(choice).toBeVisible();await expect(choice.getByRole('textbox')).toHaveCount(0);await expect(choice.locator('.angel-option')).toHaveCount(2);if(seat==='north-west'){const options=await choice.locator('.angel-option').evaluateAll(nodes=>nodes.map(n=>n.getAttribute('aria-label')));await page.getByRole('button',{name:'Close Angel choices',exact:true}).click();await port.getByRole('button',{name:'Choose your Angel',exact:true}).click();await page.reload();await expect(choice).toBeVisible();expect(await choice.locator('.angel-option').evaluateAll(nodes=>nodes.map(n=>n.getAttribute('aria-label')))).toEqual(options);await page.screenshot({path:'tmp/qa/tabletop/10-join-angel-choice.png'});}await choice.locator('.angel-option').first().click();await expect(choice).toHaveCount(0);await expect(port).toHaveClass(/occupied/);}
+ await join('north-west');await join('south-east');await join('east');await join('west');await join('south');
  await expect(page.getByRole('button',{name:'Join north',exact:true})).toBeDisabled();
  await page.screenshot({path:'tmp/qa/tabletop/02-five-seats.png'});
- await page.getByRole('button',{name:'Deal Angels',exact:true}).click();
- await expect(page.locator('[data-private-seat]')).toHaveCount(0);
- for(const name of ['North','South','East','West','Middle']){
-  await page.getByRole('button',{name:`Reveal ${name}’s rack`,exact:true}).click();
-  const port=page.locator('.tabletop-port').filter({has:page.locator(`[aria-label="Choose ${name}’s Angel"]`)});
-  await port.locator('.seat-choices button').first().click();
- }
+ await page.getByRole('button',{name:'Deal souls',exact:true}).click();
  await expect(page.locator('.heaven-board')).toBeVisible();await expect(page.locator('.play-area')).toHaveAttribute('data-turning','false');await expect(page.locator('.computer-flight')).toHaveCount(0,{timeout:10000});
  // New rounds fold every private rack before any tile faces are rendered.
  await expect(page.locator('[data-private-seat]')).toHaveCount(0);
@@ -123,5 +117,5 @@ try{
  await page.getByRole('button',{name:'Reveal Mover’s rack',exact:true}).click();
  await page.locator('[data-private-seat="tabletop-owner"] .tabletop-inspection button').first().click();
  await page.evaluate(()=>window.dispatchEvent(new Event('blur')));await expect(page.locator('[data-private-seat]')).toHaveCount(0);
- expect(errors).toEqual([]);console.log('PASS: eight walk-up seats, five-player cap, clockwise setup, screened Angel choices/racks, rotating full-width/square Heaven, unclipped rotated menus, sort controls below the rack, tap-to-place openings and pointer-correct table drags from all four edges (including touch), automatic single draws, private two-choice inspection across reload, blur cover, portrait fit.');
-}finally{await writeFile('tmp/qa/tabletop/errors.json',JSON.stringify(errors));await browser.close();}
+ expect(errors).toEqual([]);console.log('PASS: name-free walk-up Angel choice, eight positions, five-player cap, clockwise setup, screened Angel choices/racks, rotating full-width/square Heaven, unclipped rotated menus, sort controls below the rack, tap-to-place openings and pointer-correct table drags from all four edges (including touch), automatic single draws, private two-choice inspection across reload, blur cover, portrait fit.');
+}catch(e){await page.screenshot({path:'tmp/qa/tabletop/join-failure.png'});console.log('Failure state',await page.evaluate(()=>({private:[...document.querySelectorAll('[data-private-seat]')].map(n=>n.getAttribute('data-private-seat')),log:JSON.parse(localStorage.getItem('hp-tabletop-local')!).slice(-3)})));throw e;}finally{await writeFile('tmp/qa/tabletop/errors.json',JSON.stringify(errors));await browser.close();}

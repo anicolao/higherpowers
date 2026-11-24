@@ -7,7 +7,7 @@ export function describeEvent(event:GameEvent,before:State|null,after:State):Chr
   case 'join':text='joined the table.';break;
   case 'seat':text=`seated ${name(c.id)}.`;break;
   case 'bot':text=`invited ${name(c.id)}.`;break;
-  case 'start':text='dealt two Angels to everyone.';break;
+  case 'start':text=after.chooseOnJoin?'dealt fourteen souls to everyone.':'dealt two Angels to everyone.';break;
   case 'angel':text='chose an Angel.';break;
   case 'organize':{const old=new Set(before?.heaven.flatMap(g=>g.tiles)),added=after.heaven.flatMap(g=>g.tiles).filter(id=>!old.has(id)).length,powers={forgive:'Forgiveness',penance:'Penance',transfigure:'Transfiguration',sanctuary:'Sanctuary'};
    text=c.power?`used ${powers[c.power.kind]}`:before?.players.find(p=>p.id===event.actor)?.purgatory?'rescued Purgatory':'organized Heaven';if(added)text+=` · ${added} soul${added===1?'':'s'} placed`;const favor=after.players.find(p=>p.id===event.actor)!.favor-(before?.players.find(p=>p.id===event.actor)?.favor??0);if(favor)text+=` · +${favor} Favor`;text+='.';break;}

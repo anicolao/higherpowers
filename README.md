@@ -44,7 +44,9 @@ Run `bun run review:digital` for its browser checks.
 
 Open `/tabletop` on a horizontal touchscreen. Eight positions surround Heaven:
 three on each long edge and one on each short edge. Join at any two to five
-positions, then touch the central Angel deck to deal. Play order follows the
+positions. Tap a free position, choose one of two random Angels, and take that
+Angel’s name; no name entry is needed. Once everyone has chosen, touch the central
+deck to deal the souls. Play order follows the
 occupied positions clockwise. Computers may occupy chosen positions too.
 Heaven and its public controls turn toward the current player. With only
 long-edge seats occupied it uses the full available width; an occupied short
@@ -53,7 +55,7 @@ Select rack tiles and tap Heaven to place them together, or drag them there.
 Undo reverses one rearrangement; Restore Heaven resets the entire uncommitted action.
 
 Place a physical privacy screen over each player's rack area before touching
-**Screen in place · reveal**. Angel choices, racks, bag inspection, and Communion
+**Reveal rack**. Racks, bag inspection, and Communion
 choices appear inside that player's rotated area. Cover the rack before removing
 the physical screen. Racks are covered on reload, tab hiding/window blur, and at
 each new round; reveal choices are never stored or sent to Firebase.

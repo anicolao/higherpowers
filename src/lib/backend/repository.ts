@@ -16,8 +16,8 @@ export async function shareTableCode(id:string){if(/^[A-Z]{5}$/.test(id))return 
 }
 export async function canResumeGame(id:string){id=await resolveTableCode(id);const {db,uid}=await firebase();const room=await getDocFromServer(path(db,id));if(!room.exists())throw new Error('That table does not exist.');return room.data().members.includes(uid) as boolean;}
 export async function readGame(id:string):Promise<State>{const {db}=await firebase();for(let attempt=0;attempt<4;attempt++){const room=await getDocFromServer(path(db,id));if(!room.exists())throw new Error('That table does not exist.');const events=await getDocsFromServer(query(collection(db,'games',id,'events'),orderBy('sequence')));const state=replay(events.docs.map(d=>d.data() as GameEvent));if(state.revision>=room.data().revision)return state;}throw new Error('The game is still synchronizing. Please reconnect.');}
-export async function createGame(name:string,seat?:TableSeat){const {db,uid}=await firebase();if(!name.trim()||name.trim().length>40)throw new Error('Use a name of 1–40 characters.');
- const event=commandEvent(null,uid,{type:'create',name:name.trim(),seed:crypto.randomUUID(),...(seat?{seat}:{})},crypto.randomUUID()),state=applyEvent(null,event);
+export async function createGame(name:string,seat?:TableSeat,chooseOnJoin=false){const {db,uid}=await firebase();if(!name.trim()||name.trim().length>40)throw new Error('Use a name of 1–40 characters.');
+ const event=commandEvent(null,uid,{type:'create',name:name.trim(),seed:crypto.randomUUID(),...(seat?{seat}:{}),...(chooseOnJoin?{chooseOnJoin:true}:{})},crypto.randomUUID()),state=applyEvent(null,event);
  for(let attempt=0;attempt<8;attempt++){const id=newTableCode();const created=await runTransaction(db,async tx=>{const room=path(db,id);const existing=await tx.get(room),alias=await tx.get(doc(db,'tableCodes',id));if(existing.exists()||alias.exists())return false;tx.set(room,metadata(state));tx.set(doc(room,'events','1'),{...event,createdAt:serverTimestamp()});return true;});if(created)return id;}
  throw new Error('Could not reserve a table code. Try again.');
 }

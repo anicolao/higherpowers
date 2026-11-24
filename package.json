@@ -41,7 +41,13 @@
     "review:drag-recovery": "bun scripts/review-drag-recovery.ts",
     "review:smooth-play": "bun scripts/review-smooth-play.ts",
     "catalogue:register": "node scripts/register-catalogue.cjs",
-    "test:launch": "VITE_FIREBASE_EMULATORS=true bun scripts/firebase.ts emulators:exec --only auth,firestore,database --project demo-higher-powers \"bun scripts/review-launch.ts\""
+    "test:launch": "VITE_FIREBASE_EMULATORS=true bun scripts/firebase.ts emulators:exec --only auth,firestore,database --project demo-higher-powers \"bun scripts/review-launch.ts\"",
+    "rl:train": "bun scripts/rl/train.ts",
+    "rl:train:powers": "bun scripts/rl/train-powers.ts",
+    "rl:evaluate": "bun scripts/rl/evaluate.ts",
+    "rl:promote": "bun scripts/rl/promote.ts",
+    "review:bots": "bun scripts/review-trained-bots.ts",
+    "rl:verify": "bun scripts/rl/verify.ts"
   },
   "dependencies": {
     "@fontsource/atkinson-hyperlegible": "5.2.8",

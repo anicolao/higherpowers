@@ -1,0 +1,10 @@
+import {createHash} from 'node:crypto';import type {Model} from '../../src/lib/engine/rl/policy';import {angelIds} from '../../src/lib/engine/types';
+const reportPath=process.env.REPORT;if(!reportPath)throw Error('Set REPORT to a passing held-out report.');const report=await Bun.file(reportPath).json();
+if(!report.qualified||report.summary.games<1200||report.summary.winRate<.8||report.summary.wilson95[0]<.8||angelIds.some(a=>!report.byAngel[a]||report.byAngel[a].games<100||report.byAngel[a].winRate<.8)||[2,3,4,5].some(n=>!report.byPlayers[n]||report.byPlayers[n].games<300||report.byPlayers[n].winRate<.8))throw Error('Qualification threshold has not been met.');
+const hash=async(path:string)=>createHash('sha256').update(new Uint8Array(await Bun.file(path).arrayBuffer())).digest('hex');
+const bytes=await Bun.file(report.model.path).text(),model:Model=JSON.parse(bytes),modelHash=await hash(report.model.path);if(modelHash!==report.model.sha256)throw Error('The model changed after evaluation.');
+if(model.level!=='easy'&&(!model.powers||angelIds.some(a=>!(report.summary.powers[a]>0))))throw Error('Every Angel must have demonstrated power use.');
+const predecessor=model.level==='easy'?'src/lib/engine/bot.ts':`models/${model.level==='standard'?'easy':'standard'}.json`;if(await hash(predecessor)!==report.opponent.sha256)throw Error('The predecessor changed after evaluation.');
+for(const [path,expected] of Object.entries(report.sourceHashes))if(await hash(path)!==expected)throw Error(`Runtime changed after evaluation: ${path}`);
+const registryPath='models/registry.json',registry=await Bun.file(registryPath).exists()?await Bun.file(registryPath).json():{version:1,models:{},qualifications:{}};
+await Bun.write(`models/${model.level}.json`,bytes);const {training,...runtime}=model;registry.models[model.level]=runtime;registry.qualifications[model.level]={report:reportPath,model:`models/${model.level}.json`,modelSha256:modelHash,opponentSha256:report.opponent.sha256,winRate:report.summary.winRate};await Bun.write(registryPath,JSON.stringify(registry,null,2)+'\n');console.log(`Promoted ${model.level}: ${(report.summary.winRate*100).toFixed(2)}%`);

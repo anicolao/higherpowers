@@ -102,3 +102,8 @@ test('installed stronger policies never distinguish permutations of real hidden 
  const {availableBotLevels,trainedBotCommand}=await import('../src/lib/engine/trained-bot');
  for(const level of availableBotLevels.filter(level=>level!=='easy'))for(const angel of angelIds){const a=fixture(angel);a.players[0].difficulty=level;const b=structuredClone(a);[b.players[1].hand[0],b.bag[0]]=[b.bag[0],b.players[1].hand[0]];b.bag.reverse();b.seed='different-unseen-engine-rng';b.decrees[1]=9;b.judgment=a.judgment===1?2:1;expect(trainedBotCommand(a,a.players[0]),`${level}/${angel}`).toEqual(trainedBotCommand(b,b.players[0]));}
 });
+
+test('accelerated benchmark baseline preserves the frozen heuristic’s exact decisions',async()=>{
+ const {frozenHeuristic}=await import('../scripts/rl/baseline');const {botCommand}=await import('../src/lib/engine/bot');const ids=Object.keys(souls());
+ for(let decree=0;decree<=10;decree++)for(let sample=0;sample<8;sample++){const s=fixture('uriel');s.decrees=[decree,0];s.heaven=[];s.players[0].opened=sample%2===0;s.players[0].hand=Array.from({length:8+sample},(_,i)=>ids[(sample*13+i*7)%104]);rebalance(s);expect(frozenHeuristic(s,s.players[0]),`${decree}/${sample}`).toEqual(botCommand(s,s.players[0]));}
+});

@@ -35,6 +35,16 @@ jobs:
         run: bunx playwright install --with-deps chromium
       - name: Test Game Room and tabletop entry with independent browsers
         run: bun run test:launch
+      - name: Test trained bots in personal and tabletop play
+        run: |
+          bun run dev > /tmp/higher-powers-bots.log 2>&1 &
+          BOT_PREVIEW_PID=$!
+          trap 'kill "$BOT_PREVIEW_PID" 2>/dev/null || true' EXIT
+          for attempt in {1..60}; do
+            if curl --fail --silent http://127.0.0.1:5198/play > /dev/null; then break; fi
+            sleep 1
+          done
+          bun run review:bots
       - name: Select production or retained PR path
         id: destination
         env:

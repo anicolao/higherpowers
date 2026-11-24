@@ -67,3 +67,38 @@ test('Communion cannot borrow the tile required for an unopened rack’s first m
 test('learned planning is deterministic and leaves the canonical state untouched',()=>{
  const s=fixture('raguel'),before=structuredClone(s),first=learnedCommand(s,'a',model);expect(learnedCommand(s,'a',model)).toEqual(first);expect(s).toEqual(before);
 });
+
+test('unrevealed round cards cannot enter observations or decisions',()=>{
+ const a=fixture('raguel'),b=structuredClone(a);b.decrees[1]=9;b.judgment=a.judgment===5?1:5;expect(observe(a,'a')).toEqual(observe(b,'a'));expect(learnedCommand(a,'a',model)).toEqual(learnedCommand(b,'a',model));
+ a.round=3;expect(observe(a,'a').judgment).toBe(a.judgment);
+});
+
+test('worker requests share identical calculations and cancel stale ones',async()=>{
+ const original=globalThis.Worker,instances:any[]=[];
+ class FakeWorker {onmessage:any;onerror:any;terminated=false;messages:any[]=[];constructor(){instances.push(this);}postMessage(message:any){this.messages.push(message);}terminate(){this.terminated=true;}}
+ globalThis.Worker=FakeWorker as any;const {trainedCommand,closeBotWorker}=await import('../src/lib/engine/trained-worker');
+ try{const s=fixture('uriel');s.players[0].difficulty='easy';const first=trainedCommand(s,s.players[0]),duplicate=trainedCommand(s,s.players[0]);expect(duplicate).toBe(first);expect(instances.length).toBe(1);
+  const cancelled=first.catch(e=>e.name);const next=structuredClone(s);next.revision++;const fresh=trainedCommand(next,next.players[0]);expect(await cancelled).toBe('AbortError');expect(instances[0].terminated).toBe(true);expect(instances.length).toBe(2);const request=instances[1].messages[0].request;instances[1].onmessage({data:{request,command:null}});expect(await fresh).toBeNull();
+ }finally{closeBotWorker();globalThis.Worker=original;}
+});
+
+test('hard search retains the smaller search and covers both physical copies in rebuilt runs',async()=>{
+ const {rearrangePlan,refinedPlan}=await import('../src/lib/engine/rl/planner');const s=fixture('uriel');s.players[0].hand=['red-b-2','red-b-4'];s.heaven=[{id:'one',x:10,y:10,zone:null,tiles:['red-a-1','red-a-2','red-a-3']},{id:'two',x:10,y:100,zone:null,tiles:['red-b-3','red-a-4','red-a-5']}];rebalance(s);
+ const o=observe(s,'a'),base={groups:s.heaven},small=rearrangePlan(o,base,2),large=refinedPlan(o,base,3),count=(p:typeof base)=>p.groups.flatMap(g=>g.tiles).filter(id=>s.players[0].hand.includes(id)).length;
+ expect(count(large)).toBe(2);expect(count(large)).toBeGreaterThanOrEqual(count(small));expect(tryCommand(s,'a',{type:'organize',...large,turn:s.turnNumber})).toBeNull();
+});
+
+test('installed stronger levels take winning gifts and choose a useful Communion tile',async()=>{
+ const {availableBotLevels,trainedBotCommand}=await import('../src/lib/engine/trained-bot');
+ for(const level of availableBotLevels.filter(level=>level!=='easy')){
+  for(const angel of ['michael','raphael'] as const){const s=fixture(angel);s.players[0].difficulty=level;s.players[0].hand=['red-a-12'];rebalance(s);const c=trainedBotCommand(s,s.players[0])!;expect(gift(c),`${level}/${angel}`).toBe(true);const next=applyEvent(s,commandEvent(s,'a',c,`winning-${level}-${angel}`));expect(next.winner).toBe('a');}
+  let s=fixture('jegudiel');s.players[0].difficulty=level;s.players[0].hand=['red-a-1','red-a-2','red-a-3'];s.phase='after-turn';rebalance(s);let c=trainedBotCommand(s,s.players[0])!;expect(c.type==='continue'&&c.zeal).toBe(true);s=applyEvent(s,commandEvent(s,'a',c,`zeal-${level}`));c=trainedBotCommand(s,s.players[0])!;expect(applyEvent(s,commandEvent(s,'a',c,`zeal-play-${level}`)).winner).toBe('a');
+  s=fixture('uriel');s.players[0].difficulty=level;s.players[0].hand=['red-a-12'];rebalance(s);c=trainedBotCommand(s,s.players[0])!;expect(c.type==='draw'&&c.foretell,`${level}/Foretelling`).toBe(true);
+  s=fixture('chamuel');s.players[0].difficulty=level;s.players[0].hand=['black-a-2','red-a-2','green-a-10'];s.players[1].hand=['blue-a-2','green-b-13'];rebalance(s);s=applyEvent(s,commandEvent(s,'a',{type:'communion',target:'b',turn:s.turnNumber},`inspect-${level}`));c=trainedBotCommand(s,s.players[0])!;expect(c.type==='organize'&&c.communionTile).toBe('blue-a-2');
+ }
+});
+
+test('installed stronger policies never distinguish permutations of real hidden racks and bag order',async()=>{
+ const {availableBotLevels,trainedBotCommand}=await import('../src/lib/engine/trained-bot');
+ for(const level of availableBotLevels.filter(level=>level!=='easy'))for(const angel of angelIds){const a=fixture(angel);a.players[0].difficulty=level;const b=structuredClone(a);[b.players[1].hand[0],b.bag[0]]=[b.bag[0],b.players[1].hand[0]];b.bag.reverse();b.seed='different-unseen-engine-rng';b.decrees[1]=9;b.judgment=a.judgment===1?2:1;expect(trainedBotCommand(a,a.players[0]),`${level}/${angel}`).toEqual(trainedBotCommand(b,b.players[0]));}
+});

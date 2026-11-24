@@ -21,7 +21,7 @@
  function received(next:State,log?:GameEvent[]){if(disposed)return;if(log&&(!gameState||next.revision>=gameState.revision))events=log;if(gameState&&gameState.revision>=next.revision)return;gameState=next;if(!local)void channel?.authorize(next).catch(e=>error=e.message);schedule();}
  function schedule(){
   clearTimeout(timer);if(!gameState||busy||animating||disposed)return;const state=gameState,id=table,p=state.players.find(p=>botPending(state,p));if(!p)return;
-  timer=setTimeout(async()=>{try{const c=await trainedCommand(state,p);if(disposed||busy||animating||table!==id||gameState?.revision!==state.revision||gameState.eventIds[0]!==state.eventIds[0])return;if(c)await sendAs(p.id,c);}catch(e){if(!disposed&&table===id&&gameState?.revision===state.revision&&gameState.eventIds[0]===state.eventIds[0])error=(e as Error).message;}},500);
+  timer=setTimeout(async()=>{try{const c=await trainedCommand(state,p);if(disposed||busy||animating||table!==id||gameState?.revision!==state.revision||gameState.eventIds[0]!==state.eventIds[0])return;if(c)await sendAs(p.id,c);}catch(e){if((e as Error).name!=='AbortError'&&!disposed&&table===id&&gameState?.revision===state.revision&&gameState.eventIds[0]===state.eventIds[0])error=(e as Error).message;}},500);
  }
  async function run(work:()=>Promise<void>){if(busy)return;busy=true;error='';try{await work();}catch(e){error=e instanceof Error?e.message:String(e);}finally{busy=false;schedule();}}
  async function send(c:Command,actor:string){if(!gameState)return;let next:State;

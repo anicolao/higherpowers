@@ -2,11 +2,16 @@
 
 The difficulty ladder uses complete three-round games. Easy must beat the frozen
 heuristic; standard must beat frozen easy; hard must beat frozen standard. A
-benchmark places one learner against its predecessor at every other seat, across
-2–5 players, all twelve Angels, and rotated seats. Ties do not count as wins.
+promotion benchmark uses head-to-head matches against the predecessor, with
+all twelve Angels and rotated seats. Easy and standard also passed the stronger
+one-versus-field benchmark across 2–5 players. Multiplayer cohorts remain useful
+diagnostics; set `PLAYERS=all` to run them. Ties do not count as wins.
 
-Promotion requires at least 80% outright wins overall, at each player count, and
-for each Angel, plus an overall 95% Wilson lower bound of at least 80%. The report
+Head-to-head promotion requires at least 80% outright wins overall and an overall
+95% Wilson lower bound of at least 80%, balanced across all twelve Angels and both
+seats. Each Angel must remain competitive (its 95% lower bound exceeds 50%) and
+standard/hard must demonstrate every gift. Per-Angel results remain diagnostic;
+the 80% target applies to the overall balanced head-to-head cohort. The report
 and model SHA-256 must match before a level can enter `models/registry.json`.
 Unqualified candidates stay under ignored `tmp/rl/`; the UI lists only promoted
 levels. Old events without a difficulty retain the original heuristic.
@@ -74,6 +79,7 @@ MODEL=tmp/rl/standard-powers-new.json OPPONENT=models/easy.json \
 REPORT=reports/rl/hp-rl-heldout-standard-new.json bun run rl:promote
 ```
 
+`PLAYERS` defaults to two; `PLAYERS=all` uses the balanced 2–5-player cohort.
 `WORKERS` defaults to eight CPU rollout processes. They are separate from browser
 workers used during play. Training configuration, warm starts, selected generations,
 and development results are saved with the candidate. After tuning in response

@@ -26,7 +26,7 @@
  function scheduleBot(){
   clearTimeout(botTimer);if(replayMode||!gameState||busy||animationBusy||gameState.owner!==uid||disposed)return;
   const state=gameState,id=tableId,p=state.players.find(p=>botPending(state,p));if(!p)return;
-  botTimer=setTimeout(async()=>{try{const c=await trainedCommand(state,p);if(disposed||replayMode||busy||animationBusy||tableId!==id||gameState?.revision!==state.revision||gameState.eventIds[0]!==state.eventIds[0])return;if(c)await run(()=>send(c,p.id));}catch(e){if(!disposed&&tableId===id&&gameState?.revision===state.revision&&gameState.eventIds[0]===state.eventIds[0])error=(e as Error).message;}},450);
+  botTimer=setTimeout(async()=>{try{const c=await trainedCommand(state,p);if(disposed||replayMode||busy||animationBusy||tableId!==id||gameState?.revision!==state.revision||gameState.eventIds[0]!==state.eventIds[0])return;if(c)await run(()=>send(c,p.id));}catch(e){if((e as Error).name!=='AbortError'&&!disposed&&tableId===id&&gameState?.revision===state.revision&&gameState.eventIds[0]===state.eventIds[0])error=(e as Error).message;}},450);
  }
  function animationChanged(active:boolean){animationBusy=active;if(active)clearTimeout(botTimer);else scheduleBot();}
  function publish(groups:Group[],dragging:boolean,purgatory:string|null){if(gameState)latestDraft={groups,purgatory,turn:gameState.turnNumber};if(!practice&&!replayMode&&gameState&&gameState.players[gameState.turn]?.id===uid)channel?.publish({version:1,revision:gameState.revision,turn:gameState.turnNumber,actor:uid,groups,purgatory,dragging});}

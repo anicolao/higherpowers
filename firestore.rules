@@ -33,7 +33,7 @@ service cloud.firestore {
    match /events/{sequence} {
     allow read:if member(room(id));
     allow update,delete:if false;
-    allow create:if signed()&&request.resource.data.keys().hasOnly(['version','sequence','id','actor','command','createdAt'])&&request.resource.data.version in [1,2]&&request.resource.data.id is string&&request.resource.data.id.size()>0&&request.resource.data.id.size()<=128&&request.resource.data.actor is string&&request.resource.data.sequence is int&&sequence==string(request.resource.data.sequence)&&request.resource.data.createdAt==request.time&&validCommand(request.resource.data.command)&&request.resource.data.sequence==after(id).revision&&controls(after(id),request.resource.data.actor)&&(
+    allow create:if signed()&&request.resource.data.keys().hasOnly(['version','sequence','id','actor','command','createdAt'])&&request.resource.data.version in [1,2,3]&&request.resource.data.id is string&&request.resource.data.id.size()>0&&request.resource.data.id.size()<=128&&request.resource.data.actor is string&&request.resource.data.sequence is int&&sequence==string(request.resource.data.sequence)&&request.resource.data.createdAt==request.time&&validCommand(request.resource.data.command)&&request.resource.data.sequence==after(id).revision&&controls(after(id),request.resource.data.actor)&&(
      (request.resource.data.sequence==1&&request.resource.data.command.type=='create'&&after(id).owner==request.auth.uid)
      ||(request.resource.data.sequence>1&&request.resource.data.sequence==room(id).revision+1&&((request.resource.data.command.type=='join'&&request.resource.data.actor==request.auth.uid)||(member(room(id))&&request.resource.data.command.type!='create')))
     );

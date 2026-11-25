@@ -106,28 +106,28 @@
   },
   "qualifications": {
     "easy": {
-      "report": "reports/rl/hp-rl-heldout-easy-sanctuary-v2.json",
+      "report": "reports/rl/hp-rl-heldout-easy-poker-v3.json",
       "model": "models/easy.json",
       "modelSha256": "890e44347f9241a0e9aaab70d59da41ecc326460135035bc5c5deefabe49e8ab",
       "opponentSha256": "96af1f61488053fe7fb210ab34c84c5fefcf29c8979d584d76fd3c7ac7510e7f",
-      "winRate": 0.9791666666666666,
-      "rulesVersion": 2
+      "winRate": 0.9741666666666666,
+      "rulesVersion": 3
     },
     "standard": {
-      "report": "reports/rl/hp-rl-heldout-standard-sanctuary-v2.json",
+      "report": "reports/rl/hp-rl-heldout-standard-poker-v3.json",
       "model": "models/standard.json",
       "modelSha256": "428ef3d9d670825c3ed98e28fb797b449e8994f1033045d44fc7b686c28e1848",
       "opponentSha256": "890e44347f9241a0e9aaab70d59da41ecc326460135035bc5c5deefabe49e8ab",
-      "winRate": 0.9075,
-      "rulesVersion": 2
+      "winRate": 0.9208333333333333,
+      "rulesVersion": 3
     },
     "hard": {
-      "report": "reports/rl/hp-rl-heldout-hard-sanctuary-v2.json",
+      "report": "reports/rl/hp-rl-heldout-hard-poker-v3.json",
       "model": "models/hard.json",
       "modelSha256": "1d1ca5b423bd2def18161e7b572a22d7b93f0f97bab7b2ebb34785f219305098",
       "opponentSha256": "428ef3d9d670825c3ed98e28fb797b449e8994f1033045d44fc7b686c28e1848",
-      "winRate": 0.8933333333333333,
-      "rulesVersion": 2
+      "winRate": 0.8725,
+      "rulesVersion": 3
     }
   }
 }

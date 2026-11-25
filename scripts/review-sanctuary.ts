@@ -23,7 +23,7 @@ try{
  const finish=page.getByRole('button',{name:'Finish organizing',exact:true});await expect(finish).toBeEnabled();await finish.click();
  await expect.poll(()=>page.evaluate(()=>JSON.parse(localStorage.getItem('hp-practice')!).filter((e:GameEvent)=>e.actor==='practice-player'&&e.command.type==='organize').length)).toBe(2);
  const events:GameEvent[]=await page.evaluate(()=>JSON.parse(localStorage.getItem('hp-practice')!)),event=events.findLast(e=>e.actor===uid&&e.command.type==='organize')!;
- expect(event.version).toBe(2);if(event.command.type!=='organize')throw Error('Missing Organize');expect(event.command.sanctuary?.some(frame=>frame.some(ids=>ids.length===6))).toBe(true);expect(event.command.groups.filter(g=>g.zone===uid)).toHaveLength(2);
+ expect(event.version).toBe(3);if(event.command.type!=='organize')throw Error('Missing Organize');expect(event.command.sanctuary?.some(frame=>frame.some(ids=>ids.length===6))).toBe(true);expect(event.command.groups.filter(g=>g.zone===uid)).toHaveLength(2);
  await page.reload();await expect(page.locator(`.soul-group[data-zone="${uid}"]`)).toHaveCount(2);expect(errors).toEqual([]);
  console.log('PASS: rack extension → split entirely new end → commit turn-local Sanctuary witness → reload protected formations.');
 }finally{await browser.close();}

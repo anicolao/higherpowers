@@ -26,4 +26,4 @@ export type Command=
  |{type:'dance-choice';tiles:string[];turn:number}
  |{type:'continue';zeal?:boolean;turn:number}
  |{type:'next-round'};
-export interface GameEvent {version:1|2;sequence:number;id:string;actor:string;command:Command}
+export interface GameEvent {version:1|2|3;sequence:number;id:string;actor:string;command:Command}

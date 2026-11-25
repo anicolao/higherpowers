@@ -125,7 +125,7 @@
       "id": "decree-6",
       "name": "God's Poker Night",
       "title": "Heavenly Decree",
-      "detailed": "Ordinary Choirs and Processions remain legal. Also permit **Two Pair** (exactly 2 souls of each of two distinct ranks) and **Full House** (exactly 3 of one rank and 2 of a different rank). Colors may repeat in these added formations. They are neither Choirs nor Processions for powers.",
+      "detailed": "Ordinary Choirs and Processions remain legal. Also permit **Two Pair** (exactly 2 souls of each of two distinct ranks) and **Full House** (exactly 3 of one rank and 2 of a different rank). The two souls in each pair must have different colors; the three souls in a Full House’s triple must also have different colors. Colors may repeat between the two distinct ranks. They are neither Choirs nor Processions for powers.",
       "kind": "decree"
     },
     {

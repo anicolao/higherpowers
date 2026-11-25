@@ -36,11 +36,17 @@ jobs:
             }
             // Use the upload output directly: the artifact listing service can
             // return an empty list immediately after a successful upload.
+            // Each retained-site snapshot needs its own deployment identity.
+            // context.sha identifies the dispatcher on main and stays unchanged
+            // across PR previews; reusing it can return an older deployment.
+            const pagesCommit = require('node:child_process').execFileSync(
+              'git', ['rev-parse', 'HEAD'], {encoding: 'utf8'}
+            ).trim();
             const oidcToken = await core.getIDToken();
             const {data: deployment} = await github.request('POST /repos/{owner}/{repo}/pages/deployments', {
               ...context.repo,
               artifact_id: artifactId,
-              pages_build_version: context.sha,
+              pages_build_version: pagesCommit,
               oidc_token: oidcToken
             });
             core.setOutput('page_url', deployment.page_url);

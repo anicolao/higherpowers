@@ -1,7 +1,7 @@
 import {suits,analyzeFormation,type Soul,type SoulSpec,type Formation} from '../tabletop/rearrangement';
 export type FormationKind='choir'|'procession'|'poker';
 const matches=(t:Soul,r:number,c:string)=>t.rank==='joker'||(t.rank===r&&t.color===c);
-export function formation(tiles:readonly Soul[],decree=0,faces:Record<string,SoulSpec>={}):FormationKind|null {
+export function formation(tiles:readonly Soul[],decree=0,faces:Record<string,SoulSpec>={},legacyPoker=false):FormationKind|null {
  if(!tiles.length)return null;
  const ts=tiles.map(t=>t.rank==='joker'&&faces[t.id]?{...t,...faces[t.id]}:t);
  const numbered=ts.filter(t=>t.rank!=='joker'),n=ts.length,j=n-numbered.length;
@@ -10,7 +10,8 @@ export function formation(tiles:readonly Soul[],decree=0,faces:Record<string,Sou
  else if(n>=(decree===9?2:3)&&n<=4&&new Set(numbered.map(t=>t.rank)).size<=1&&(decree===2||new Set(numbered.map(t=>t.color)).size===numbered.length))return 'choir';
  if(decree===6&&(n===4||n===5)){
   const counts=new Map<number,number>();for(const t of numbered)counts.set(Number(t.rank),(counts.get(Number(t.rank))??0)+1);
-  for(let a=1;a<=13;a++)for(let b=a+1;b<=13;b++)for(const sizes of n===4?[[2,2]]:[[2,3],[3,2]])if([...counts].every(([r,c])=>r===a?c<=sizes[0]:r===b?c<=sizes[1]:false)&&sizes[0]+sizes[1]-numbered.length===j)return 'poker';
+  const distinct=legacyPoker||[...counts.keys()].every(rank=>{const group=numbered.filter(t=>t.rank===rank);return new Set(group.map(t=>t.color)).size===group.length;});
+  if(distinct)for(let a=1;a<=13;a++)for(let b=a+1;b<=13;b++)for(const sizes of n===4?[[2,2]]:[[2,3],[3,2]])if([...counts].every(([r,c])=>r===a?c<=sizes[0]:r===b?c<=sizes[1]:false)&&sizes[0]+sizes[1]-numbered.length===j)return 'poker';
  }
  if(n<(decree===7?4:3)||n>13)return null;
  for(let start=1;start<=13;start++){
@@ -41,8 +42,8 @@ export function inspectFormation(tiles:readonly Soul[],decree=0):Formation {
 }
 
 /** Resolve undeclared joker faces in a stable rank/suit order; explicit choices remain binding. */
-export function resolveJokers(tiles:readonly Soul[],decree=0,declared:Record<string,SoulSpec>={}):Record<string,SoulSpec>|null{
+export function resolveJokers(tiles:readonly Soul[],decree=0,declared:Record<string,SoulSpec>={},legacyPoker=false):Record<string,SoulSpec>|null{
  const jokers=tiles.filter(t=>t.rank==='joker'),faces={...declared};
- function choose(i:number):Record<string,SoulSpec>|null{if(i===jokers.length)return formation(tiles,decree,faces)?{...faces}:null;const id=jokers[i].id;if(faces[id])return choose(i+1);for(let rank=1;rank<=13;rank++)for(const color of suits){faces[id]={rank,color};const found=choose(i+1);if(found)return found;}delete faces[id];return null;}
+ function choose(i:number):Record<string,SoulSpec>|null{if(i===jokers.length)return formation(tiles,decree,faces,legacyPoker)?{...faces}:null;const id=jokers[i].id;if(faces[id])return choose(i+1);for(let rank=1;rank<=13;rank++)for(const color of suits){faces[id]={rank,color};const found=choose(i+1);if(found)return found;}delete faces[id];return null;}
  return choose(0);
 }

@@ -2,8 +2,10 @@
 
 The current ladder uses the corrected Sanctuary rule: exactly one formation on
 creation, then extensions and splits of protected formations, with no independent
-formation imports. New events use rules version 2; historical version-1 events
-remain replayable. Previous models are archived under
+formation imports. God’s Poker Night also requires distinct colors within each
+pair and triple. New events use rules version 3; historical version-1 and version-2
+events remain replayable. The existing frozen weights are requalified under the
+new legality check; their training provenance remains unchanged. Previous models are archived under
 `models/archive/before-sanctuary-v2/`; their results describe the old rule only.
 
 The difficulty ladder uses complete three-round games. Easy must beat the frozen
@@ -97,44 +99,45 @@ and legacy behavior. `bun run review:bots` checks worker-driven play, animation
 handoff, reload, and tabletop difficulty selection. Firebase emulator tests cover
 persistent registration and reject invalid difficulty values.
 
-## Recorded results under corrected Sanctuary rules
+## Recorded results under corrected Sanctuary and Poker rules
 
 The head-to-head target is the primary promotion test. Earlier full-field and
-head-to-head reports describe the previous Sanctuary rule. Historical and failed
+head-to-head reports describe the rule versions recorded in those reports. Historical and failed
 exploratory reports are retained rather than overwritten.
 
 | Level | Frozen opponent | Head-to-head wins | Win rate |
 | --- | --- | --- | --- |
-| Easy | Original heuristic | 1,175 / 1,200 | 97.9% |
-| Standard | Easy | 1,089 / 1,200 | 90.75% |
-| Hard | Standard | 1,072 / 1,200 | 89.33% |
+| Easy | Original heuristic | 1,169 / 1,200 | 97.42% |
+| Standard | Easy | 1,105 / 1,200 | 92.08% |
+| Hard | Standard | 1,047 / 1,200 | 87.25% |
 
-The current reports use the namespace `hp-rl-heldout-<level>-sanctuary-v2`.
+The current reports use the namespace `hp-rl-heldout-<level>-poker-v3`.
 Standard and hard exercised every gift. Reports include each Angel separately; the overall
 balanced win rate is the promotion target, rather than an 80% claim for each
 Angel or against a multiplayer field.
 
-To replace a level after a rule change, promotion requires an explicit
-`MODEL_GENERATION=before-sanctuary-v2` archive directory. It preserves the old
-model bytes and qualification before installing the newly qualified candidate.
+Replacing model weights requires an explicit `MODEL_GENERATION` archive directory
+(for example, `before-sanctuary-v2`). It preserves the old model bytes and
+qualification before installing the newly qualified candidate. Requalifying the
+same frozen model only updates its qualification; historical reports remain intact.
 Never apply an earlier rule generation's performance claim to a changed engine.
 
-Hard's overall 95% Wilson interval is 87.46–90.96%. Its breakdown against
+Hard's overall 95% Wilson interval is 85.24–89.02%. Its breakdown against
 corrected-rule standard is below. Each Angel has 100 complete three-round games;
 activations are counts across 300 rounds, rather than a measure of the benefit
 caused by using a gift.
 
 | Angel | Gift | Wins / 100 | Activations |
 | --- | --- | --- | --- |
-| Raguel | Judgment | 97 | 281 |
-| Zadkiel | Forgiveness | 94 | 289 |
-| Raphael | Penance | 94 | 233 |
-| Barachiel | Sanctuary of Processions | 91 | 295 |
-| Chamuel | Communion | 91 | 292 |
-| Gabriel | Calling | 90 | 274 |
-| Michael | Banishment | 90 | 209 |
-| Jegudiel | Zeal | 87 | 300 |
-| Uriel | Foretelling | 86 | 282 |
-| Jophiel | Transfiguration | 86 | 58 |
-| Haniel | Heavenly Dance | 84 | 236 |
-| Selaphiel | Sanctuary of Choirs | 82 | 292 |
+| Michael | Banishment | 96 | 209 |
+| Raguel | Judgment | 94 | 285 |
+| Chamuel | Communion | 93 | 287 |
+| Jegudiel | Zeal | 92 | 299 |
+| Raphael | Penance | 88 | 216 |
+| Zadkiel | Forgiveness | 87 | 294 |
+| Selaphiel | Sanctuary of Choirs | 87 | 295 |
+| Jophiel | Transfiguration | 84 | 63 |
+| Uriel | Foretelling | 84 | 286 |
+| Barachiel | Sanctuary of Processions | 83 | 297 |
+| Gabriel | Calling | 81 | 279 |
+| Haniel | Heavenly Dance | 78 | 240 |

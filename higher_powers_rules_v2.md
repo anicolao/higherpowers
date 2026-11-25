@@ -308,7 +308,7 @@ In addition to ordinary Choirs and Processions, angels may create:
 - Two Pair: exactly two souls of one rank and two of another.
 - Full House: exactly three souls of one rank and two of another.
 
-Duplicate colors are permitted in these special formations.
+Each pair must use two different colors, and a Full House’s triple must use three different colors. Colors may repeat between different ranks.
 
 **7. The Grand Procession**
 

@@ -29,7 +29,7 @@ test('Purgatory rescue and compound openings remain legal',()=>{
  s.players[0].purgatory=null;s.players[0].opened=false;rebalance(s);const c=learnedCommand(s,'a',model)!;expect(c.type).toBe('organize');expect(tryCommand(s,'a',c)).toBeNull();
 });
 test('structured formation candidates support every decree and physical joker copies',()=>{
- const all=souls(),cases:[number,string[]][]=[[0,['black-a-1','black-a-2','black-a-3']],[1,['black-a-1','black-a-3','black-a-5']],[2,['black-a-3','black-b-3','red-a-3']],[3,['black-a-1','green-a-2','blue-a-3']],[4,['black-a-1','red-a-2','black-a-3']],[5,['black-a-12','black-a-13','black-a-1']],[6,['black-a-2','black-b-2','red-a-5','blue-a-5']],[7,['black-a-1','black-a-2','black-a-3','black-a-4']],[8,['black-a-1','black-a-3','black-a-4']],[9,['red-a-1','blue-a-1']],[10,['black-a-1','black-a-13']],[0,['black-a-1','joker-1','black-a-3']]];
+ const all=souls(),cases:[number,string[]][]=[[0,['black-a-1','black-a-2','black-a-3']],[1,['black-a-1','black-a-3','black-a-5']],[2,['black-a-3','black-b-3','red-a-3']],[3,['black-a-1','green-a-2','blue-a-3']],[4,['black-a-1','red-a-2','black-a-3']],[5,['black-a-12','black-a-13','black-a-1']],[6,['black-a-2','red-a-2','red-a-5','blue-a-5']],[7,['black-a-1','black-a-2','black-a-3','black-a-4']],[8,['black-a-1','black-a-3','black-a-4']],[9,['red-a-1','blue-a-1']],[10,['black-a-1','black-a-13']],[0,['black-a-1','joker-1','black-a-3']]];
  for(const [decree,ids] of cases){const found=melds(ids.map(id=>all[id]),decree);expect(found.some(ts=>ts.length===ids.length),String(decree)).toBe(true);expect(found.every(ts=>formation(ts.map(id=>all[id]),decree))).toBe(true);}
 });
 

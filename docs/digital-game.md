@@ -139,12 +139,14 @@ use no wall-clock time or ambient randomness. Table positions and explicit playe
 choices are recorded commands. Joker identities are resolved deterministically
 and shown on the table; explicit faces remain binding when valid.
 
-New events use version 2, which corrects Sanctuary: create it with one formation,
+Version-2 events introduced the corrected Sanctuary rule: create it with one formation,
 then grow protected formations through extensions and splits. Independent
 formations cannot be imported. Organize commands may carry turn-local Sanctuary
 arrangements to witness an extension followed by a split. There are no permanent
-original-tile tags. Version-1 events retain their previous validation during
-replay, so a historical mass-protection move does not break an existing game.
+original-tile tags. Historical events retain their original validation during replay, so earlier
+formations and mass-protection moves do not break an existing game.
+Current version-3 events additionally require distinct colors within each pair
+and triple under God’s Poker Night; colors may repeat between different ranks.
 Firestore stores Sanctuary frames as arrays of objects containing formation
 objects and tile arrays; it rejects arrays directly nested inside other arrays.
 The repository encodes on write and decodes on both transcript and live event

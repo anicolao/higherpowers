@@ -34,7 +34,7 @@
 3. **Colorful Processions:** Consecutive ranks, any colors.
 4. **Candy Cane:** Processions alternate exactly two colors.
 5. **Eternal Circle:** Processions may wrap 13 → 1.
-6. **God's Poker Night:** Also allow two pairs (2+2) and full houses (3+2), including duplicate colors.
+6. **God's Poker Night:** Also allow two pairs (2+2) and full houses (3+2), with different colors within each pair or triple.
 7. **Grand Procession:** Minimum procession length 4.
 8. **Stairway to Heaven:** Procession rank steps may each be 1 or 2.
 9. **Heavenly Pairs:** Two different-colored same-rank souls make a choir.

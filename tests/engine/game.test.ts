@@ -15,7 +15,7 @@ describe('decrees',()=>{
  expect(formation(ts('black-a-1','red-a-2','black-a-3'),4)).toBe('procession');
  expect(formation(ts('black-a-1','black-a-2','black-a-3'),4)).toBeNull();
  expect(formation(ts('black-a-12','black-a-13','black-a-1'),5)).toBe('procession');
- expect(formation(ts('black-a-2','black-b-2','red-a-5','blue-a-5'),6)).toBe('poker');
+ expect(formation(ts('black-a-2','red-a-2','red-a-5','blue-a-5'),6)).toBe('poker');
  expect(formation(ts('black-a-1','black-a-2','black-a-3'),7)).toBeNull();
  expect(formation(ts('black-a-1','black-a-3','black-a-4'),8)).toBe('procession');
  expect(formation(ts('red-a-1','blue-a-1'),9)).toBe('choir');

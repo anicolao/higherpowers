@@ -47,7 +47,7 @@ const enabled=!!process.env.FIRESTORE_EMULATOR_HOST;let env:RulesTestEnvironment
   const id=crypto.randomUUID();let s=await write(id,'rl-host',null,'rl-host',{type:'create',name:'Host',seed:'rl-backend'});
   for(const difficulty of ['easy','standard','hard'] as const)s=await write(id,'rl-host',s,'rl-host',{type:'bot',id:`rl-${difficulty}`,name:difficulty,difficulty});
   const db=env.authenticatedContext('rl-host').firestore(),events=await getDocs(collection(db,'games',id,'events'));
-  expect(events.docs.every(d=>d.data().version===2)).toBe(true);
+  expect(events.docs.every(d=>d.data().version===3)).toBe(true);
   expect(replay(events.docs.map(d=>decodeEvent(d.data())).sort((a,b)=>a.sequence-b.sequence)).players.slice(1).map(p=>p.difficulty)).toEqual(['easy','standard','hard']);
   const event=commandEvent(s,'rl-host',{type:'bot',id:'bad-level',name:'Bad',difficulty:'easy'},crypto.randomUUID()),next=applyEvent(s,event);
   await assertFails(runTransaction(db,async tx=>{const room=doc(db,'games',id);await tx.get(room);tx.set(room,meta(next));tx.set(doc(room,'events',String(event.sequence)),{...event,command:{...event.command,difficulty:'expert'},createdAt:serverTimestamp()});}));

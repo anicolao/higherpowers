@@ -1,0 +1,42 @@
+{
+  "tool": "built-in image_gen",
+  "purpose": "Distinct painted card backs with no typography or markup overlays",
+  "jobs": [
+    {
+      "id": "back-angel",
+      "transparent": false,
+      "prompt": "Use case: illustration-story. Asset type: final full-bleed card BACK artwork for Higher Powers, a cream-and-gold painterly tabletop game. Portrait 63:88 playing-card aspect ratio. A complete finished painted design, ready to print as a single image, not a mockup and not a card photographed on a table. Beautiful classical oil painting and hand-gilded illuminated ornament, rich physical brushwork and gold leaf patina, sophisticated ivory and antique gold palette. Intricate, refined, highly polished, not flat vector art. Full opaque background. Strong central graphical motif, balanced two-way 180-degree rotational composition; all important ornament safely inside the outer 9 percent so modest cropping cannot cut it. No writing whatsoever: no words, no letters, no numbers, no runes, no pseudo-text, no logo, no watermark. The ANGEL deck: an exquisite medallion formed by two opposed pairs of sweeping ivory feathered wings surrounding a luminous gold sun and two interlocked halos. Pearl-white and warm cream field with very subtle dove-blue shadows. Fine gold laurel and feather scrollwork repeat around the perimeter, with a delicate gold rectangular inset border. The unmistakable theme is wings, halos, and celestial grace. Keep it visually distinct from scrolls or judgment scales."
+    },
+    {
+      "id": "back-decree",
+      "transparent": false,
+      "prompt": "Use case: illustration-story. Asset type: final full-bleed card BACK artwork for Higher Powers, a cream-and-gold painterly tabletop game. Portrait 63:88 playing-card aspect ratio. A complete finished painted design, ready to print as a single image, not a mockup and not a card photographed on a table. Beautiful classical oil painting and hand-gilded illuminated ornament, rich physical brushwork and gold leaf patina, sophisticated ivory and antique gold palette. Intricate, refined, highly polished, not flat vector art. Full opaque background. Strong central graphical motif, balanced two-way 180-degree rotational composition; all important ornament safely inside the outer 9 percent so modest cropping cannot cut it. No writing whatsoever: no words, no letters, no numbers, no runes, no pseudo-text, no logo, no watermark. The HEAVENLY DECREE deck: two opposed blank parchment scrolls with elegant curled ends arranged around a grand embossed gold solar wax seal, framed by intricate acanthus and geometric celestial tracery. Rich warm honey-gold and toasted parchment accents over an ivory field. A delicate ornate gold inset rectangular border. No marks at all on the scrolls or seal, only pictorial embossed sun rays. The unmistakable theme is divine edicts, scrolls, and golden order. No feathered wings and no scales."
+    },
+    {
+      "id": "back-judgment",
+      "transparent": false,
+      "prompt": "Use case: illustration-story. Asset type: final full-bleed card BACK artwork for Higher Powers, a cream-and-gold painterly tabletop game. Portrait 63:88 playing-card aspect ratio. A complete finished painted design, ready to print as a single image, not a mockup and not a card photographed on a table. Beautiful classical oil painting and hand-gilded illuminated ornament, rich physical brushwork and gold leaf patina, sophisticated ivory and antique gold palette. Intricate, refined, highly polished, not flat vector art. Full opaque background. Strong central graphical motif, balanced two-way 180-degree rotational composition; all important ornament safely inside the outer 9 percent so modest cropping cannot cut it. No writing whatsoever: no words, no letters, no numbers, no runes, no pseudo-text, no logo, no watermark. The FINAL JUDGMENT deck: two opposed ceremonial gold balance scales, one upright and one inverted, encircling a radiant pearl orb, within a sumptuous antique gold laurel wreath. Ivory and cream central field, with restrained smoky midnight-blue enamel accents and gold constellations around the inset perimeter border. Small mirrored sun and moon ornaments emphasize balance and reckoning. The unmistakable theme is scales, balance, and the last judgment. No scrolls or feathered wings."
+    }
+  ],
+  "edits": [
+    {
+      "kind": "precise-object-edit",
+      "id": "back-judgment-trim",
+      "prompt": "Use case: precise-object-edit. Image 1 is the EDIT TARGET: the existing Higher Powers Final Judgment card back. Image 2 is a COLOR AND EDGE-TREATMENT REFERENCE ONLY: the regular Heavenly Decree back. Make one narrow production change to Image 1: add a continuous, even, warm antique-gold outer trim band on ALL FOUR EDGES, including filling the extreme square corners. Match the warm gold color at the edges of Image 2. At a printed card size of 63 by 88 mm, this new border should be about 1.5 mm wide (about 2.4% of image width on the left/right, 1.7% of image height on top/bottom). The entire outer band must stay golden right to the image edge, with subtle painterly gold-leaf texture but no dark blue, no black, no white gaps, no narrow dark outlines, and no precise decorative detail crossing the trim band. This gives tolerance for imprecise scissor cuts and slight duplex registration errors. Fit the existing ornate border just inside this band, shrinking the existing composition minimally if necessary rather than clipping any meaningful imagery. Preserve the original interior painting: both opposed scales, pearl orb, gold laurel, blue enamel, sun and moon, all proportions and the cream-and-gold oil-painting style. Do not redesign or simplify the interior. Keep the portrait 63:88 aspect ratio and opaque background. No text, numerals, lettering, logo, or watermark. Return only the finished revised card back, not a mockup.",
+      "references": [
+        "static/art/source/archive/back-judgment-v1.png",
+        "static/art/source/back-decree.png"
+      ],
+      "transparent": false
+    },
+    {
+      "kind": "precise-object-edit",
+      "id": "back-judgment-square-corners",
+      "prompt": "Use case: precise-object-edit. This is a FLAT RECTANGULAR PRINTING ASSET, NOT a physical rounded playing card. Make a microscopic production fix to the supplied image. Keep the entire painting and its new gold perimeter band exactly as they are. ONLY correct the four extreme corners: remove the tiny dark triangular pixels outside the rounded outer curve at the top-left, top-right, bottom-left and bottom-right, and fill those corner tips with the same warm antique gold as the adjacent outer band. The finished canvas must be a completely filled SQUARE-CORNERED RECTANGLE, with gold extending all the way to every corner pixel and along all four edges. Inner decorative frame lines may remain rounded, but the outermost artwork must have no rounded clipping, no dark corner triangles, no black, no white, no transparent corner gaps. Keep the existing width, height and portrait aspect ratio. Do not enlarge the band, alter the illustration, change colors, add any border outside the existing canvas, or add text. Return the same image with only those four small corner patches filled gold.",
+      "references": [
+        "static/art/source/archive/back-judgment-trim-draft.png"
+      ],
+      "transparent": false
+    }
+  ]
+}

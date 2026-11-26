@@ -1,0 +1,22 @@
+{
+  "mode": "Built-in image_gen",
+  "license": "GPL-3.0-only",
+  "assets": [
+    {
+      "id": "heaven-legal-halo",
+      "prompt": "Use case: stylized-concept. A single standalone small graphical status emblem for Higher Powers, a cream-and-antique-gold painterly digital tabletop game. Exactly front-facing, centered, isolated on genuine transparent background. Rich but restrained classical oil-painting brush texture, tactile ivory and gilded metal, readable silhouette at 48 pixels. Entire object visible, breathing room around every edge. No text, letters, numbers, faces, heads, people, scenery, borders, UI, mockup or watermark. A beautiful luminous elliptical antique-gold HALO, tilted just enough to read as a floating ring, above a tiny symmetrical pair of ivory feathered wings. The ring is the clear dominant motif. Warm gentle golden radiance with transparent soft edges, a dignified sign that Heaven is in a legal, harmonious state. Elegant, compact composition, not ornate or busy.",
+      "transparent": true,
+      "source": "static/art/source/digital/heaven-legal-halo.png",
+      "output": "static/art/digital/heaven-legal-halo.webp",
+      "generatedSource": "/Users/anicolao/.codex/generated_images/01a1f726-df37-7052-baf4-7398eca03659/exec-cd9921af-9d5d-4648-aaf3-ccb212193d15.png"
+    },
+    {
+      "id": "heaven-invalid-horns",
+      "prompt": "Use case: stylized-concept. A single standalone small graphical status emblem for Higher Powers, a cream-and-antique-gold painterly digital tabletop game. Exactly front-facing, centered, isolated on genuine transparent background. Rich but restrained classical oil-painting brush texture, tactile ivory and gilded metal, readable silhouette at 48 pixels. Entire object visible, breathing room around every edge. No text, letters, numbers, faces, heads, people, scenery, borders, UI, mockup or watermark. A symmetrical pair of elegantly curved dark bronze HORNS with warm burnished copper-gold edges, curling outward and upward from a small central ivory-and-bronze base. The two horns are the clear dominant motif, a witty restrained visual signal that the Heaven table needs rearrangement. No head or skull, no frightening face, no flames or blood. Similar compact silhouette and scale to a gilded halo emblem.",
+      "transparent": true,
+      "source": "static/art/source/digital/heaven-invalid-horns.png",
+      "output": "static/art/digital/heaven-invalid-horns.webp",
+      "generatedSource": "/Users/anicolao/.codex/generated_images/01a1f726-df37-7052-baf4-7398eca03659/exec-456540b8-0a3e-4dd2-8277-b24f0577c72d.png"
+    }
+  ]
+}

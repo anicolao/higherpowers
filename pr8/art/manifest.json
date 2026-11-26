@@ -1,0 +1,258 @@
+[
+  {
+    "id": "zadkiel",
+    "source": "static/art/source/zadkiel.png",
+    "width": 1145,
+    "height": 1374,
+    "hasAlpha": true,
+    "output": "/art/cards/zadkiel.webp"
+  },
+  {
+    "id": "chamuel",
+    "source": "static/art/source/chamuel.png",
+    "width": 1312,
+    "height": 1199,
+    "hasAlpha": true,
+    "output": "/art/cards/chamuel.webp"
+  },
+  {
+    "id": "back-decree",
+    "source": "static/art/source/back-decree.png",
+    "width": 1060,
+    "height": 1484,
+    "hasAlpha": false,
+    "output": "/art/cards/back-decree.webp"
+  },
+  {
+    "id": "decree-9",
+    "source": "static/art/source/decree-9.png",
+    "width": 1312,
+    "height": 1199,
+    "hasAlpha": true,
+    "output": "/art/cards/decree-9.webp"
+  },
+  {
+    "id": "decree-8",
+    "source": "static/art/source/decree-8.png",
+    "width": 1312,
+    "height": 1199,
+    "hasAlpha": true,
+    "output": "/art/cards/decree-8.webp"
+  },
+  {
+    "id": "back-angel",
+    "source": "static/art/source/back-angel.png",
+    "width": 1061,
+    "height": 1483,
+    "hasAlpha": false,
+    "output": "/art/cards/back-angel.webp"
+  },
+  {
+    "id": "selaphiel",
+    "source": "static/art/source/selaphiel.png",
+    "width": 1145,
+    "height": 1374,
+    "hasAlpha": true,
+    "output": "/art/cards/selaphiel.webp"
+  },
+  {
+    "id": "judgment-3",
+    "source": "static/art/source/judgment-3.png",
+    "width": 1536,
+    "height": 1024,
+    "hasAlpha": true,
+    "output": "/art/cards/judgment-3.webp"
+  },
+  {
+    "id": "decree-3",
+    "source": "static/art/source/decree-3.png",
+    "width": 1774,
+    "height": 887,
+    "hasAlpha": true,
+    "output": "/art/cards/decree-3.webp"
+  },
+  {
+    "id": "barachiel",
+    "source": "static/art/source/barachiel.png",
+    "width": 1312,
+    "height": 1199,
+    "hasAlpha": true,
+    "output": "/art/cards/barachiel.webp"
+  },
+  {
+    "id": "decree-2",
+    "source": "static/art/source/decree-2.png",
+    "width": 1536,
+    "height": 1024,
+    "hasAlpha": true,
+    "output": "/art/cards/decree-2.webp"
+  },
+  {
+    "id": "judgment-2",
+    "source": "static/art/source/judgment-2.png",
+    "width": 1536,
+    "height": 1024,
+    "hasAlpha": true,
+    "output": "/art/cards/judgment-2.webp"
+  },
+  {
+    "id": "haniel",
+    "source": "static/art/source/haniel.png",
+    "width": 1470,
+    "height": 1070,
+    "hasAlpha": true,
+    "output": "/art/cards/haniel.webp"
+  },
+  {
+    "id": "decree-1",
+    "source": "static/art/source/decree-1.png",
+    "width": 1536,
+    "height": 1024,
+    "hasAlpha": true,
+    "output": "/art/cards/decree-1.webp"
+  },
+  {
+    "id": "judgment-1",
+    "source": "static/art/source/judgment-1.png",
+    "width": 1312,
+    "height": 1199,
+    "hasAlpha": true,
+    "output": "/art/cards/judgment-1.webp"
+  },
+  {
+    "id": "judgment-5",
+    "source": "static/art/source/judgment-5.png",
+    "width": 1536,
+    "height": 1024,
+    "hasAlpha": true,
+    "output": "/art/cards/judgment-5.webp"
+  },
+  {
+    "id": "decree-5",
+    "source": "static/art/source/decree-5.png",
+    "width": 1536,
+    "height": 1024,
+    "hasAlpha": true,
+    "output": "/art/cards/decree-5.webp"
+  },
+  {
+    "id": "decree-4",
+    "source": "static/art/source/decree-4.png",
+    "width": 1024,
+    "height": 1536,
+    "hasAlpha": true,
+    "output": "/art/cards/decree-4.webp"
+  },
+  {
+    "id": "judgment-4",
+    "source": "static/art/source/judgment-4.png",
+    "width": 1536,
+    "height": 1024,
+    "hasAlpha": true,
+    "output": "/art/cards/judgment-4.webp"
+  },
+  {
+    "id": "jophiel",
+    "source": "static/art/source/jophiel.png",
+    "width": 1536,
+    "height": 1024,
+    "hasAlpha": true,
+    "output": "/art/cards/jophiel.webp"
+  },
+  {
+    "id": "decree-6",
+    "source": "static/art/source/decree-6.png",
+    "width": 1536,
+    "height": 1024,
+    "hasAlpha": true,
+    "output": "/art/cards/decree-6.webp"
+  },
+  {
+    "id": "decree-10",
+    "source": "static/art/source/decree-10.png",
+    "width": 1536,
+    "height": 1024,
+    "hasAlpha": true,
+    "output": "/art/cards/decree-10.webp"
+  },
+  {
+    "id": "raphael",
+    "source": "static/art/source/raphael.png",
+    "width": 1145,
+    "height": 1373,
+    "hasAlpha": true,
+    "output": "/art/cards/raphael.webp"
+  },
+  {
+    "id": "decree-7",
+    "source": "static/art/source/decree-7.png",
+    "width": 1536,
+    "height": 1024,
+    "hasAlpha": true,
+    "output": "/art/cards/decree-7.webp"
+  },
+  {
+    "id": "frame",
+    "source": "static/art/source/frame.png",
+    "width": 1061,
+    "height": 1483,
+    "hasAlpha": true,
+    "output": "/art/cards/frame.webp"
+  },
+  {
+    "id": "jegudiel",
+    "source": "static/art/source/jegudiel.png",
+    "width": 1312,
+    "height": 1199,
+    "hasAlpha": true,
+    "output": "/art/cards/jegudiel.webp"
+  },
+  {
+    "id": "michael",
+    "source": "static/art/source/michael.png",
+    "width": 1312,
+    "height": 1199,
+    "hasAlpha": true,
+    "output": "/art/cards/michael.webp"
+  },
+  {
+    "id": "gabriel",
+    "source": "static/art/source/gabriel.png",
+    "width": 1312,
+    "height": 1199,
+    "hasAlpha": true,
+    "output": "/art/cards/gabriel.webp"
+  },
+  {
+    "id": "uriel",
+    "source": "static/art/source/uriel.png",
+    "width": 1350,
+    "height": 1165,
+    "hasAlpha": true,
+    "output": "/art/cards/uriel.webp"
+  },
+  {
+    "id": "heaven-background",
+    "source": "static/art/source/heaven-background.png",
+    "width": 1024,
+    "height": 1536,
+    "hasAlpha": false,
+    "output": "/art/cards/heaven-background.webp"
+  },
+  {
+    "id": "raguel",
+    "source": "static/art/source/raguel.png",
+    "width": 1378,
+    "height": 1142,
+    "hasAlpha": true,
+    "output": "/art/cards/raguel.webp"
+  },
+  {
+    "id": "back-judgment",
+    "source": "static/art/source/back-judgment.png",
+    "width": 1060,
+    "height": 1484,
+    "hasAlpha": false,
+    "output": "/art/cards/back-judgment.webp"
+  }
+]

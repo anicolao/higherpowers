@@ -98,6 +98,11 @@ backs up the catalogue, uses an update-time precondition, and reads the result
 back. Existing titles, visibility, unrelated fields, and other documents are
 preserved. No changes to either launcher’s source are needed.
 
+The dedicated gold-and-green catalogue cover can be reviewed at
+`/gallery/launchers`. Use `--artwork-only` to update only the shared Icon without
+changing either launch destination. Source artwork and the generation prompt
+are documented in [the cover notes](docs/art/launcher-cover.md).
+
 ## Learned computer players
 
 Practice, friends tables, and shared tabletops offer the installed trained levels.

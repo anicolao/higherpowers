@@ -1,0 +1,38 @@
+[
+  {
+    "id": "soul-tile-body-v2",
+    "width": 1049,
+    "height": 1500,
+    "hasAlpha": true
+  },
+  {
+    "id": "favor-medallion",
+    "width": 1254,
+    "height": 1254,
+    "hasAlpha": true
+  },
+  {
+    "id": "sanctuary-garden",
+    "width": 1536,
+    "height": 1024,
+    "hasAlpha": false
+  },
+  {
+    "id": "purgatory-threshold",
+    "width": 1536,
+    "height": 1024,
+    "hasAlpha": false
+  },
+  {
+    "id": "heaven-legal-halo",
+    "width": 1536,
+    "height": 1024,
+    "hasAlpha": true
+  },
+  {
+    "id": "heaven-invalid-horns",
+    "width": 1536,
+    "height": 1024,
+    "hasAlpha": true
+  }
+]

@@ -5,8 +5,9 @@ const {writeFileSync}=require('node:fs');
 (async()=>{
  const arg=process.argv.find(a=>a.startsWith('--site='));
  const site=new URL(arg?arg.slice(7):'https://anicolao.github.io/higherpowers/');
+ const artworkOnly=process.argv.includes('--artwork-only');
  if(site.origin!=='https://anicolao.github.io'||!/^\/higherpowers\/(pr\d+\/)?$/.test(site.pathname)||site.search||site.hash)throw Error('Use the production or retained PR Higher Powers site.');
- const record={Title:'Higher Powers',URL:new URL('tabletop/',site).href,WebURL:new URL('play/',site).href,Icon:new URL('art/cards/heaven-background.webp',site).href,Hidden:false,GameroomEnabled:'integrated'};
+ const record={Title:'Higher Powers',URL:new URL('tabletop/',site).href,WebURL:new URL('play/',site).href,Icon:new URL('art/integrations/higher-powers-cover-v1.webp',site).href,Hidden:false,GameroomEnabled:'integrated'};
  const account=getGlobalDefaultAccount();await requireAuth({project:'launcherui',...account});
  const {access_token}=await getAccessToken(account.tokens.refresh_token,[]);
  const headers={Authorization:`Bearer ${access_token}`,'Content-Type':'application/json'},base='https://firestore.googleapis.com/v1/projects/launcherui/databases/(default)/documents';
@@ -16,12 +17,13 @@ const {writeFileSync}=require('node:fs');
  const matches=documents.filter(d=>d.name.endsWith('/higherpowers')||d.fields.Title?.stringValue?.toLowerCase()==='higher powers'||[d.fields.URL?.stringValue,d.fields.WebURL?.stringValue].some(u=>u&&/^https:\/\/anicolao.github.io\/higherpowers\//.test(u)));
  if(matches.length>1||matches[0]&&!matches[0].name.endsWith('/higherpowers'))throw Error('Review the existing catalogue document ID before registering.');
  const prior=matches[0],old=Object.fromEntries(Object.entries(prior?.fields??{}).map(([k,v])=>[k,v.stringValue??v.booleanValue]));
+ if(artworkOnly&&!prior)throw Error('Art-only updates require an existing Higher Powers entry.');
  // Preserve an existing entry's presentation and visibility; maintain only integration fields.
- const keys=prior?['URL','WebURL','Icon','GameroomEnabled']:Object.keys(record);
+ const keys=artworkOnly?['Icon']:prior?['URL','WebURL','Icon','GameroomEnabled']:Object.keys(record);
  const changes=Object.fromEntries(keys.filter(k=>old[k]!==record[k]).map(k=>[k,record[k]]));
  console.log(JSON.stringify({id:'higherpowers',before:old,changes},null,2));
  if(!process.argv.includes('--apply')){console.log('Dry run. Use --apply once the site and launch contract are deployed.');return;}
- for(const target of [record.URL,record.WebURL,record.Icon]){const check=await fetch(target,{method:'HEAD'});if(!check.ok)throw Error(`Deploy first: ${target} (${check.status})`);}
+ for(const target of artworkOnly?[record.Icon]:[record.URL,record.WebURL,record.Icon]){const check=await fetch(target,{method:'HEAD'});if(!check.ok)throw Error(`Deploy first: ${target} (${check.status})`);}
  const responseContract=await fetch(new URL('gameroom-launch.json',record.WebURL)),contract=await responseContract.json();
  if(!responseContract.ok||contract.game!=='higherpowers'||contract.protocol!=='gameroom-url'||contract.version!==1)throw Error('Deploy the Game Room URL protocol before enabling the catalogue entry.');
  if(!Object.keys(changes).length){console.log('Catalogue already current.');return;}

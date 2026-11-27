@@ -346,3 +346,24 @@ active. Rack movement does not treat that mask as a release. The explicit pointe
 up completes the drop; cancellation, blur, Escape or re-entry after a missing
 outside-window release clear an abandoned gesture. The drag recovery review
 includes the zero-button ordering observed in native Chrome input.
+
+
+### Drawing after a legal pending Organize
+
+Touching the bag while the complete pending Organize command is legal asks
+“Return these tiles to your hand and draw?” and shows the original rack tiles
+played in that action, including an original rack tile placed into Purgatory.
+Cancel is focused by default and leaves the arrangement and event log untouched.
+Confirming sends one ordinary draw against the last committed state. Foretelling
+uses the same guard and is spent only when confirmed. A legal rescue/gift with
+no rack deliveries uses “Undo this Organize move and draw?” instead.
+
+No prompt is added for an empty or invalid Organize. This is a client safeguard;
+no game rule, model, or event schema changes. A revision/turn/player change,
+page hiding, or tabletop privacy covering dismisses the preview. The native
+modal traps focus and disables table keyboard rearrangements while open; on a
+tabletop it faces the current player. Escape cancels, retaining tabletop’s
+existing Escape-to-cover behavior. `bun run review:confirm-draw` verifies the
+modal, exact tile preview, cancellation, one-time confirmation, Foretelling,
+rescue-only cases, stale revisions, all four tabletop edges, privacy, and the
+real practice route’s durable event log.

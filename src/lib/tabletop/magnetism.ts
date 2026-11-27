@@ -1,4 +1,4 @@
-import {nearestSpace} from './layout';
+import {nearestSpace,formationRect} from './layout';
 import {analyzeFormation,overlaps,suits,type Soul,type Suit,type TileGroup,type Rect} from './rearrangement';
 export type FormationAxis='procession'|'choir';
 export interface Geometry {kind:FormationAxis;cells:{tile:Soul;rank:number;color:Suit;column:number}[]}
@@ -41,11 +41,12 @@ export function findVerticalSnap(groups:readonly TileGroup[],id:string,metrics:M
   const mi=geometry(moving,targetInfo.kind,metrics.classify)!,ti=geometry(target,targetInfo.kind,metrics.classify)!,mk=keys(moving,mi,metrics.step),tk=keys(target,ti,metrics.step),common=[...mk.keys()].filter(key=>tk.has(key));if(!common.length)continue;
   const dx=tk.get(common[0])!-mk.get(common[0])!;if(common.some(key=>Math.abs(tk.get(key)!-mk.get(key)!-dx)>.5))continue;
   for(const direction of [-1,1]){
-   const x=moving.x+dx,y=target.y+direction*metrics.rowPitch,xDistance=Math.abs(x-original.x),yDistance=Math.abs(y-original.y);
+   const pitch=metrics.rowPitch+(moving.zone||target.zone?25:0);
+   const x=moving.x+dx,y=target.y+direction*pitch,xDistance=Math.abs(x-original.x),yDistance=Math.abs(y-original.y);
    if(xDistance>metrics.step*.6||yDistance>Math.max(18,metrics.tileHeight*.36))continue;
-   const snapped={...moving,x,y},box=groupRect(snapped,metrics.step,metrics.tileHeight),targetBox=groupRect(target,metrics.step,metrics.tileHeight);
-   if(x<8||y<8||x+box.width>width-8||y+box.height>height-8)continue;
-   if(groups.some(g=>g.id!==id&&g.id!==target.id&&(overlaps(box,groupRect(g,metrics.step,metrics.tileHeight),3)||overlaps(targetBox,groupRect(g,metrics.step,metrics.tileHeight),3))))continue;
+   const snapped={...moving,x,y},box=formationRect(snapped,metrics),targetBox=formationRect(target,metrics);
+   if(box.x<8||box.y<8||box.x+box.width>width-8||box.y+box.height>height-8)continue;
+   if(groups.some(g=>g.id!==id&&g.id!==target.id&&(overlaps(box,formationRect(g,metrics),3)||overlaps(targetBox,formationRect(g,metrics),3))))continue;
    const score=xDistance+yDistance;if(!best||score<best.score)best={moving:snapped,target,targetId:target.id,kind:targetInfo.kind,direction:direction<0?'north':'south',score};
   }
  }return best;
@@ -55,7 +56,7 @@ export function alignedStack(groups:readonly TileGroup[],id:string,metrics:Metri
  const selected=[seed],seen=new Set([id]);
  for(let i=0;i<selected.length;i++){
   const a=selected[i],ai=geometry(a,seedInfo.kind,metrics.classify);if(!ai)continue;const ak=keys(a,ai,metrics.step);
-  for(const b of groups){if(seen.has(b.id)||Math.abs(Math.abs(a.y-b.y)-metrics.rowPitch)>2)continue;const bi=geometry(b,seedInfo.kind,metrics.classify);if(!bi)continue;const bk=keys(b,bi,metrics.step),common=[...ak.keys()].filter(k=>bk.has(k));
+  for(const b of groups){if(seen.has(b.id)||Math.abs(Math.abs(a.y-b.y)-(metrics.rowPitch+(a.zone||b.zone?25:0)))>2)continue;const bi=geometry(b,seedInfo.kind,metrics.classify);if(!bi)continue;const bk=keys(b,bi,metrics.step),common=[...ak.keys()].filter(k=>bk.has(k));
    if(common.length&&common.every(k=>Math.abs(ak.get(k)!-bk.get(k)!)<=1)){seen.add(b.id);selected.push(b);}
   }
  }return selected.length>=2?selected.sort((a,b)=>a.y-b.y||a.x-b.x):[];
@@ -88,11 +89,10 @@ export function transposeStack(stack:readonly TileGroup[],metrics:Metrics,worldW
  }else for(const color of suits)output.push(...processionPartition(cells.filter(c=>c.color===color)));
  const targetKind:FormationAxis=kind==='procession'?'choir':'procession';
  const column=(tile:Resolved)=>targetKind==='choir'?suits.indexOf(tile.color):tile.rank-1;
- const origin=Math.min(...cells.map(column));
- const raw=output.map((line,i)=>{const sorted=[...line].sort((a,b)=>column(a)-column(b)),first=column(sorted[0]);const g:TileGroup={id:makeId(),layoutKind:targetKind,x:(first-origin)*metrics.step,y:i*metrics.rowPitch,tiles:sorted.map(c=>c.tile),slots:sorted.map(c=>column(c)-first),jokerFaces:Object.fromEntries(sorted.filter(c=>c.tile.rank==='joker').map(c=>[c.tile.id,{rank:c.rank,color:c.color}]))};return canonicalGroup(g,targetKind,metrics.classify)??g;});
- const maxRight=Math.max(...raw.map(g=>g.x+groupRect(g,metrics.step,metrics.tileHeight).width)),width=Math.max(worldWidth,maxRight+16),anchorX=Math.max(8,Math.min(Math.min(...stack.map(g=>g.x)),width-maxRight-8)),anchorY=Math.max(8,Math.min(...stack.map(g=>g.y)));
- const occupied=otherGroups.map(g=>groupRect(g,metrics.step,metrics.tileHeight));
- const height=Math.max(...raw.map(g=>g.y+metrics.tileHeight));
- const position=nearestSpace({width:maxRight,height},occupied,{x:anchorX,y:anchorY},width);
- return raw.map(g=>({...g,x:g.x+position.x,y:g.y+position.y}));
+ const origin=Math.min(...cells.map(column)),zone=stack[0].zone,pitch=metrics.rowPitch+(zone?25:0);
+ const raw=output.map((line,i)=>{const sorted=[...line].sort((a,b)=>column(a)-column(b)),first=column(sorted[0]);const g:TileGroup={id:makeId(),layoutKind:targetKind,zone,x:(first-origin)*metrics.step,y:i*pitch,tiles:sorted.map(c=>c.tile),slots:sorted.map(c=>column(c)-first),jokerFaces:Object.fromEntries(sorted.filter(c=>c.tile.rank==='joker').map(c=>[c.tile.id,{rank:c.rank,color:c.color}]))};return canonicalGroup(g,targetKind,metrics.classify)??g;});
+ const bounds=raw.map(g=>formationRect(g,metrics)),left=Math.min(...bounds.map(r=>r.x)),top=Math.min(...bounds.map(r=>r.y)),right=Math.max(...bounds.map(r=>r.x+r.width)),bottom=Math.max(...bounds.map(r=>r.y+r.height));
+ const size={width:right-left,height:bottom-top},width=Math.max(worldWidth,size.width+16),anchor={x:Math.max(8,Math.min(Math.min(...stack.map(g=>g.x))+left,width-size.width-8)),y:Math.max(8,Math.min(...stack.map(g=>g.y))+top)};
+ const position=nearestSpace(size,otherGroups.map(g=>formationRect(g,metrics)),anchor,width);
+ return raw.map(g=>({...g,x:g.x+position.x-left,y:g.y+position.y-top}));
 }

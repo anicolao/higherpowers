@@ -5,7 +5,7 @@ const b=await launchBrowser();const p=await b.newPage({viewport:{width:1440,heig
 function assert(value:unknown,message:string):asserts value{if(!value)throw Error(message);}
 const tile=(id:string)=>p.locator(`[data-tile-id="${id}"]`),group=(id:string)=>p.locator(`.soul-group:has([data-tile-id="${id}"])`);
 async function position(id:string){return group(id).evaluate(el=>{const matrix=new DOMMatrix(getComputedStyle(el).transform);return {x:matrix.m41,y:matrix.m42,width:el.getBoundingClientRect().width,height:el.getBoundingClientRect().height};});}
-async function ids(){return p.locator('.tile-control').evaluateAll(nodes=>nodes.map(n=>n.getAttribute('data-tile-id')).sort());}
+async function ids(){return p.locator('.heaven-board .tile-control').evaluateAll(nodes=>nodes.map(n=>n.getAttribute('data-tile-id')).sort());}
 async function moveWhole(id:string,x:number,y:number,magnet?:'procession'|'choir'){
  await tile(id).dblclick();await group(id).and(p.locator('[data-whole-selected=true]')).waitFor();const start=await position(id),box=await tile(id).boundingBox();assert(box,'Missing source bounds');
  await p.mouse.move(box.x+box.width/2,box.y+box.height/2);await p.mouse.down();await p.mouse.move(box.x+box.width/2+x-start.x,box.y+box.height/2+y-start.y,{steps:10});

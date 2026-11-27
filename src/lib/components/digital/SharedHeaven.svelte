@@ -2,7 +2,7 @@
  import {onMount,tick,untrack} from 'svelte';
  import {base} from '$app/paths';
  import {elementPose,localPoint,localVector} from '$lib/tabletop/coordinates';
- import {tidyGroups} from '$lib/tabletop/layout';
+ import {tidyGroups,separateGroups,formationRect} from '$lib/tabletop/layout';
  import SoulTile from './SoulTile.svelte';
  import SuitSymbol from './SuitSymbol.svelte';
  import {tileColumn,groupRect,geometry,findVerticalSnap,alignedStack,transposeStack,type MagnetKind} from '$lib/tabletop/magnetism';
@@ -13,13 +13,13 @@
  $effect(()=>{const snapshot=JSON.stringify(groups),moving=!!dragging?.moved;if(game&&initialized)untrack(()=>{const normalized:TileGroup[]=JSON.parse(snapshot).map(normalizeGroup);if(JSON.stringify(normalized)!==snapshot)groups=normalized;onChange?.(normalized,moving);});});
  function controlPortal(node:HTMLElement,host:HTMLElement|null){const original=node.parentNode;function move(target:HTMLElement|null){if(target)target.append(node);else original?.appendChild(node);}move(host);return {update:move,destroy(){node.remove();}};}
  function editable(group?:TileGroup){return !readOnly&&(!group||canTouch(group));}
- export function placeTile(tile:Soul,clientX:number,clientY:number){return placeTiles([tile],clientX,clientY);}
- export function placeTiles(tiles:Soul[],clientX:number,clientY:number,anchorIndex=0){
+ export function placeTile(tile:Soul,clientX:number,clientY:number){return placeTiles([tile],clientX,clientY,0,true);}
+ export function placeTiles(tiles:Soul[],clientX:number,clientY:number,anchorIndex=0,automatic=false){
   if(!editable()||!tiles.length||new Set(tiles.map(t=>t.id)).size!==tiles.length||tiles.some(tile=>groups.some(g=>g.tiles.some(t=>t.id===tile.id))))return false;
   const point=localPoint(clientX,clientY,elementPose(surface)),inside=localPoint(clientX,clientY,elementPose(viewport));if(inside.x<0||inside.x>viewport.clientWidth||inside.y<0||inside.y>viewport.clientHeight)return false;
   const before=capture(true);save();const x=Math.max(8,point.x-tileSize/2-anchorIndex*step),y=Math.max(8,point.y-tileHeight/2),id=`placed-${crypto.randomUUID()}`;
   groups.push(normalizeGroup({id,x,y,tiles:[...tiles],zone:null}));worldWidth=Math.max(worldWidth,x+tiles.length*step+18);worldHeight=Math.max(worldHeight,y+tileHeight+18);
-  finishDrop(id,false);void animateLayout(before);return true;
+  if(automatic){arrange(id);settleAutomatic([id]);}else finishDrop(id,false);void animateLayout(before);return true;
  }
  export function previewTiles(tiles:Soul[],clientX:number,clientY:number,anchorIndex=0,openingMeld=false){
   if(!editable()||!tiles.length){clearTilePreview();return;}
@@ -29,7 +29,7 @@
  export function hasPreview(){return !!external;}
  export function previewSnapshot(){return JSON.parse(JSON.stringify(external?[...groups,external]:groups)) as TileGroup[];}
  export function clearTilePreview(){external=null;externalOpening=false;}
- export function addToGroup(tile:Soul,id:string,index:number){const group=groups.find(g=>g.id===id);if(!group||!editable(group))return false;const before=capture(true);save();group.tiles=insertTiles(group.tiles,[tile],index);group.slots=undefined;group.jokerFaces=undefined;arrange(id);void animateLayout(before);return true;}
+ export function addToGroup(tile:Soul,id:string,index:number){const group=groups.find(g=>g.id===id);if(!group||!editable(group))return false;const before=capture(true);save();group.tiles=insertTiles(group.tiles,[tile],index);group.slots=undefined;group.jokerFaces=undefined;arrange(id);settleAutomatic([id]);void animateLayout(before);return true;}
  export function removeTile(id:string){const group=groups.find(g=>g.tiles.some(t=>t.id===id));if(!group||!editable()||(!editable(group)&&!returnable.includes(id)))return false;const before=capture();save();groups=groups.map(g=>g.id===group.id?({...g,tiles:g.tiles.filter(t=>t.id!==id),slots:undefined,jokerFaces:jokerFacesFor(g.tiles.filter(t=>t.id!==id),g.jokerFaces)}):g).filter(g=>g.tiles.length);void animateLayout(before);return true;}
  export function shelter(id:string,owner:string|null){const group=groups.find(g=>g.id===id);if(!group||!editable(group))return false;save();group.zone=owner;return true;}
  export function snapshot(){return structuredClone($state.snapshot(groups));}
@@ -106,9 +106,14 @@
   if(index===0)target.x=Math.min(moving.x,target.x);target.tiles=insertTiles(target.tiles,moving.tiles,index);target.slots=undefined;target.layoutKind=undefined;target.jokerFaces=undefined;groups=groups.filter(g=>g.id!==id);selected=targetId;wholeGroup=selectWhole?targetId:null;
   worldWidth=Math.max(worldWidth,target.x+rect(target).width+18);announcement=`Joined ${target.tiles.length} souls.`;
  }
+ function settleAutomatic(changed:string[]){
+  const ids=new Set(changed);groups=separateGroups(groups,metrics,Math.max(worldWidth,...groups.map(g=>{const r=formationRect(g,metrics);return r.x+r.width+8;})),g=>editable(g),g=>ids.has(g.id)?1:0);
+  worldWidth=Math.max(worldWidth,...groups.map(g=>g.x+rect(g).width+18));worldHeight=Math.max(worldHeight,...groups.map(g=>g.y+tileHeight+30));
+ }
  function arrange(id:string){groups=groups.map(g=>g.id===id?normalizeGroup(orderGroup(g)):g);}
  function finishDrop(id:string,whole:boolean){
-  arrange(id);const target=findJoin(id);if(target){merge(id,target.id,target.index,whole);arrange(target.id);return;}
+  const previous=groups.find(g=>g.id===id),oldWidth=previous&&rect(previous).width;arrange(id);const target=findJoin(id);if(target){merge(id,target.id,target.index,whole);arrange(target.id);settleAutomatic([target.id]);return;}
+  const arranged=groups.find(g=>g.id===id);if(arranged&&oldWidth!==rect(arranged).width)settleAutomatic([id]);
   const candidate=findVerticalSnap(groups,id,metrics,worldWidth,surfaceHeight),snap=candidate&&snapTarget(groups.find(g=>g.id===candidate.targetId)!)?candidate:null;
   if(snap){groups=groups.map(g=>g.id===id?snap.moving:g.id===snap.targetId?snap.target:g);selected=id;wholeGroup=id;announcement=`Aligned ${snap.kind==='procession'?'matching ranks':'matching suits'}. Transpose is available for this stack.`;}
   else{selected=id;wholeGroup=whole?id:null;announcement=whole?'Whole group moved.':'Split group moved.';}
@@ -154,14 +159,14 @@
  function blank(event:PointerEvent){if((event.target!==surface&&(!tapToPlace||(event.target as Element).closest('button')))||dragging||event.button!==0)return;commitTap();selected=null;wholeGroup=null;if(tapToPlace)placePress={pointer:event.pointerId,x:event.clientX,y:event.clientY};}
  function key(event:KeyboardEvent,id:string,tileId:string){if(!editable(groups.find(g=>g.id===id)))return;
   if((event.key==='Enter'||event.key===' ')&&event.shiftKey){event.preventDefault();clearTap();cut(tileId);return;}
-  if(event.key==='Enter'||event.key===' '){event.preventDefault();clearTap();const target=wholeGroup===id?findJoin(id):null;if(target){save();merge(id,target.id,target.index,true);}else{selected=id;wholeGroup=id;announcement='Whole group selected.';}return;}
+  if(event.key==='Enter'||event.key===' '){event.preventDefault();clearTap();const target=wholeGroup===id?findJoin(id):null;if(target){const before=capture();save();merge(id,target.id,target.index,true);arrange(target.id);settleAutomatic([target.id]);void animateLayout(before);}else{selected=id;wholeGroup=id;announcement='Whole group selected.';}return;}
   const directions:Record<string,[number,number]>={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]};const direction=directions[event.key];if(!direction)return;
   event.preventDefault();clearTap();save();const group=wholeGroup===id?groups.find(g=>g.id===id):cut(tileId,false);if(!group)return;selected=group.id;const distance=event.shiftKey?2:12;
   group.x=Math.max(8,Math.min(worldWidth-rect(group).width-8,group.x+direction[0]*distance));group.y=Math.max(8,Math.min(surfaceHeight-tileHeight-8,group.y+direction[1]*distance));
  }
  function transpose(){
   if(readOnly||dragging||stack.length<2||stack.some(g=>!editable(g))||new Set(stack.map(g=>g.zone??null)).size>1)return;clearTap();const source=[...stack],ids=new Set(source.map(g=>g.id)),others=groups.filter(g=>!ids.has(g.id)),output=transposeStack(source,metrics,worldWidth,others,()=>`group-${crypto.randomUUID()}`);if(!output.length)return;
-  const before=capture();save();for(const g of output)g.zone=source[0].zone;groups=[...others,...output];selected=output[0].id;wholeGroup=output[0].id;worldWidth=Math.max(worldWidth,...output.map(g=>g.x+rect(g).width+18));worldHeight=Math.max(worldHeight,...output.map(g=>g.y+tileHeight+30));announcement=`Transposed ${source.length} groups into ${output.length} groups. Incomplete pieces remain separate.`;
+  const before=capture();save();for(const g of output)g.zone=source[0].zone;groups=[...others,...output];settleAutomatic(output.map(g=>g.id));selected=output[0].id;wholeGroup=output[0].id;worldWidth=Math.max(worldWidth,...output.map(g=>g.x+rect(g).width+18));worldHeight=Math.max(worldHeight,...output.map(g=>g.y+tileHeight+30));announcement=`Transposed ${source.length} groups into ${output.length} groups. Incomplete pieces remain separate.`;
   void animateLayout(before);
  }
  function globalKey(event:KeyboardEvent){if(readOnly)return;if(event.key.toLowerCase()==='t'&&!event.metaKey&&!event.ctrlKey&&!event.altKey&&!(event.target instanceof HTMLInputElement)&&!(event.target instanceof HTMLTextAreaElement)&&!(event.target instanceof HTMLSelectElement)){event.preventDefault();transpose();}if(event.key==='Escape'){event.preventDefault();if(dragging)cancel();else{clearTap();selected=null;wholeGroup=null;}}if((event.metaKey||event.ctrlKey)&&event.key.toLowerCase()==='z'&&!(event.target instanceof HTMLInputElement)&&!(event.target instanceof HTMLTextAreaElement)){event.preventDefault();undo();}}

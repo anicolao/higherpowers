@@ -1,3 +1,4 @@
+import {formationRect} from '../src/lib/tabletop/layout';
 import {formation} from '../src/lib/engine/formations';
 import {describe,test,expect} from 'bun:test';
 import {canonicalGroup,findVerticalSnap,alignedStack,transposeStack,geometry,groupRect,type Metrics} from '../src/lib/tabletop/magnetism';
@@ -69,4 +70,13 @@ describe('Active-decree magnets',()=>{
  test('Mirror Choirs are treated as Choirs, with their two different ranks preserved',()=>{const a=procession('a','red',[1,13],200,150),b=procession('b','red',[2,12],204,233),snap=findVerticalSnap([a,b],'b',{...metrics,classify:classify(10)},1200,700)!;expect(snap?.kind).toBe('choir');expect(snap.moving.tiles.map(t=>t.rank)).toEqual([2,12]);});
  test('Eternal Circle Processions align across 13 to 1 without reordering their souls',()=>{const a=procession('a','black',[12,13,1],200,150),b=procession('b','red',[13,1,2],251,233),snap=findVerticalSnap([a,b],'b',{...metrics,classify:classify(5)},1200,700)!;expect(snap?.kind).toBe('procession');expect(snap.moving.x).toBe(247);expect(snap.moving.tiles.map(t=>t.rank)).toEqual([13,1,2]);});
  test('Poker formations do not masquerade as Choirs',()=>{const a=procession('a','black',[2,2,5,5],200,150);a.tiles[1].color='red';a.tiles[3].color='red';expect(formation(a.tiles,6)).toBe('poker');expect(geometry(a,undefined,classify(6))).toBeNull();});
+});
+
+test('Sanctuary magnets and transposes reserve their painted frames',()=>{
+ const a={...procession('safe-a','black',[1,2,3],200,100),zone:'own'},b={...procession('safe-b','red',[1,2,3],204,202),zone:'own'},snap=findVerticalSnap([a,b],'safe-b',metrics,1200,900)!;
+ expect(snap).not.toBeNull();expect(overlaps(formationRect(snap.moving,metrics),formationRect(snap.target,metrics))).toBe(false);
+ const stack=alignedStack([snap.target,snap.moving],snap.moving.id,metrics);expect(stack).toHaveLength(2);
+ let serial=0;const other={...procession('blocker','green',[7,8,9],200,320),zone:'opponent'},out=transposeStack(stack,metrics,1200,[other],()=>`protected-${serial++}`);
+ expect(out.every(g=>g.zone==='own')).toBe(true);
+ const rects=[...out,other].map(g=>formationRect(g,metrics));for(let i=0;i<rects.length;i++)for(let j=i+1;j<rects.length;j++)expect(overlaps(rects[i],rects[j])).toBe(false);
 });

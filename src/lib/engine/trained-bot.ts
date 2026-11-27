@@ -1,13 +1,14 @@
 import registry from '../../../models/registry.json';
 import {botCommand} from './bot';
 import {learnedCommand,type Model} from './rl/policy';
+import {layoutBotCommand} from './bot-layout';
 import type {State,Player,BotLevel} from './types';
 export const availableBotLevels=Object.keys(registry.models) as BotLevel[];
 export const defaultBotLevel:BotLevel=availableBotLevels.includes('standard')?'standard':'easy';
 export function trainedBotCommand(state:State,player:Player){
- if(!player.difficulty)return botCommand(state,player);
+ if(!player.difficulty)return layoutBotCommand(state,player.id,botCommand(state,player));
  const model=(registry.models as Record<string,Model>)[player.difficulty];if(!model)throw Error(`The ${player.difficulty} model is not installed.`);
- return learnedCommand(state,player.id,model);
+ return layoutBotCommand(state,player.id,learnedCommand(state,player.id,model));
 }
 export function botPending(s:State,p:Player){
  if(!p.bot)return false;

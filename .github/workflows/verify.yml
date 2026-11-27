@@ -45,6 +45,7 @@ jobs:
             sleep 1
           done
           bun run review:bots
+          bun run review:overlap
           bun run review:sanctuary
           bun run review:purgatory
           bun run review:visibility

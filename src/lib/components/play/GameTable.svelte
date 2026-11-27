@@ -154,8 +154,7 @@
   const dealt=before.round!==next.round,computer=before.players[before.turn]?.bot,passed=before.phase==='dance'&&next.phase!=='dance',automaticKeep=before.phase==='inspect'&&before.inspection?.tiles.length===1&&next.phase!=='inspect';if(!tabletop&&!dealt&&!computer&&!passed&&!automaticKeep)return;
   const transfers=tileTransfers(before,next).filter(t=>(!dealt||t.to.kind==='hand')&&(!tabletop||t.to.kind!=='heaven'||!document.querySelector(`[data-tile-id="${t.id}"]`))),oldPositions=tablePositions(before),newPositions=tablePositions(next);
   if(tabletop&&!transfers.length&&JSON.stringify(before.heaven)===JSON.stringify(next.heaven))return;
-  const rotated=tabletop&&before.players[before.turn]?.seat!==next.players[next.turn]?.seat;
-  const shifted=rotated?[]:[...newPositions.keys()].filter(id=>oldPositions.has(id));
+  const shifted=[...newPositions.keys()].filter(id=>oldPositions.has(id));
   if(!transfers.length&&!shifted.length)return;
   if(document.hidden||window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
   const source=renderedTiles(true),bag=bagBox(),sequence=++motionSequence;motionBatches.set(sequence,{ids:[...new Set([...transfers.map(t=>t.id),...shifted])],favor:next.players.filter(p=>p.favor!==(before.players.find(old=>old.id===p.id)?.favor??0)).map(p=>p.id)});refreshMotionTiles();onAnimating?.(true);

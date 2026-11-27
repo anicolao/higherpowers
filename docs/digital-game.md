@@ -232,20 +232,34 @@ Heaven is a fixed, non-scrolling tile plane. It keeps normal tile size while the
 layout fits, then scales the entire arrangement to keep every soul visible above
 the rack. Pointer coordinates account for the scale; dragging does not change
 scale until release. Computer plays choose nearby clear space instead of assigning
-each new group another row. Extending an existing group also checks its neighbours.
+each new group another row. After either a heuristic or learned computer selects an Organize command, a
+presentation pass checks the complete final arrangement, including sparse tile
+slots and Sanctuary frames. Unchanged formations get priority; conflicts move to
+the nearest clear space, with opponents’ Sanctuaries fixed. This changes only
+coordinates, leaving the selected tiles, gift, opening and Sanctuary witness intact.
+The same committed coordinates reach every client and survive replay.
 
-The Tidy Heaven control slides editable groups upward, then Processions left and
-Choirs right, stopping at other groups. Protected Sanctuaries remain stationary
+The Tidy Heaven control first separates overlapping editable groups, then slides
+them upward, with Processions left and
+Choirs right, stopping at other groups. Other players’ Sanctuaries remain stationary
 obstacles. Tidy preserves memberships, joker declarations and tile order, and is
 one undoable rearrangement. Transpose chooses the closest clear space to its
 original stack. Tidy, Transpose, Undo and automatic snap/scale adjustments animate
 the physical tiles between their previous and final positions. Reduced-motion
 preferences skip these animations. `bun run review:layout` checks animated tidy
 and transpose, mobile fitting, scaled dragging and the absence of scrolling.
+`bun run review:overlap` covers pre-existing overlaps, growing formations,
+suggestions, automatic single-tile placement, merges, Sanctuary transpose, and
+real worker-driven moves at every difficulty in web and tabletop views. It checks
+that relocated existing tiles animate before turn rotation. Direct manual drags
+can still deliberately overlap groups; their chosen coordinates are not
+silently packed. Automatic suggestions and joins reserve space for their
+resulting width instead of hiding a neighboring set.
 
 The game table reserves a status rail on the left in landscape and across the top
 in portrait (square screens use the portrait arrangement). It contains the legality
-halo, rearrangement tools, table menu, round card, opponents and occupied Purgatories. Heaven has its own remaining rectangle, so the rail does
+halo, rearrangement tools, table menu, round card and opponents. Occupied Purgatories sit beside Heaven, outside the
+scrolling rail. Heaven has its own remaining rectangle, so the rail does
 not obscure tiles. A separate bottom strip groups your Angel, Favor and score at bottom left,
 with the bag, chronicle and rack alongside; portrait screens put the rack beneath the other bottom-strip objects. The
 rail and compact opponent artifacts adapt to short landscape and narrow portrait
